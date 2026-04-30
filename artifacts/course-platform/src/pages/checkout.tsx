@@ -616,6 +616,11 @@ export default function CheckoutPage() {
         content_type: "product",
         content_ids: [String(courseId)],
         content_name: course?.title ?? "",
+      }, {
+        email: form.email.trim(),
+        phone: form.mobile.trim(),
+        firstName: form.fullName.trim().split(/\s+/)[0],
+        lastName: form.fullName.trim().split(/\s+/).slice(1).join(" ") || undefined,
       });
       setSuccess({
         isNewUser: data.isNewUser,
@@ -679,6 +684,11 @@ export default function CheckoutPage() {
         content_type: "product",
         content_ids: [String(courseId)],
         content_name: course?.title ?? "",
+      }, {
+        email: form.email.trim(),
+        phone: form.mobile.trim(),
+        firstName: form.fullName.trim().split(/\s+/)[0],
+        lastName: form.fullName.trim().split(/\s+/).slice(1).join(" ") || undefined,
       });
       setStripeData(null);
       setSuccess({

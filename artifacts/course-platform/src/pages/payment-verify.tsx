@@ -76,7 +76,11 @@ export default function PaymentVerifyPage() {
             content_type: "product",
             content_ids: data.courseId ? [String(data.courseId)] : data.bundleId ? [String(data.bundleId)] : [],
             content_name: data.courseTitle ?? data.bundleName ?? "",
-          });
+            // Pass our gateway sessionId — pixel.ts route will look up the
+            // payment row and enrich with hashed billing email/phone/name
+            // for higher Event Match Quality on Meta's side.
+            order_id: orderId,
+          }, newUser ? { email: newUser.email } : undefined);
           setState("success");
           setSuccessData({ courseId: data.courseId, courseTitle: data.courseTitle, bundleId: data.bundleId, bundleName: data.bundleName, courseCount: data.courseCount, newUser });
         } else if (data.pending) {

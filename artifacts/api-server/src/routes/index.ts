@@ -16,6 +16,7 @@ import emailTrackingRouter from "./email-tracking";
 import gstRouter from "./gst";
 import bundlesRouter from "./bundles";
 import staffRouter from "./staff";
+import pixelRouter from "./pixel";
 import { db } from "@workspace/db";
 import { platformSettingsTable } from "@workspace/db";
 
@@ -56,5 +57,6 @@ router.use("/email", emailTrackingRouter);
 router.use("/admin/gst", gstRouter);
 router.use("/bundles", bundlesRouter);
 router.use("/admin/staff", staffRouter);
+router.use("/pixel", pixelRouter);
 
 export default router;

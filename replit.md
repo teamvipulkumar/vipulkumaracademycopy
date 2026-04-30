@@ -54,6 +54,19 @@ Includes a responsive design with specific layouts for admin dashboards and repo
     - `user_signup` trigger fires at user creation time (e.g., registration, guest checkout).
 **Email Tracking**: Open, click, and unsubscribe tracking for emails, with secure link rewriting and HMAC-SHA256 signature verification.
 
+**Facebook Pixel + Conversions API (Server-Side)**:
+- Browser pixel utility: `artifacts/course-platform/src/lib/facebook-pixel.ts`
+  - Internal event queue handles the race condition where events fire before the async-loaded fbq script is ready (events queued, flushed on init)
+  - Every event gets a UUID `event_id` shared with both browser and server for Meta deduplication
+  - `fbTrack(event, params, userData?)` fires the browser pixel AND POSTs to `/api/pixel/event` server-side; `userData` (email/phone/firstName/lastName/externalId) is hashed server-side for higher Event Match Quality
+- Server-side CAPI: `POST /api/pixel/event` in `artifacts/api-server/src/routes/pixel.ts`
+  - Reads `FACEBOOK_CAPI_ACCESS_TOKEN` env var and pixel ID from `platform_settings` table
+  - Forwards to Meta with visitor IP, user-agent, `_fbp`/`_fbc` cookies, and SHA-256 hashed PII
+  - For Purchase events with `order_id`, looks up the payment row (by internal id OR gateway sessionId) to enrich with billing email/phone/name from DB
+  - Returns 400 for malformed bodies, `{sent:false, reason:"capi_not_configured"}` if env var missing — failures never propagate to user-facing flows
+- Admin status card at `/admin/facebook-pixel` shows whether CAPI is active (queries `GET /api/pixel/capi-status`)
+- Affiliate per-user pixels (`affiliate_pixels` table, with their own `access_token` column) are independent of the global CAPI token and continue to work as before
+
 ## External Dependencies
 
 - **Supabase**: PostgreSQL database and Storage for file uploads.

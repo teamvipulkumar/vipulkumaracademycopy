@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Check, ExternalLink, Globe, Zap } from "lucide-react";
+import { Check, ExternalLink, Globe, Zap, Server, AlertCircle, ShieldCheck } from "lucide-react";
+
+const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 export default function AdminFacebookPixelPage() {
   const { data: settings } = useGetAdminSettings({ query: { queryKey: getGetAdminSettingsQueryKey() } });
@@ -18,6 +20,14 @@ export default function AdminFacebookPixelPage() {
 
   const [form, setForm] = useState({ enabled: false, pixelId: "", baseCode: "" });
   const [saving, setSaving] = useState(false);
+  const [capiConfigured, setCapiConfigured] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/pixel/capi-status`)
+      .then(r => r.json())
+      .then((d: { configured: boolean }) => setCapiConfigured(d.configured))
+      .catch(() => setCapiConfigured(false));
+  }, []);
 
   useEffect(() => {
     if (settings) {
@@ -58,7 +68,7 @@ export default function AdminFacebookPixelPage() {
     <div className="p-6 max-w-2xl">
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Facebook Pixel</h1>
-        <p className="text-muted-foreground">Browser-based tracking — all events fire directly in the visitor's browser.</p>
+        <p className="text-muted-foreground">Browser pixel + Server-Side Conversions API — events fire from the visitor's browser AND from our server, so ad blockers and iOS privacy don't break attribution.</p>
       </div>
 
       <div className="space-y-6">
@@ -111,11 +121,66 @@ export default function AdminFacebookPixelPage() {
               <p className="text-xs text-muted-foreground mt-1.5">
                 Copy from Events Manager → your Pixel → Overview → Install Pixel → Copy Code. If left empty, the platform auto-injects using the Pixel ID above.
               </p>
+              <p className="text-[11px] text-amber-500/90 mt-1.5">
+                <strong>Tip:</strong> If you paste Meta's full snippet, remove the line <code className="bg-background px-1 py-0.5 rounded">fbq('track', 'PageView');</code> from it — our app already fires PageView on every route change with deduplication. Leaving it in causes the initial PageView to be counted twice in Events Manager (does not affect Lead / InitiateCheckout / Purchase counts).
+              </p>
             </div>
 
             <Button type="button" onClick={handleSave} disabled={saving} className="w-full">
               {saving ? "Saving..." : "Save Pixel Settings"}
             </Button>
+          </CardContent>
+        </Card>
+
+        {/* CAPI status card */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Server className="w-4 h-4 text-blue-400" />
+                <CardTitle className="text-base">Conversions API (Server-Side)</CardTitle>
+              </div>
+              {capiConfigured === true && (
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-green-500 bg-green-500/10 border border-green-500/30 rounded-full px-2.5 py-0.5 flex items-center gap-1">
+                  <ShieldCheck className="w-3 h-3" /> Active
+                </span>
+              )}
+              {capiConfigured === false && (
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-amber-500 bg-amber-500/10 border border-amber-500/30 rounded-full px-2.5 py-0.5 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" /> Not Configured
+                </span>
+              )}
+            </div>
+            <CardDescription>
+              Sends every Lead, InitiateCheckout, and Purchase event from our server directly to Meta — bypassing ad blockers, iOS Safari ITP, and Brave. Each event uses the same <code className="text-[11px] bg-background px-1 py-0.5 rounded">event_id</code> as the browser pixel so Meta deduplicates them.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {capiConfigured === false && (
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 text-sm">
+                <p className="font-semibold text-amber-500 mb-2">Action required</p>
+                <ol className="space-y-1.5 text-xs text-muted-foreground list-decimal pl-4">
+                  <li>Open Meta Events Manager → your Pixel → Settings → Conversions API</li>
+                  <li>Click <strong>Generate access token</strong> (and revoke any previously leaked one)</li>
+                  <li>Add the token as the secret <code className="bg-background px-1 py-0.5 rounded">FACEBOOK_CAPI_ACCESS_TOKEN</code> in Replit Secrets</li>
+                  <li>Restart the API server — this card will turn green</li>
+                </ol>
+              </div>
+            )}
+            {capiConfigured === true && (
+              <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 text-xs text-muted-foreground">
+                Server-side dispatch is active. Every conversion event now reaches Meta from two sources (browser + server), giving you complete coverage even when ad blockers strip the browser pixel.
+              </div>
+            )}
+            <div className="text-xs text-muted-foreground bg-background border border-border rounded-lg p-3 space-y-1.5">
+              <p><strong>How it works:</strong></p>
+              <ul className="list-disc pl-4 space-y-1">
+                <li>Browser fires <code className="bg-card px-1 rounded">fbq('track', ...)</code> with an event ID (when fbq is ready, otherwise it's queued)</li>
+                <li>Same event also POSTs to <code className="bg-card px-1 rounded">/api/pixel/event</code> with the same event ID</li>
+                <li>Server adds visitor IP, user-agent, _fbp/_fbc cookies, and SHA-256 hashes of email/phone for matching</li>
+                <li>Meta deduplicates by event ID so you never get double-counted conversions</li>
+              </ul>
+            </div>
           </CardContent>
         </Card>
 

@@ -24,7 +24,11 @@ export default function OptinPage() {
     if (!form.firstName.trim() || !form.email.trim()) return;
     setError("");
     setLoading(true);
-    fbTrack("Lead");
+    fbTrack("Lead", { content_name: "Optin Form" }, {
+      email: form.email.trim(),
+      firstName: form.firstName.trim(),
+      lastName: form.lastName.trim() || undefined,
+    });
     await new Promise(r => setTimeout(r, 900));
     setLoading(false);
     setSubmitted(true);
