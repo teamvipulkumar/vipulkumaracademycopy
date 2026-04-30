@@ -3,6 +3,7 @@ import { db, platformSettingsTable, usersTable, paymentsTable } from "@workspace
 import { eq } from "drizzle-orm";
 import { sendFbEvent, type FbEventData } from "../lib/facebook-pixel";
 import { pixelEventRateLimiter } from "../middlewares/rate-limit";
+import { requireAdmin } from "../middlewares/auth";
 
 const router: IRouter = Router();
 
@@ -74,19 +75,39 @@ function isString(v: unknown): v is string {
   return typeof v === "string" && v.length > 0;
 }
 
-function getCachedGlobalPixel(): Promise<{ pixelId: string | null; enabled: boolean }> {
-  // Fetch from DB on every call — platform_settings is small and queries are
-  // cheap. If this becomes a hot path, wrap it in an in-memory TTL cache.
+interface CapiCreds {
+  pixelId: string | null;
+  enabled: boolean;
+  accessToken: string | null;
+  testEventCode: string | null;
+}
+
+/**
+ * Read pixel ID, enabled flag, CAPI access token, and test event code from
+ * platform_settings. The access token in the DB takes precedence; if it's
+ * empty, we fall back to the FACEBOOK_CAPI_ACCESS_TOKEN env var so the
+ * previous deployment style still works without any DB changes.
+ */
+function getCapiCreds(): Promise<CapiCreds> {
   return db.select({
     facebookPixelId: platformSettingsTable.facebookPixelId,
     facebookPixelEnabled: platformSettingsTable.facebookPixelEnabled,
+    facebookAccessToken: platformSettingsTable.facebookAccessToken,
+    facebookTestEventCode: platformSettingsTable.facebookTestEventCode,
   }).from(platformSettingsTable).limit(1).then(rows => {
     const r = rows[0];
+    const dbToken = r?.facebookAccessToken && r.facebookAccessToken.trim().length > 0
+      ? r.facebookAccessToken.trim() : null;
+    const envToken = process.env.FACEBOOK_CAPI_ACCESS_TOKEN ?? null;
+    const testCode = r?.facebookTestEventCode && r.facebookTestEventCode.trim().length > 0
+      ? r.facebookTestEventCode.trim() : null;
     return {
       pixelId: r?.facebookPixelId ?? null,
       enabled: !!r?.facebookPixelEnabled,
+      accessToken: dbToken ?? envToken,
+      testEventCode: testCode,
     };
-  }).catch(() => ({ pixelId: null, enabled: false }));
+  }).catch(() => ({ pixelId: null, enabled: false, accessToken: null, testEventCode: null }));
 }
 
 /**
@@ -131,10 +152,8 @@ router.post("/event", pixelEventRateLimiter, async (req, res): Promise<void> => 
       res.status(400).json({ sent: false, reason: "missing_event_id" }); return;
     }
 
-    const accessToken = process.env.FACEBOOK_CAPI_ACCESS_TOKEN;
+    const { pixelId, enabled, accessToken, testEventCode } = await getCapiCreds();
     if (!accessToken) { res.json({ sent: false, reason: "capi_not_configured" }); return; }
-
-    const { pixelId, enabled } = await getCachedGlobalPixel();
     if (!enabled || !pixelId) { res.json({ sent: false, reason: "pixel_disabled" }); return; }
 
     const customData = (body.custom_data && typeof body.custom_data === "object")
@@ -228,7 +247,9 @@ router.post("/event", pixelEventRateLimiter, async (req, res): Promise<void> => 
     }
 
     // Fire-and-forget so the response stays snappy even if Meta is slow.
-    void sendFbEvent(pixelId, accessToken, data).then(result => {
+    // testEventCode (when set in admin UI) routes the event into Meta's Test
+    // Events tab instead of production stats — useful for verifying setup.
+    void sendFbEvent(pixelId, accessToken, data, testEventCode ?? undefined).then(result => {
       if (!result.success) {
         console.warn(`[CAPI ${eventName}] Meta returned error:`, result.error);
       }
@@ -236,7 +257,7 @@ router.post("/event", pixelEventRateLimiter, async (req, res): Promise<void> => 
       console.error(`[CAPI ${eventName}] dispatch failed:`, err);
     });
 
-    res.json({ sent: true });
+    res.json({ sent: true, test_mode: !!testEventCode });
   } catch (err) {
     console.error("[pixel/event] handler error:", err);
     res.json({ sent: false, reason: "internal_error" });
@@ -245,11 +266,88 @@ router.post("/event", pixelEventRateLimiter, async (req, res): Promise<void> => 
 
 /**
  * GET /api/pixel/capi-status
- * Admin-facing helper: tells the admin UI whether the CAPI access token
- * is configured in the environment. Never returns the token itself.
+ * Admin-only helper: tells the admin UI whether the CAPI access token is
+ * configured (in DB or env), where it came from, and whether a test code is
+ * currently active. Never returns the token itself.
+ *
+ * SECURITY: Admin-gated to avoid leaking integration config (token presence,
+ * test mode state) to anonymous callers. The /api/pixel/event handler that
+ * fires real conversion data still does its own per-request DB lookup.
  */
-router.get("/capi-status", (_req, res): void => {
-  res.json({ configured: !!process.env.FACEBOOK_CAPI_ACCESS_TOKEN });
+router.get("/capi-status", requireAdmin, async (_req, res): Promise<void> => {
+  // Single DB read — pull both the resolved creds AND the raw DB token in one
+  // round trip so we can attribute the source (database vs environment).
+  const rows = await db.select({
+    accessToken: platformSettingsTable.facebookAccessToken,
+    testEventCode: platformSettingsTable.facebookTestEventCode,
+  }).from(platformSettingsTable).limit(1).catch(() => []);
+  const r = rows[0];
+  const dbToken = r?.accessToken && r.accessToken.trim().length > 0 ? r.accessToken.trim() : null;
+  const envToken = process.env.FACEBOOK_CAPI_ACCESS_TOKEN ?? null;
+  const accessToken = dbToken ?? envToken;
+  const testCode = r?.testEventCode && r.testEventCode.trim().length > 0 ? r.testEventCode.trim() : null;
+  res.json({
+    configured: !!accessToken,
+    source: accessToken ? (dbToken ? "database" : "environment") : null,
+    test_mode: !!testCode,
+  });
+});
+
+/**
+ * POST /api/pixel/send-test-event
+ * Admin-only diagnostic — fires a synthetic Lead event to Meta CAPI using
+ * the saved Test Event Code. Within ~30s the event should appear in
+ * Events Manager → Test Events tab, confirming the full pipeline works.
+ *
+ * Body: { event_name?: "Lead"|"Purchase"|"InitiateCheckout" }  (default: Lead)
+ */
+router.post("/send-test-event", requireAdmin, async (req, res): Promise<void> => {
+  try {
+    // Defense in depth: even though requireAdmin already validated the JWT,
+    // also enforce the same-origin gate so a stolen admin cookie used from a
+    // third-party site can't trigger Meta test events from a different origin.
+    if (!isRequestFromAllowedOrigin(req)) {
+      res.status(403).json({ sent: false, reason: "forbidden_origin" }); return;
+    }
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const eventName = isString(body.event_name) && ALLOWED_EVENTS.has(body.event_name)
+      ? body.event_name : "Lead";
+
+    const { pixelId, accessToken, testEventCode } = await getCapiCreds();
+    if (!accessToken) { res.status(400).json({ sent: false, reason: "capi_not_configured" }); return; }
+    if (!pixelId) { res.status(400).json({ sent: false, reason: "pixel_id_missing" }); return; }
+    if (!testEventCode) { res.status(400).json({ sent: false, reason: "test_event_code_missing" }); return; }
+
+    const data: FbEventData = {
+      eventName,
+      eventId: `test_${eventName}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      eventSourceUrl: typeof req.headers.referer === "string" ? req.headers.referer : undefined,
+      userIp: getClientIp(req),
+      userAgent: typeof req.headers["user-agent"] === "string" ? req.headers["user-agent"] : undefined,
+      contentName: "Admin Test Event",
+      value: eventName === "Purchase" ? 1 : undefined,
+      currency: eventName === "Purchase" ? "INR" : undefined,
+      customData: { test_source: "admin_panel" },
+    };
+
+    // Wait for Meta's response so the admin gets immediate feedback.
+    const result = await sendFbEvent(pixelId, accessToken, data, testEventCode);
+    if (result.success) {
+      res.json({
+        sent: true,
+        event_name: eventName,
+        event_id: data.eventId,
+        test_event_code: testEventCode,
+        meta_response: result.result,
+        next_step: `Open Events Manager → Pixel ${pixelId} → Test Events tab. The event "${eventName}" should appear within 30 seconds.`,
+      });
+    } else {
+      res.status(502).json({ sent: false, reason: "meta_rejected", error: result.error });
+    }
+  } catch (err) {
+    console.error("[pixel/send-test-event] error:", err);
+    res.status(500).json({ sent: false, reason: "internal_error" });
+  }
 });
 
 export default router;

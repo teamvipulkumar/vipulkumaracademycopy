@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Check, ExternalLink, Globe, Zap, Server, AlertCircle, ShieldCheck } from "lucide-react";
+import { Check, ExternalLink, Globe, Zap, Server, AlertCircle, ShieldCheck, Eye, EyeOff, Send, Loader2 } from "lucide-react";
 
 const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -18,23 +18,30 @@ export default function AdminFacebookPixelPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const [form, setForm] = useState({ enabled: false, pixelId: "", baseCode: "" });
+  const [form, setForm] = useState({ enabled: false, pixelId: "", baseCode: "", accessToken: "", testEventCode: "" });
   const [saving, setSaving] = useState(false);
-  const [capiConfigured, setCapiConfigured] = useState<boolean | null>(null);
+  const [showToken, setShowToken] = useState(false);
+  const [sendingTest, setSendingTest] = useState(false);
+  const [capiStatus, setCapiStatus] = useState<{ configured: boolean; source: string | null; test_mode: boolean } | null>(null);
 
-  useEffect(() => {
+  const refreshCapiStatus = () => {
     fetch(`${API_BASE}/api/pixel/capi-status`)
       .then(r => r.json())
-      .then((d: { configured: boolean }) => setCapiConfigured(d.configured))
-      .catch(() => setCapiConfigured(false));
-  }, []);
+      .then((d: { configured: boolean; source: string | null; test_mode: boolean }) => setCapiStatus(d))
+      .catch(() => setCapiStatus({ configured: false, source: null, test_mode: false }));
+  };
+
+  useEffect(() => { refreshCapiStatus(); }, []);
 
   useEffect(() => {
     if (settings) {
+      const s = settings as Record<string, unknown>;
       setForm({
-        enabled: (settings as Record<string, unknown>).facebookPixelEnabled as boolean ?? false,
-        pixelId: (settings as Record<string, unknown>).facebookPixelId as string ?? "",
-        baseCode: (settings as Record<string, unknown>).facebookPixelBaseCode as string ?? "",
+        enabled: s.facebookPixelEnabled as boolean ?? false,
+        pixelId: s.facebookPixelId as string ?? "",
+        baseCode: s.facebookPixelBaseCode as string ?? "",
+        accessToken: s.facebookAccessToken as string ?? "",
+        testEventCode: s.facebookTestEventCode as string ?? "",
       });
     }
   }, [settings]);
@@ -46,11 +53,14 @@ export default function AdminFacebookPixelPage() {
         facebookPixelEnabled: form.enabled,
         facebookPixelId: form.pixelId,
         facebookPixelBaseCode: form.baseCode,
+        facebookAccessToken: form.accessToken,
+        facebookTestEventCode: form.testEventCode,
       } as Parameters<typeof updateSettings.mutate>[0]["data"],
     }, {
       onSuccess: () => {
         toast({ title: "Facebook Pixel settings saved!" });
         queryClient.invalidateQueries({ queryKey: getGetAdminSettingsQueryKey() });
+        refreshCapiStatus();
         setSaving(false);
       },
       onError: () => {
@@ -58,6 +68,44 @@ export default function AdminFacebookPixelPage() {
         setSaving(false);
       },
     });
+  };
+
+  const handleSendTestEvent = async () => {
+    if (!form.testEventCode.trim()) {
+      toast({ title: "Test Event Code missing", description: "Pehle Test Event Code daalein aur Save karein.", variant: "destructive" });
+      return;
+    }
+    setSendingTest(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/pixel/send-test-event`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event_name: "Lead" }),
+      });
+      const data = await res.json();
+      if (res.ok && data.sent) {
+        toast({
+          title: "Test event Meta ko bhej diya!",
+          description: `Event "${data.event_name}" 30 seconds mein Test Events tab mein dikhega.`,
+        });
+      } else {
+        toast({
+          title: "Test event fail hua",
+          description: data.reason === "test_event_code_missing"
+            ? "Pehle Test Event Code save karein."
+            : data.reason === "capi_not_configured"
+              ? "Access Token configured nahi hai."
+              : data.reason === "meta_rejected"
+                ? `Meta ne reject kiya: ${data.error?.message ?? "unknown error"}`
+                : data.reason ?? "Unknown error",
+          variant: "destructive",
+        });
+      }
+    } catch (e) {
+      toast({ title: "Network error", description: String(e), variant: "destructive" });
+    } finally {
+      setSendingTest(false);
+    }
   };
 
   const testEventsUrl = form.pixelId
@@ -126,6 +174,74 @@ export default function AdminFacebookPixelPage() {
               </p>
             </div>
 
+            {/* CAPI Access Token */}
+            <div className="pt-3 border-t border-border">
+              <Label className="text-sm mb-1.5 block">
+                Conversions API Access Token
+                <span className="ml-2 text-muted-foreground font-normal text-[11px]">(server-side dispatch — keep secret)</span>
+              </Label>
+              <div className="relative">
+                <Input
+                  type={showToken ? "text" : "password"}
+                  value={form.accessToken}
+                  onChange={e => setForm(f => ({ ...f, accessToken: e.target.value }))}
+                  placeholder="EAAxxxx... (long token from Events Manager)"
+                  className="bg-background font-mono pr-10"
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowToken(s => !s)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
+                  aria-label={showToken ? "Hide token" : "Show token"}
+                >
+                  {showToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Events Manager → your Pixel → Settings → Conversions API → <strong>Generate access token</strong>. Saved here, this overrides the <code className="bg-background px-1 py-0.5 rounded text-[11px]">FACEBOOK_CAPI_ACCESS_TOKEN</code> env var.
+              </p>
+            </div>
+
+            {/* Test Event Code */}
+            <div>
+              <Label className="text-sm mb-1.5 block">
+                Test Event Code
+                <span className="ml-2 text-muted-foreground font-normal text-[11px]">(optional — routes events to the Test Events tab)</span>
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  value={form.testEventCode}
+                  onChange={e => setForm(f => ({ ...f, testEventCode: e.target.value }))}
+                  placeholder="TEST12345"
+                  className="bg-background font-mono"
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleSendTestEvent}
+                  disabled={sendingTest || !form.testEventCode.trim()}
+                  className="shrink-0 gap-2"
+                  title="Sample Lead event Meta ko bhejo aur Test Events tab mein verify karo"
+                >
+                  {sendingTest ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  {sendingTest ? "Sending..." : "Send Test Event"}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Get this from Events Manager → Test Events tab — top of page shows your unique <code className="bg-background px-1 py-0.5 rounded text-[11px]">TEST&lt;digits&gt;</code> code. While set, <strong>all</strong> server-side events route to Test Events instead of production stats. <span className="text-amber-500/90">Clear this field after testing!</span>
+              </p>
+              {capiStatus?.test_mode && (
+                <p className="text-[11px] text-amber-500 mt-1.5 flex items-center gap-1.5">
+                  <AlertCircle className="w-3 h-3" />
+                  Test mode is currently <strong>ACTIVE</strong> — production events are not being recorded. Clear the Test Event Code and Save to resume normal tracking.
+                </p>
+              )}
+            </div>
+
             <Button type="button" onClick={handleSave} disabled={saving} className="w-full">
               {saving ? "Saving..." : "Save Pixel Settings"}
             </Button>
@@ -140,12 +256,12 @@ export default function AdminFacebookPixelPage() {
                 <Server className="w-4 h-4 text-blue-400" />
                 <CardTitle className="text-base">Conversions API (Server-Side)</CardTitle>
               </div>
-              {capiConfigured === true && (
+              {capiStatus?.configured === true && (
                 <span className="text-[11px] font-semibold uppercase tracking-wide text-green-500 bg-green-500/10 border border-green-500/30 rounded-full px-2.5 py-0.5 flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3" /> Active
+                  <ShieldCheck className="w-3 h-3" /> Active{capiStatus.source === "database" ? " · DB" : capiStatus.source === "environment" ? " · Env" : ""}
                 </span>
               )}
-              {capiConfigured === false && (
+              {capiStatus?.configured === false && (
                 <span className="text-[11px] font-semibold uppercase tracking-wide text-amber-500 bg-amber-500/10 border border-amber-500/30 rounded-full px-2.5 py-0.5 flex items-center gap-1">
                   <AlertCircle className="w-3 h-3" /> Not Configured
                 </span>
@@ -156,20 +272,20 @@ export default function AdminFacebookPixelPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {capiConfigured === false && (
+            {capiStatus?.configured === false && (
               <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 text-sm">
                 <p className="font-semibold text-amber-500 mb-2">Action required</p>
                 <ol className="space-y-1.5 text-xs text-muted-foreground list-decimal pl-4">
                   <li>Open Meta Events Manager → your Pixel → Settings → Conversions API</li>
                   <li>Click <strong>Generate access token</strong> (and revoke any previously leaked one)</li>
-                  <li>Add the token as the secret <code className="bg-background px-1 py-0.5 rounded">FACEBOOK_CAPI_ACCESS_TOKEN</code> in Replit Secrets</li>
-                  <li>Restart the API server — this card will turn green</li>
+                  <li>Paste the token in the <strong>Conversions API Access Token</strong> field above and click Save</li>
+                  <li>This card turns green automatically — no server restart needed</li>
                 </ol>
               </div>
             )}
-            {capiConfigured === true && (
+            {capiStatus?.configured === true && (
               <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 text-xs text-muted-foreground">
-                Server-side dispatch is active. Every conversion event now reaches Meta from two sources (browser + server), giving you complete coverage even when ad blockers strip the browser pixel.
+                Server-side dispatch is active{capiStatus.source === "database" ? " (token saved in database)" : capiStatus.source === "environment" ? " (token from FACEBOOK_CAPI_ACCESS_TOKEN env var)" : ""}. Every conversion event now reaches Meta from two sources (browser + server), giving you complete coverage even when ad blockers strip the browser pixel.
               </div>
             )}
             <div className="text-xs text-muted-foreground bg-background border border-border rounded-lg p-3 space-y-1.5">

@@ -40,6 +40,10 @@ export const platformSettingsTable = pgTable("platform_settings", {
   facebookPixelId: text("facebook_pixel_id"),
   facebookAccessToken: text("facebook_access_token"),
   facebookPixelBaseCode: text("facebook_pixel_base_code"),
+  // Optional Test Event Code from Meta's Test Events tool. When set, every
+  // CAPI dispatch is tagged so events show in Events Manager → Test Events
+  // (instead of being counted in production). Clear this field to go live.
+  facebookTestEventCode: text("facebook_test_event_code"),
   siteUrl: text("site_url").notNull().default(""),
   siteLogo: text("site_logo"),
   logoSize: integer("logo_size").notNull().default(34),
