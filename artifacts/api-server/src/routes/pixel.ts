@@ -51,17 +51,14 @@ function isRequestFromAllowedOrigin(req: Request): boolean {
   return false;
 }
 
+// Only the events we actively track from this app.
+// Lead is intentionally excluded — it's set up via Meta's Event Setup Tool
+// (URL = /vsl rule), so the browser fires Lead automatically off PageView
+// and we never proxy a Lead through CAPI from our own code.
 const ALLOWED_EVENTS = new Set([
   "PageView",
-  "ViewContent",
-  "Lead",
   "InitiateCheckout",
-  "AddPaymentInfo",
   "Purchase",
-  "CompleteRegistration",
-  "Search",
-  "AddToCart",
-  "Subscribe",
 ]);
 
 function getClientIp(req: Request): string | undefined {
@@ -116,7 +113,7 @@ function getCapiCreds(): Promise<CapiCreds> {
  *
  * Body:
  *   {
- *     event_name: string,         // e.g. "Lead", "InitiateCheckout", "Purchase"
+ *     event_name: string,         // e.g. "InitiateCheckout", "Purchase"
  *     event_id: string,           // UUID — must match the eventID on the browser pixel for dedup
  *     event_source_url?: string,  // window.location.href
  *     referrer?: string,          // document.referrer
@@ -295,11 +292,11 @@ router.get("/capi-status", requireAdmin, async (_req, res): Promise<void> => {
 
 /**
  * POST /api/pixel/send-test-event
- * Admin-only diagnostic — fires a synthetic Lead event to Meta CAPI using
- * the saved Test Event Code. Within ~30s the event should appear in
- * Events Manager → Test Events tab, confirming the full pipeline works.
+ * Admin-only diagnostic — fires a synthetic InitiateCheckout event to Meta
+ * CAPI using the saved Test Event Code. Within ~30s the event should appear
+ * in Events Manager → Test Events tab, confirming the full pipeline works.
  *
- * Body: { event_name?: "Lead"|"Purchase"|"InitiateCheckout" }  (default: Lead)
+ * Body: { event_name?: "InitiateCheckout"|"Purchase" }  (default: InitiateCheckout)
  */
 router.post("/send-test-event", requireAdmin, async (req, res): Promise<void> => {
   try {
@@ -311,7 +308,7 @@ router.post("/send-test-event", requireAdmin, async (req, res): Promise<void> =>
     }
     const body = (req.body ?? {}) as Record<string, unknown>;
     const eventName = isString(body.event_name) && ALLOWED_EVENTS.has(body.event_name)
-      ? body.event_name : "Lead";
+      ? body.event_name : "InitiateCheckout";
 
     const { pixelId, accessToken, testEventCode } = await getCapiCreds();
     if (!accessToken) { res.status(400).json({ sent: false, reason: "capi_not_configured" }); return; }

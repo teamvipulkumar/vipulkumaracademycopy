@@ -79,7 +79,7 @@ export default function AdminFacebookPixelPage() {
       const res = await fetch(`${API_BASE}/api/pixel/send-test-event`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ event_name: "Lead" }),
+        body: JSON.stringify({ event_name: "InitiateCheckout" }),
       });
       const data = await res.json();
       if (res.ok && data.sent) {

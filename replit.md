@@ -59,6 +59,7 @@ Includes a responsive design with specific layouts for admin dashboards and repo
   - Internal event queue handles the race condition where events fire before the async-loaded fbq script is ready (events queued, flushed on init)
   - Every event gets a UUID `event_id` shared with both browser and server for Meta deduplication
   - `fbTrack(event, params, userData?)` fires the browser pixel AND POSTs to `/api/pixel/event` server-side; `userData` (email/phone/firstName/lastName/externalId) is hashed server-side for higher Event Match Quality
+- **Tracked events** (intentionally minimal): `PageView`, `InitiateCheckout`, `Purchase`. Lead is **not** fired from app code — it's set up via Meta's Event Setup Tool with a URL = `/vsl` rule that auto-injects Lead off the existing PageView. ViewContent was removed at user's request. `ALLOWED_EVENTS` in `pixel.ts` enforces this server-side as defense in depth.
 - Server-side CAPI: `POST /api/pixel/event` in `artifacts/api-server/src/routes/pixel.ts`
   - Token resolution order: `platform_settings.facebook_access_token` (preferred, editable in admin UI) → `FACEBOOK_CAPI_ACCESS_TOKEN` env var (legacy fallback)
   - Forwards to Meta with visitor IP, user-agent, `_fbp`/`_fbc` cookies, and SHA-256 hashed PII
@@ -67,7 +68,7 @@ Includes a responsive design with specific layouts for admin dashboards and repo
   - When `platform_settings.facebook_test_event_code` is set, every event is automatically tagged with `test_event_code` and routed to Meta's Test Events tab instead of production stats
 - Admin UI at `/admin/facebook-pixel`:
   - Editable inputs for Pixel ID, Base Code, **Access Token (password-masked with show/hide toggle)**, and **Test Event Code** — all persisted to `platform_settings` via `PUT /api/admin/settings`
-  - **Send Test Event button** — fires a synthetic Lead via `POST /api/pixel/send-test-event` and reports Meta's response via toast (validates the full pipeline end-to-end without leaving the admin panel)
+  - **Send Test Event button** — fires a synthetic InitiateCheckout via `POST /api/pixel/send-test-event` and reports Meta's response via toast (validates the full pipeline end-to-end without leaving the admin panel)
   - Status badge queries `GET /api/pixel/capi-status` which returns `{configured, source: "database"|"environment"|null, test_mode}` so admins see whether the active token came from DB or env, plus a banner when test mode is currently active
 - Affiliate per-user pixels (`affiliate_pixels` table, with their own `access_token` column) are independent of the global CAPI token and continue to work as before
 

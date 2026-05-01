@@ -4,7 +4,6 @@ import { SiteFooter } from "@/components/layout/app-layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Loader2, CheckCircle2, ShieldCheck, VideoOff, BadgeDollarSign } from "lucide-react";
-import { fbTrack } from "@/lib/facebook-pixel";
 
 const TRUST_BADGES = [
   { label: "No Upselling",          Icon: ShieldCheck },
@@ -24,11 +23,6 @@ export default function OptinPage() {
     if (!form.firstName.trim() || !form.email.trim()) return;
     setError("");
     setLoading(true);
-    fbTrack("Lead", { content_name: "Optin Form" }, {
-      email: form.email.trim(),
-      firstName: form.firstName.trim(),
-      lastName: form.lastName.trim() || undefined,
-    });
     await new Promise(r => setTimeout(r, 900));
     setLoading(false);
     setSubmitted(true);
