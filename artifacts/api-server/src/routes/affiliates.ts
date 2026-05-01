@@ -210,7 +210,16 @@ router.get("/dashboard", requireAuth, async (req, res): Promise<void> => {
     last7Earnings,
     last30Earnings,
     dailyChart,
-    welcomedAt: application?.welcomedAt ?? null,
+    // If the user has no `affiliateApplications` row at all (e.g. an admin or
+    // an `affiliate`-role user created directly by an admin — both of whom
+    // bypass the apply/approval flow at AffiliatePage), they have no
+    // onboarding journey to complete, so we treat them as already-welcomed.
+    // This prevents the welcome popup + tour from re-appearing forever for
+    // those users (the POST /welcome-complete UPDATE would otherwise affect
+    // zero rows because no application row exists to stamp).
+    welcomedAt: application
+      ? (application.welcomedAt ?? null)
+      : new Date().toISOString(),
   });
 });
 
