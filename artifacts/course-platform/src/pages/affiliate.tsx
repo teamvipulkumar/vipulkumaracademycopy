@@ -1941,6 +1941,18 @@ function BankTab({ bank, onSaved }: { bank: any; onSaved: (b: any) => void }) {
   });
   const [showAcc, setShowAcc] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Same lock pattern as Pixel tab — once saved, the form is read-only so a
+  // stray keystroke can't accidentally corrupt the bank details. User has to
+  // explicitly click "Edit" to make changes.
+  const isSaved = !!bank;
+  const [editing, setEditing] = useState(!isSaved);
+  const locked = isSaved && !editing;
+
+  // Mask the account number when locked (show only last 4 digits) so the
+  // sensitive value is never fully visible on screen.
+  const maskedAcc = form.accountNumber.length > 4
+    ? `${"•".repeat(Math.max(8, form.accountNumber.length - 4))}${form.accountNumber.slice(-4)}`
+    : "••••••••";
 
   const save = async () => {
     if (!form.accountHolderName || !form.accountNumber || !form.ifscCode || !form.bankName) {
@@ -1954,9 +1966,22 @@ function BankTab({ bank, onSaved }: { bank: any; onSaved: (b: any) => void }) {
       });
       if (!res.ok) throw new Error("Failed");
       onSaved(await res.json());
+      setEditing(false);
+      setShowAcc(false);
       toast({ title: "Bank details saved!" });
     } catch { toast({ title: "Failed to save bank details", variant: "destructive" }); }
     finally { setSaving(false); }
+  };
+
+  const cancelEdit = () => {
+    setForm({
+      accountHolderName: bank?.accountHolderName ?? "",
+      accountNumber: bank?.accountNumber ?? "",
+      ifscCode: bank?.ifscCode ?? "",
+      bankName: bank?.bankName ?? "",
+    });
+    setShowAcc(false);
+    setEditing(false);
   };
 
   return (
@@ -1964,7 +1989,11 @@ function BankTab({ bank, onSaved }: { bank: any; onSaved: (b: any) => void }) {
       <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-foreground">Bank Account Details</h3>
-          {bank && <Badge className="text-[10px] text-green-400 border-green-400/30 bg-green-400/10 gap-1"><CheckCircle2 className="w-3 h-3" />Saved</Badge>}
+          {locked && (
+            <Badge className="text-[10px] text-green-400 border-green-400/30 bg-green-400/10 gap-1">
+              <Lock className="w-3 h-3" />Saved
+            </Badge>
+          )}
         </div>
 
         <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
@@ -1977,37 +2006,63 @@ function BankTab({ bank, onSaved }: { bank: any; onSaved: (b: any) => void }) {
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Account Holder Name</Label>
             <Input value={form.accountHolderName} onChange={e => setForm(f => ({ ...f, accountHolderName: e.target.value }))}
-              placeholder="As per bank records" className="bg-background border-border" />
+              placeholder="As per bank records" className="bg-background border-border disabled:opacity-100 disabled:cursor-not-allowed"
+              readOnly={locked} disabled={locked} />
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Account Number</Label>
             <div className="relative">
-              <Input type={showAcc ? "text" : "password"} value={form.accountNumber}
+              <Input
+                type={locked ? "text" : (showAcc ? "text" : "password")}
+                value={locked ? maskedAcc : form.accountNumber}
                 onChange={e => setForm(f => ({ ...f, accountNumber: e.target.value }))}
-                placeholder="Enter account number" className="bg-background border-border pr-9 font-mono" />
-              <button className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer" onClick={() => setShowAcc(v => !v)}>
-                {showAcc ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-              </button>
+                placeholder="Enter account number"
+                className="bg-background border-border pr-9 font-mono disabled:opacity-100 disabled:cursor-not-allowed"
+                readOnly={locked} disabled={locked}
+              />
+              {!locked && (
+                <button type="button" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer" onClick={() => setShowAcc(v => !v)}>
+                  {showAcc ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                </button>
+              )}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">IFSC Code</Label>
               <Input value={form.ifscCode} onChange={e => setForm(f => ({ ...f, ifscCode: e.target.value.toUpperCase() }))}
-                placeholder="e.g. HDFC0001234" className="bg-background border-border font-mono uppercase" />
+                placeholder="e.g. HDFC0001234" className="bg-background border-border font-mono uppercase disabled:opacity-100 disabled:cursor-not-allowed"
+                readOnly={locked} disabled={locked} />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Bank Name</Label>
               <Input value={form.bankName} onChange={e => setForm(f => ({ ...f, bankName: e.target.value }))}
-                placeholder="e.g. HDFC Bank" className="bg-background border-border" />
+                placeholder="e.g. HDFC Bank" className="bg-background border-border disabled:opacity-100 disabled:cursor-not-allowed"
+                readOnly={locked} disabled={locked} />
             </div>
           </div>
         </div>
 
-        <Button onClick={save} disabled={saving} className="w-full bg-primary gap-2">
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Building2 className="w-4 h-4" />}
-          {saving ? "Saving…" : bank ? "Update Bank Details" : "Save Bank Details"}
-        </Button>
+        {locked ? (
+          <Button onClick={() => setEditing(true)} variant="outline" className="w-full gap-2">
+            <Edit2 className="w-4 h-4" />Edit Bank Details
+          </Button>
+        ) : isSaved ? (
+          <div className="flex gap-2">
+            <Button onClick={cancelEdit} disabled={saving} variant="outline" className="flex-1 gap-2">
+              Cancel
+            </Button>
+            <Button onClick={save} disabled={saving} className="flex-1 bg-primary gap-2">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Building2 className="w-4 h-4" />}
+              {saving ? "Saving…" : "Update"}
+            </Button>
+          </div>
+        ) : (
+          <Button onClick={save} disabled={saving} className="w-full bg-primary gap-2">
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Building2 className="w-4 h-4" />}
+            {saving ? "Saving…" : "Save Bank Details"}
+          </Button>
+        )}
       </div>
     </div>
   );
