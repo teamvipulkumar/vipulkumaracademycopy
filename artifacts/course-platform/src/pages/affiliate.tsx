@@ -2088,13 +2088,7 @@ export default function AffiliatePage() {
       .catch(() => setStatus("no-app"));
   }, [isAuthenticated, user]);
 
-  if (status === "loading") {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (status === "loading") return null;
 
   if (status === "no-app") return <ApplyForm user={user} onSubmitted={() => setStatus("pending")} />;
   if (status === "pending") return <PendingView />;
