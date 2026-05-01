@@ -668,7 +668,28 @@ function AffiliateDashboard({ user }: { user: any }) {
           )}
 
           {/* ── Sales Tab ── */}
-          {tab === "sales" && (() => {
+          {/* Generic loading skeleton for all non-earnings tabs.
+              Without this, refreshing on Sales/Clicks/etc. would flash zeros
+              for ~1-2 seconds before real data arrives. For Pixel/Bank tabs
+              it's especially important because their form's initial useState
+              snapshots the props ONCE — if we let them mount with null data,
+              the input fields stay blank even after data loads. */}
+          {tab !== "earnings" && loading && (
+            <div className="space-y-5 animate-pulse">
+              <div className="space-y-2">
+                <div className="h-6 w-44 bg-white/[0.06] rounded-lg" />
+                <div className="h-3.5 w-72 bg-white/[0.04] rounded-lg" />
+              </div>
+              <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+                <div className="h-4 w-32 bg-white/[0.06] rounded" />
+                <div className="h-10 w-full bg-white/[0.04] rounded-lg" />
+                <div className="h-10 w-full bg-white/[0.04] rounded-lg" />
+                <div className="h-10 w-2/3 bg-white/[0.04] rounded-lg" />
+              </div>
+            </div>
+          )}
+
+          {tab === "sales" && !loading && (() => {
             const pagedSales = sales.slice((salesPage - 1) * PAGE_SIZE, salesPage * PAGE_SIZE);
             return (
               <div className="space-y-5">
@@ -751,7 +772,7 @@ function AffiliateDashboard({ user }: { user: any }) {
           })()}
 
           {/* ── Links Tab ── */}
-          {tab === "links" && (
+          {tab === "links" && !loading && (
             <div className="space-y-4 max-w-2xl">
               <TabHeader title="My Affiliate Links" subtitle="Share your unique link to earn commissions on every sale." />
 
@@ -784,7 +805,7 @@ function AffiliateDashboard({ user }: { user: any }) {
           )}
 
           {/* ── Clicks Tab ── */}
-          {tab === "clicks" && (
+          {tab === "clicks" && !loading && (
             <div className="space-y-6">
               <TabHeader title="Click Analytics" subtitle="Track traffic and conversions from your referral links." />
 
@@ -825,7 +846,7 @@ function AffiliateDashboard({ user }: { user: any }) {
           )}
 
           {/* ── Creatives Tab ── */}
-          {tab === "creatives" && (
+          {tab === "creatives" && !loading && (
             <div>
               <TabHeader title="Marketing Creatives" subtitle="Download banners, copy, and assets to promote your affiliate link." />
               <CreativesTab creatives={creatives} />
@@ -833,7 +854,7 @@ function AffiliateDashboard({ user }: { user: any }) {
           )}
 
           {/* ── KYC Tab ── */}
-          {tab === "kyc" && (
+          {tab === "kyc" && !loading && (
             <div>
               <TabHeader title="KYC Verification" subtitle="Submit identity documents to enable payouts." />
               <KycTab kyc={kyc} onSaved={k => setKyc(k)} />
@@ -841,7 +862,7 @@ function AffiliateDashboard({ user }: { user: any }) {
           )}
 
           {/* ── Payouts Tab ── */}
-          {tab === "payouts" && (
+          {tab === "payouts" && !loading && (
             <div>
               <TabHeader title="Payouts" subtitle="View your earnings and payout history." />
               <PayoutsTab dashboard={dashboard} payouts={payouts} upcomingPayout={upcomingPayout} />
@@ -849,7 +870,7 @@ function AffiliateDashboard({ user }: { user: any }) {
           )}
 
           {/* ── Pixel Tab ── */}
-          {tab === "pixel" && (
+          {tab === "pixel" && !loading && (
             <div>
               <TabHeader title="Tracking Pixel" subtitle="Connect your Facebook Pixel to track conversions from your referrals." />
               <PixelTab pixel={pixel} onSaved={p => setPixel(p)} />
@@ -857,7 +878,7 @@ function AffiliateDashboard({ user }: { user: any }) {
           )}
 
           {/* ── Bank Tab ── */}
-          {tab === "bank" && (
+          {tab === "bank" && !loading && (
             <div>
               <TabHeader title="Bank Account" subtitle="Add your bank details to receive payout transfers." />
               <BankTab bank={bank} onSaved={b => setBank(b)} />
