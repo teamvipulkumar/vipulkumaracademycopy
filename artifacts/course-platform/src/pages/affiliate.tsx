@@ -311,20 +311,7 @@ function AffiliateDashboard({ user }: { user: any }) {
   const tooltipItemStyle = { color: isLight ? "#334155" : "#cbd5e1" };
   const tooltipCursorFill = isLight ? "rgba(0,0,0,0.04)" : "rgba(255,255,255,0.03)";
   const chartGridStroke = isLight ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.05)";
-  // Persist the active tab across page refreshes. Without this, every
-  // refresh would dump the user back on the Dashboard tab even if they were
-  // looking at KYC, Pixel, Bank, etc.
-  const VALID_TABS: Tab[] = ["earnings", "sales", "links", "clicks", "creatives", "kyc", "payouts", "pixel", "bank"];
-  const [tab, setTab] = useState<Tab>(() => {
-    try {
-      const saved = localStorage.getItem("vka-affiliate-tab");
-      if (saved && VALID_TABS.includes(saved as Tab)) return saved as Tab;
-    } catch {}
-    return "earnings";
-  });
-  useEffect(() => {
-    try { localStorage.setItem("vka-affiliate-tab", tab); } catch {}
-  }, [tab]);
+  const [tab, setTab] = useState<Tab>("earnings");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dashboard, setDashboard] = useState<any>(null);
   const [clicks, setClicks] = useState<any>(null);
