@@ -322,7 +322,7 @@ function AffiliateDashboard({ user }: { user: any }) {
   const params = useParams<{ tab?: string }>();
   const [, navigate] = useLocation();
   const tab: Tab = SLUG_TO_TAB[params.tab ?? ""] ?? "earnings";
-  const setTab = (t: Tab) => { navigate("/affiliate/" + TAB_TO_SLUG[t]); };
+  const setTab = (t: Tab) => { navigate("/affiliate/" + TAB_TO_SLUG[t], { replace: true }); };
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dashboard, setDashboard] = useState<any>(null);
   const [clicks, setClicks] = useState<any>(null);
