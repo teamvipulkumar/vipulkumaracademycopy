@@ -491,11 +491,28 @@ function AffiliateDashboard({ user }: { user: any }) {
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <h2
-                    className="text-[26px] sm:text-[32px] leading-tight font-extrabold tracking-tight bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent"
+                    className="text-[26px] sm:text-[32px] leading-tight font-extrabold tracking-tight flex items-center flex-wrap gap-x-2"
                     style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif", letterSpacing: "-0.02em" }}
                   >
-                    Hello, {user?.name?.split(" ")[0] ?? "there"}
-                    <span className="inline-block ml-1 wave-emoji" style={{ WebkitTextFillColor: "initial" }}>👋</span>
+                    {/* Gradient text — explicit inline styles so it works
+                        reliably in both light and dark modes. Tailwind's
+                        bg-clip utilities sometimes get hijacked by light-mode
+                        global overrides, so we set everything by hand here. */}
+                    <span
+                      style={{
+                        backgroundImage: "linear-gradient(90deg, #2563eb 0%, #7c3aed 50%, #db2777 100%)",
+                        backgroundClip: "text",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        color: "transparent",
+                      }}
+                    >
+                      Hello, {user?.name?.split(" ")[0] ?? "there"}
+                    </span>
+                    {/* Emoji is a SIBLING of the gradient span (not a child)
+                        so the parent h2's normal text color applies and the
+                        emoji renders in its native colors. */}
+                    <span className="wave-emoji" aria-hidden="true">👋</span>
                   </h2>
                   <p
                     className="text-[13px] sm:text-sm text-muted-foreground mt-1.5 font-medium"
