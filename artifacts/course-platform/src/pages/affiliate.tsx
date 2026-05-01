@@ -19,7 +19,7 @@ import {
   Trash2, Eye, EyeOff, Send, ChevronRight, ChevronLeft, ChevronDown, Activity, Target,
   Calendar, Star, Lock, Loader2, Menu, X, ExternalLink, Share2,
   ArrowUpRight, TrendingDown, Banknote, Info, Percent, Cookie,
-  Upload, FileImage
+  Upload, FileImage, Rocket
 } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "";
@@ -314,6 +314,10 @@ function AffiliateDashboard({ user }: { user: any }) {
   const [tourActive, setTourActive] = useState(false);
   const [tourSidebarOpen, setTourSidebarOpen] = useState(false);
   const [welcomeDismissed, setWelcomeDismissed] = useState(false);
+  // Manual "Replay tour" trigger. When true we mount a fresh WelcomeOnboarding
+  // in skipWelcomeModal mode, so any user (including admins who have no
+  // first-time popup) can re-watch the interactive walkthrough on demand.
+  const [replayingTour, setReplayingTour] = useState(false);
   // Sticky flag: decided ONCE from the first successful dashboard load. We don't
   // want background polling refreshes (every 45s) to unmount the modal/tour
   // mid-flow once the auto-stamp has set welcomedAt server-side.
@@ -395,6 +399,15 @@ function AffiliateDashboard({ user }: { user: any }) {
             <p className="text-[10px] text-muted-foreground truncate">{user?.email}</p>
           </div>
         </div>
+        <button
+          onClick={() => {
+            setSidebarOpen(false);
+            setReplayingTour(true);
+          }}
+          className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors w-full px-1 py-1 cursor-pointer"
+        >
+          <Rocket className="w-3.5 h-3.5" />Replay tour
+        </button>
         <Link href="/">
           <button className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors w-full px-1 py-1 cursor-pointer">
             <ChevronRight className="w-3.5 h-3.5 rotate-180" />Back to Site
@@ -815,6 +828,35 @@ function AffiliateDashboard({ user }: { user: any }) {
           onComplete={() => {
             setWelcomeDismissed(true);
             setDashboard((d: any) => d ? { ...d, welcomedAt: new Date().toISOString() } : d);
+          }}
+        />
+      )}
+
+      {/* Manual replay tour — mounts a fresh WelcomeOnboarding in tour-only
+          mode whenever the user clicks "Replay tour" in the sidebar. Resets
+          its own state on finish so the user can replay as many times as they
+          want. Independent of the first-time popup above. */}
+      {!loading && dashboard && replayingTour && (
+        <WelcomeOnboarding
+          key={`replay-${replayingTour}`}
+          userName={user?.name ?? ""}
+          commissionRate={dashboard?.commissionRate ?? 20}
+          cookieDays={dashboard?.cookieDays ?? 30}
+          referralCode={dashboard?.referralCode ?? ""}
+          skipWelcomeModal
+          onTourStart={() => {
+            setTourActive(true);
+            setTab("earnings");
+          }}
+          onTourEnd={() => {
+            setTourActive(false);
+            setTourSidebarOpen(false);
+          }}
+          onTourStepChange={({ isNavTarget }) => {
+            setTourSidebarOpen(isNavTarget);
+          }}
+          onComplete={() => {
+            setReplayingTour(false);
           }}
         />
       )}

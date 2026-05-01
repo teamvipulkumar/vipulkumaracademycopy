@@ -66,6 +66,22 @@ const TOUR_STEPS: TourStep[] = [
     placement: "auto",
     isNavTarget: true,
   },
+  {
+    selector: '[data-tour="nav-pixel"]',
+    title: "Facebook Pixel (Optional)",
+    description: "Connect your own Facebook Pixel to retarget visitors who clicked your affiliate links. Powerful if you run paid ads — completely optional otherwise.",
+    icon: <Zap className="w-5 h-5 text-pink-400" />,
+    placement: "auto",
+    isNavTarget: true,
+  },
+  {
+    selector: '[data-tour="nav-bank"]',
+    title: "Bank Details",
+    description: "Add your account number, IFSC and beneficiary name here. Without bank details, payouts cannot be processed — fill this once and forget.",
+    icon: <Building2 className="w-5 h-5 text-cyan-400" />,
+    placement: "auto",
+    isNavTarget: true,
+  },
 ];
 
 type Phase = "welcome" | "tour" | "done";
@@ -79,6 +95,7 @@ export default function WelcomeOnboarding({
   onTourStart,
   onTourEnd,
   onTourStepChange,
+  skipWelcomeModal = false,
 }: {
   userName: string;
   commissionRate: number;
@@ -88,14 +105,21 @@ export default function WelcomeOnboarding({
   onTourStart?: () => void;
   onTourEnd?: () => void;
   onTourStepChange?: (info: { index: number; isNavTarget: boolean }) => void;
+  /** When true, jump straight to the interactive TourOverlay (no congrats modal).
+   *  Used for the manual "Replay tour" entry point so returning users don't
+   *  see the first-time congratulations card again. */
+  skipWelcomeModal?: boolean;
 }) {
-  const [phase, setPhase] = useState<Phase>("welcome");
+  const [phase, setPhase] = useState<Phase>(skipWelcomeModal ? "tour" : "welcome");
   const stampedRef = useRef(false);
 
-  // Stamp `welcomedAt` on the server as soon as the popup is shown to the user.
-  // This guarantees the popup appears at most once per affiliate, even if the
-  // user reloads the page mid-popup or mid-tour without ever clicking Skip/Finish.
+  // Stamp `welcomedAt` on the server as soon as this component first mounts in
+  // the first-time flow. Skip stamping entirely on a manual replay — the user
+  // is already past first-time onboarding (their welcomedAt is already set,
+  // and the endpoint is a no-op anyway, but skipping the call keeps replays
+  // network-quiet).
   useEffect(() => {
+    if (skipWelcomeModal) return;
     if (stampedRef.current) return;
     stampedRef.current = true;
     void (async () => {
@@ -106,9 +130,28 @@ export default function WelcomeOnboarding({
         });
       } catch { /* non-fatal — finish() will retry on dismiss */ }
     })();
-  }, []);
+  }, [skipWelcomeModal]);
+
+  // When the parent renders us with skipWelcomeModal=true, we land directly in
+  // the tour phase — but the parent still needs its onTourStart hook to fire
+  // (e.g. switch to the earnings tab so the first two tour targets exist).
+  useEffect(() => {
+    if (skipWelcomeModal) onTourStart?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [skipWelcomeModal]);
 
   const finish = useCallback(async () => {
+    // Replay mode: pure UI dismissal, no server call. The user is past
+    // first-time onboarding so there's nothing to stamp; always notify the
+    // parent so it can reset its `replayingTour` flag and let the user
+    // replay again.
+    if (skipWelcomeModal) {
+      setPhase("done");
+      onTourEnd?.();
+      onComplete();
+      return;
+    }
+
     let ok = false;
     try {
       const res = await fetch(`${API_BASE}/api/affiliate/welcome-complete`, {
@@ -135,7 +178,7 @@ export default function WelcomeOnboarding({
       // Only call onComplete (which optimistically updates parent) if the server confirmed.
       if (ok) onComplete();
     }
-  }, [onComplete, onTourEnd]);
+  }, [onComplete, onTourEnd, skipWelcomeModal]);
 
   const startTour = useCallback(() => {
     onTourStart?.();
