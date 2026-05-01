@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, Fragment } from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/lib/auth-context";
+import { useTheme } from "@/lib/theme-context";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -294,6 +295,22 @@ const EarningsBarShape = (props: any) => {
 
 /* ─── Full Dashboard ─── */
 function AffiliateDashboard({ user }: { user: any }) {
+  const { theme } = useTheme();
+  const isLight = theme === "light";
+  // Theme-aware Recharts tooltip styling — defaults are dark, so in light
+  // mode we flip to a white surface with darker text and borders. Reused by
+  // both the earnings and clicks charts.
+  const tooltipContentStyle = {
+    background: isLight ? "#ffffff" : "#0d1424",
+    border: `1px solid ${isLight ? "rgba(0,0,0,0.10)" : "rgba(255,255,255,0.1)"}`,
+    borderRadius: 8,
+    fontSize: 12,
+    boxShadow: isLight ? "0 4px 12px rgba(0,0,0,0.08)" : "0 4px 12px rgba(0,0,0,0.4)",
+  };
+  const tooltipLabelStyle = { color: isLight ? "#0f172a" : "#f8fafc", fontWeight: 600 };
+  const tooltipItemStyle = { color: isLight ? "#334155" : "#cbd5e1" };
+  const tooltipCursorFill = isLight ? "rgba(0,0,0,0.04)" : "rgba(255,255,255,0.03)";
+  const chartGridStroke = isLight ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.05)";
   const [tab, setTab] = useState<Tab>("earnings");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dashboard, setDashboard] = useState<any>(null);
@@ -571,7 +588,7 @@ function AffiliateDashboard({ user }: { user: any }) {
                         <stop offset="100%" stopColor="#a78bfa" stopOpacity={0.9} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={chartGridStroke} vertical={false} />
                     <XAxis
                       dataKey="date"
                       tick={{ fontSize: 10, fill: "#6b7280" }}
@@ -583,10 +600,12 @@ function AffiliateDashboard({ user }: { user: any }) {
                     />
                     <YAxis tick={{ fontSize: 10, fill: "#6b7280" }} tickFormatter={v => `₹${v}`} width={50} />
                     <Tooltip
-                      contentStyle={{ background: "#0d1424", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }}
+                      contentStyle={tooltipContentStyle}
+                      labelStyle={tooltipLabelStyle}
+                      itemStyle={tooltipItemStyle}
                       formatter={(v: any, name: string) => [`₹${Number(v).toFixed(2)}`, name === "amount" ? "Earnings" : "Trend"]}
                       labelFormatter={(v: string) => `${v.substring(8)}-${v.substring(5, 7)}-${v.substring(0, 4)}`}
-                      cursor={{ fill: "rgba(255,255,255,0.03)" }}
+                      cursor={{ fill: tooltipCursorFill }}
                     />
                     <Bar dataKey="amount" fill="#2563eb" name="amount" maxBarSize={40}
                       shape={<EarningsBarShape />}
@@ -779,10 +798,15 @@ function AffiliateDashboard({ user }: { user: any }) {
                 </div>
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={clicks?.dailyChart ?? []} margin={{ top: 5, right: 5, bottom: 5, left: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                    <CartesianGrid strokeDasharray="3 3" stroke={chartGridStroke} />
                     <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#6b7280" }} tickFormatter={v => v.substring(5)} interval="preserveStartEnd" />
                     <YAxis tick={{ fontSize: 10, fill: "#6b7280" }} />
-                    <Tooltip contentStyle={{ background: "#0d1424", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }} />
+                    <Tooltip
+                      contentStyle={tooltipContentStyle}
+                      labelStyle={tooltipLabelStyle}
+                      itemStyle={tooltipItemStyle}
+                      cursor={{ fill: tooltipCursorFill }}
+                    />
                     <Bar dataKey="clicks" fill="#3b82f6" radius={[3, 3, 0, 0]} name="Clicks" />
                     <Bar dataKey="unique" fill="#8b5cf6" radius={[3, 3, 0, 0]} name="Unique" />
                     <Bar dataKey="conversions" fill="#22c55e" radius={[3, 3, 0, 0]} name="Conv." />
