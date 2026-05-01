@@ -720,29 +720,16 @@ export default function AdminSettingsPage() {
           )}
         </Card>
 
-        {/* General */}
-        <Card className="bg-card border-border">
-          <CardHeader><CardTitle className="text-base">General</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label className="text-sm mb-1.5 block">Platform Name</Label>
-              <Input value={form.siteName} onChange={e => setForm(f => ({ ...f, siteName: e.target.value }))} className="bg-background" />
-            </div>
-            <div>
-              <Label className="text-sm mb-1.5 block">Site URL</Label>
-              <Input value={form.siteUrl} onChange={e => setForm(f => ({ ...f, siteUrl: e.target.value }))} placeholder="https://yourdomain.com" className="bg-background" />
-              <p className="text-xs text-muted-foreground mt-1">Your public site address (custom domain). Used in email buttons and affiliate share links. Must be a full URL starting with https:// — paths are stripped automatically.</p>
-            </div>
-            <div>
-              <Label className="text-sm mb-1.5 block">Description</Label>
-              <textarea value={form.siteDescription} onChange={e => setForm(f => ({ ...f, siteDescription: e.target.value }))} className="w-full p-3 rounded-md bg-background border border-border text-sm resize-none h-20" />
-            </div>
-            <div>
-              <Label className="text-sm mb-1.5 block">Currency</Label>
-              <Input value={form.currency} onChange={e => setForm(f => ({ ...f, currency: e.target.value }))} className="bg-background w-32" />
-            </div>
-          </CardContent>
-        </Card>
+        {/*
+          General card removed — Platform Name is now edited via the Site
+          Identity & SEO card (brandingForm.siteName → handleSaveBranding).
+          The remaining form fields (siteUrl, siteDescription, currency) are
+          rarely changed; they stay populated from the DB via the settings
+          useEffect and continue to round-trip through handleSave when the
+          Notifications / Homepage Sections cards save below, so existing
+          functionality (email links, affiliate URLs, currency formatting)
+          is preserved without exposing an editor here.
+        */}
 
         {/* Notifications */}
         <Card className="bg-card border-border">
