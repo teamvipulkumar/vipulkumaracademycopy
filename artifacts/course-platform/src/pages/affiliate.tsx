@@ -489,9 +489,20 @@ function AffiliateDashboard({ user }: { user: any }) {
           {tab === "earnings" && !loading && (
             <div className="space-y-6">
               <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h2 className="text-2xl font-extrabold text-foreground">Hello, {user?.name?.split(" ")[0] ?? "there"} 👋</h2>
-                  <p className="text-sm text-muted-foreground mt-1">Welcome back to your affiliate dashboard.</p>
+                <div className="min-w-0">
+                  <h2
+                    className="text-[26px] sm:text-[32px] leading-tight font-extrabold tracking-tight bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent"
+                    style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif", letterSpacing: "-0.02em" }}
+                  >
+                    Hello, {user?.name?.split(" ")[0] ?? "there"}
+                    <span className="inline-block ml-1 wave-emoji" style={{ WebkitTextFillColor: "initial" }}>👋</span>
+                  </h2>
+                  <p
+                    className="text-[13px] sm:text-sm text-muted-foreground mt-1.5 font-medium"
+                    style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif", letterSpacing: "0.005em" }}
+                  >
+                    Welcome back to your affiliate dashboard.
+                  </p>
                 </div>
                 <Button variant="outline" size="sm" className="gap-1.5 flex-shrink-0" onClick={loadDashboard} disabled={refreshing}>
                   <RefreshCw className={`w-3.5 h-3.5 transition-transform ${refreshing ? "animate-spin" : ""}`} />

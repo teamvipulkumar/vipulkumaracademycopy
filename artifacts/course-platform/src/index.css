@@ -16,6 +16,22 @@ html, body {
   animation: cta-bounce-glow 1.8s ease-in-out infinite;
 }
 
+/* Friendly waving hand for the affiliate dashboard greeting. Subtle rotation
+   so it adds personality without being distracting. */
+@keyframes wave-emoji {
+  0%, 60%, 100% { transform: rotate(0deg); }
+  10%           { transform: rotate(14deg); }
+  20%           { transform: rotate(-8deg); }
+  30%           { transform: rotate(14deg); }
+  40%           { transform: rotate(-4deg); }
+  50%           { transform: rotate(10deg); }
+}
+.wave-emoji {
+  display: inline-block;
+  transform-origin: 70% 70%;
+  animation: wave-emoji 2.4s ease-in-out infinite;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
