@@ -314,8 +314,11 @@ function AffiliateDashboard({ user }: { user: any }) {
   const VALID_TABS: Tab[] = ["earnings", "sales", "links", "clicks", "creatives", "kyc", "payouts", "pixel", "bank"];
   const [tab, setTab] = useState<Tab>(() => {
     try {
-      const saved = sessionStorage.getItem("vka-affiliate-tab");
-      if (saved && VALID_TABS.includes(saved as Tab)) return saved as Tab;
+      const navType = (performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined)?.type;
+      if (navType === "reload") {
+        const saved = sessionStorage.getItem("vka-affiliate-tab");
+        if (saved && VALID_TABS.includes(saved as Tab)) return saved as Tab;
+      }
     } catch {}
     return "earnings";
   });
