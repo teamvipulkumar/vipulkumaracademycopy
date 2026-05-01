@@ -211,6 +211,11 @@ export default function AdminSettingsPage() {
   const [brandingSaving, setBrandingSaving] = useState(false);
   const [logoPicker, setLogoPicker] = useState(false);
   const [faviconPicker, setFaviconPicker] = useState(false);
+  // Branding card collapses to a compact summary once it has been saved with
+  // real values. Admin clicks "Edit" to expand the full form. This declutters
+  // the settings page since branding is rarely changed once configured.
+  const [brandingExpanded, setBrandingExpanded] = useState(true);
+  const brandingHasData = !!(brandingForm.siteName || brandingForm.siteLogo || brandingForm.favicon || brandingForm.metaTitle);
   const API_BASE = import.meta.env.VITE_API_URL ?? "";
 
   useEffect(() => {
@@ -239,15 +244,23 @@ export default function AdminSettingsPage() {
       // the editable form by default.
       setGoogleSaved(!!gClientId && !!gClientSecret);
       setGoogleEditing(false);
+      const bSiteName = settings.siteName ?? "";
+      const bSiteLogo = (settings as Record<string, unknown>).siteLogo as string ?? "";
+      const bFavicon = (settings as Record<string, unknown>).favicon as string ?? "";
+      const bMetaTitle = (settings as Record<string, unknown>).metaTitle as string ?? "";
       setBrandingForm({
-        siteName: settings.siteName ?? "",
-        siteLogo: (settings as Record<string, unknown>).siteLogo as string ?? "",
+        siteName: bSiteName,
+        siteLogo: bSiteLogo,
         logoSize: (settings as Record<string, unknown>).logoSize as number ?? 34,
         logoSizeMobile: (settings as Record<string, unknown>).logoSizeMobile as number ?? 28,
-        favicon: (settings as Record<string, unknown>).favicon as string ?? "",
-        metaTitle: (settings as Record<string, unknown>).metaTitle as string ?? "",
+        favicon: bFavicon,
+        metaTitle: bMetaTitle,
         metaDescription: (settings as Record<string, unknown>).metaDescription as string ?? "",
       });
+      // If branding has been configured already, collapse to the compact
+      // summary view by default. Fresh installs (no data yet) stay expanded.
+      const hasBranding = !!(bSiteName || bSiteLogo || bFavicon || bMetaTitle);
+      setBrandingExpanded(!hasBranding);
     }
   }, [settings]);
 
@@ -332,9 +345,27 @@ export default function AdminSettingsPage() {
         toast({ title: "Site identity saved!" });
         queryClient.invalidateQueries({ queryKey: getGetAdminSettingsQueryKey() });
         setBrandingSaving(false);
+        // Auto-collapse back to the summary view after a successful save so
+        // the page returns to its compact state.
+        setBrandingExpanded(false);
       },
       onError: () => { toast({ title: "Error saving branding", variant: "destructive" }); setBrandingSaving(false); },
     });
+  };
+
+  const cancelBrandingEdit = () => {
+    if (settings) {
+      setBrandingForm({
+        siteName: settings.siteName ?? "",
+        siteLogo: (settings as Record<string, unknown>).siteLogo as string ?? "",
+        logoSize: (settings as Record<string, unknown>).logoSize as number ?? 34,
+        logoSizeMobile: (settings as Record<string, unknown>).logoSizeMobile as number ?? 28,
+        favicon: (settings as Record<string, unknown>).favicon as string ?? "",
+        metaTitle: (settings as Record<string, unknown>).metaTitle as string ?? "",
+        metaDescription: (settings as Record<string, unknown>).metaDescription as string ?? "",
+      });
+    }
+    setBrandingExpanded(false);
   };
 
   const handleSaveGoogle = () => {
@@ -453,9 +484,50 @@ export default function AdminSettingsPage() {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Globe className="w-4 h-4 text-primary" />Site Identity & SEO
+              {brandingHasData && !brandingExpanded && (
+                <span className="ml-auto flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-green-400/15 text-green-400 border border-green-400/30">
+                  <CheckCircle2 className="w-3 h-3" />Saved
+                </span>
+              )}
             </CardTitle>
             <CardDescription>Configure your site logo, favicon and SEO metadata shown in search engines.</CardDescription>
           </CardHeader>
+          {brandingHasData && !brandingExpanded ? (
+            /* Compact summary view — shown once branding has been saved.
+               Clicking Edit re-expands the full form below. */
+            <CardContent className="space-y-3">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50 border border-border">
+                {/* Logo thumbnail */}
+                <div className="w-12 h-12 rounded-lg border border-border flex items-center justify-center bg-card flex-shrink-0 overflow-hidden">
+                  {brandingForm.siteLogo ? (
+                    <img src={brandingForm.siteLogo} alt="Logo" className="max-w-full max-h-full object-contain" />
+                  ) : (
+                    <ImageIcon className="w-5 h-5 text-muted-foreground/40" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <p className="text-sm font-semibold text-foreground truncate">{brandingForm.siteName || "Untitled site"}</p>
+                    {brandingForm.favicon && (
+                      <img src={brandingForm.favicon} alt="Favicon" className="w-4 h-4 object-contain flex-shrink-0" title="Favicon set" />
+                    )}
+                  </div>
+                  {brandingForm.metaTitle ? (
+                    <p className="text-xs text-muted-foreground truncate">{brandingForm.metaTitle}</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground/60 italic">No SEO title set</p>
+                  )}
+                </div>
+                <div className="hidden sm:flex flex-col items-end gap-1 text-[10px] text-muted-foreground flex-shrink-0">
+                  <span className="font-mono">{brandingForm.logoSize}px / {brandingForm.logoSizeMobile}px</span>
+                  <span>desktop / mobile</span>
+                </div>
+              </div>
+              <Button type="button" variant="outline" onClick={() => setBrandingExpanded(true)} className="w-full gap-2">
+                <Edit2 className="w-4 h-4" />Edit Site Identity
+              </Button>
+            </CardContent>
+          ) : (
           <CardContent className="space-y-6">
 
             {/* Platform Name */}
@@ -630,10 +702,22 @@ export default function AdminSettingsPage() {
               </div>
             </div>
 
-            <Button type="button" onClick={handleSaveBranding} disabled={brandingSaving} className="w-full gap-2 cursor-pointer">
-              {brandingSaving ? <><Loader2 className="w-4 h-4 animate-spin" />Saving…</> : "Save Site Identity"}
-            </Button>
+            {brandingHasData ? (
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={cancelBrandingEdit} disabled={brandingSaving} className="flex-1">
+                  Cancel
+                </Button>
+                <Button type="button" onClick={handleSaveBranding} disabled={brandingSaving} className="flex-1 gap-2 cursor-pointer">
+                  {brandingSaving ? <><Loader2 className="w-4 h-4 animate-spin" />Saving…</> : "Update"}
+                </Button>
+              </div>
+            ) : (
+              <Button type="button" onClick={handleSaveBranding} disabled={brandingSaving} className="w-full gap-2 cursor-pointer">
+                {brandingSaving ? <><Loader2 className="w-4 h-4 animate-spin" />Saving…</> : "Save Site Identity"}
+              </Button>
+            )}
           </CardContent>
+          )}
         </Card>
 
         {/* General */}
