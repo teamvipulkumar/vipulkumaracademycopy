@@ -149,6 +149,7 @@ function Router() {
       <Route path="/my-courses" component={() => <AppLayout><ProtectedRoute><MyCoursesPage /></ProtectedRoute></AppLayout>} />
       <Route path="/learn/:courseId" component={() => <ProtectedRoute><LearnPage /></ProtectedRoute>} />
       <Route path="/affiliate" component={() => <AppLayout noFooter><ProtectedRoute><AffiliatePage /></ProtectedRoute></AppLayout>} />
+      <Route path="/affiliate/:tab" component={() => <AppLayout noFooter><ProtectedRoute><AffiliatePage /></ProtectedRoute></AppLayout>} />
       <Route path="/payments" component={() => <AppLayout><ProtectedRoute><PaymentsPage /></ProtectedRoute></AppLayout>} />
       <Route path="/notifications" component={() => <AppLayout><ProtectedRoute><NotificationsPage /></ProtectedRoute></AppLayout>} />
       <Route path="/profile" component={() => <AppLayout><ProtectedRoute><ProfilePage /></ProtectedRoute></AppLayout>} />

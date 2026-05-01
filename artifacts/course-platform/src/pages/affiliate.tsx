@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, Fragment } from "react";
-import { Link } from "wouter";
+import { Link, useLocation, useParams } from "wouter";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@/lib/theme-context";
 import { useToast } from "@/hooks/use-toast";
@@ -311,20 +311,18 @@ function AffiliateDashboard({ user }: { user: any }) {
   const tooltipItemStyle = { color: isLight ? "#334155" : "#cbd5e1" };
   const tooltipCursorFill = isLight ? "rgba(0,0,0,0.04)" : "rgba(255,255,255,0.03)";
   const chartGridStroke = isLight ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.05)";
-  const VALID_TABS: Tab[] = ["earnings", "sales", "links", "clicks", "creatives", "kyc", "payouts", "pixel", "bank"];
-  const [tab, setTab] = useState<Tab>(() => {
-    try {
-      const navType = (performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined)?.type;
-      if (navType === "reload") {
-        const saved = sessionStorage.getItem("vka-affiliate-tab");
-        if (saved && VALID_TABS.includes(saved as Tab)) return saved as Tab;
-      }
-    } catch {}
-    return "earnings";
-  });
-  useEffect(() => {
-    try { sessionStorage.setItem("vka-affiliate-tab", tab); } catch {}
-  }, [tab]);
+  const SLUG_TO_TAB: Record<string, Tab> = {
+    dashboard: "earnings", sales: "sales", links: "links", clicks: "clicks",
+    creatives: "creatives", kyc: "kyc", payouts: "payouts", pixel: "pixel", bank: "bank",
+  };
+  const TAB_TO_SLUG: Record<Tab, string> = {
+    earnings: "dashboard", sales: "sales", links: "links", clicks: "clicks",
+    creatives: "creatives", kyc: "kyc", payouts: "payouts", pixel: "pixel", bank: "bank",
+  };
+  const params = useParams<{ tab?: string }>();
+  const [, navigate] = useLocation();
+  const tab: Tab = SLUG_TO_TAB[params.tab ?? ""] ?? "earnings";
+  const setTab = (t: Tab) => { navigate("/affiliate/" + TAB_TO_SLUG[t]); };
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dashboard, setDashboard] = useState<any>(null);
   const [clicks, setClicks] = useState<any>(null);
