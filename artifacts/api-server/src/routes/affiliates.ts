@@ -124,7 +124,33 @@ router.get("/dashboard", requireAuth, async (req, res): Promise<void> => {
     .where(and(eq(payoutRequestsTable.userId, authedReq.user.userId), eq(payoutRequestsTable.status, "approved")));
   const paidEarnings = approvedPayouts.reduce((acc, p) => acc + parseFloat(String(p.amount)), 0);
 
-  const domain = process.env.REPLIT_DOMAINS?.split(",")[0] ?? "localhost:80";
+  // Resolve the public base URL with admin-configured siteUrl as the highest
+  // priority. This ensures that when admin connects a custom domain via
+  // Replit Deployments and saves it under Admin → Branding (siteUrl), the
+  // affiliate links use that custom domain instead of the default *.replit.app
+  // URL. Fallback chain (high → low): platform_settings.siteUrl → PUBLIC_BASE_URL
+  // env → SITE_URL env → REPLIT_DEV_DOMAIN → REPLIT_DOMAINS (deployment) →
+  // localhost. Returns full URL with protocol (e.g., "https://academy.com").
+  let baseUrl = await getPublicBaseUrl();
+  if (!baseUrl) {
+    const fallbackDomain = process.env.REPLIT_DOMAINS?.split(",")[0] ?? "localhost:80";
+    baseUrl = `https://${fallbackDomain}`;
+  }
+  // Normalise to origin-only — strip any path/query the admin may have entered
+  // (e.g. "https://academy.com/app?x=1") so building referral links via string
+  // concatenation never produces malformed URLs like "...?x=1?ref=CODE". If
+  // parsing fails for any reason, fall back to the raw value.
+  let canonicalBase = baseUrl;
+  try { canonicalBase = new URL(baseUrl).origin; } catch { /* keep raw */ }
+  const referralLink = (() => {
+    try {
+      const u = new URL(canonicalBase);
+      u.searchParams.set("ref", user.referralCode ?? "");
+      return u.toString().replace(/\/$/, "").replace(/\/\?/, "?");
+    } catch {
+      return `${canonicalBase}?ref=${user.referralCode}`;
+    }
+  })();
 
   /* Earnings breakdown */
   const todayStart = dayStart(0);
@@ -158,7 +184,13 @@ router.get("/dashboard", requireAuth, async (req, res): Promise<void> => {
 
   res.json({
     referralCode: user.referralCode,
-    referralLink: `https://${domain}?ref=${user.referralCode}`,
+    referralLink,
+    // The resolved public base URL (custom domain when configured, else
+    // deployment URL), normalised to origin-only. Surfaced to the frontend so
+    // the Custom Link Generator can accept URLs from this domain even when the
+    // affiliate is currently browsing the dashboard via a different origin
+    // (e.g., dev preview).
+    siteBaseUrl: canonicalBase,
     totalClicks: clicks,
     uniqueClicks,
     totalConversions: conversions,

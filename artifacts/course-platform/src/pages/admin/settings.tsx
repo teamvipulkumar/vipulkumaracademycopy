@@ -564,7 +564,7 @@ export default function AdminSettingsPage() {
             <div>
               <Label className="text-sm mb-1.5 block">Site URL</Label>
               <Input value={form.siteUrl} onChange={e => setForm(f => ({ ...f, siteUrl: e.target.value }))} placeholder="https://yourdomain.com" className="bg-background" />
-              <p className="text-xs text-muted-foreground mt-1">Used in email buttons (e.g. "Start Learning", "Explore Courses"). No trailing slash.</p>
+              <p className="text-xs text-muted-foreground mt-1">Your public site address (custom domain). Used in email buttons and affiliate share links. Must be a full URL starting with https:// — paths are stripped automatically.</p>
             </div>
             <div>
               <Label className="text-sm mb-1.5 block">Description</Label>

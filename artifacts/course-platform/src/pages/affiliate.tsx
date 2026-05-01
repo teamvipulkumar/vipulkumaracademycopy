@@ -708,7 +708,7 @@ function AffiliateDashboard({ user }: { user: any }) {
                 </div>
               </div>
 
-              <CustomLinkGenerator referralCode={dashboard?.referralCode ?? ""} />
+              <CustomLinkGenerator referralCode={dashboard?.referralCode ?? ""} siteBaseUrl={dashboard?.siteBaseUrl ?? ""} />
             </div>
           )}
 
@@ -823,15 +823,28 @@ function AffiliateDashboard({ user }: { user: any }) {
 }
 
 /* ─── Custom Link Generator ─── */
-function CustomLinkGenerator({ referralCode }: { referralCode: string }) {
+function CustomLinkGenerator({ referralCode, siteBaseUrl }: { referralCode: string; siteBaseUrl: string }) {
   const [inputUrl, setInputUrl] = useState("");
   const [copiedGenerated, setCopiedGenerated] = useState(false);
-  const siteOrigin = window.location.origin;
+  const browserOrigin = window.location.origin;
+
+  // Compute the canonical public origin (custom domain when configured) and
+  // also keep the current browser origin as an accepted origin. This way:
+  //  - On the deployed custom domain → both equal the custom domain.
+  //  - On dev/preview → user can paste either preview URLs OR custom-domain
+  //    URLs, and we always rewrite into the canonical custom-domain link.
+  const canonicalOrigin = (() => {
+    try { return siteBaseUrl ? new URL(siteBaseUrl).origin : browserOrigin; }
+    catch { return browserOrigin; }
+  })();
+  const acceptedOrigins = Array.from(new Set([canonicalOrigin, browserOrigin]));
+  // Display string — the custom domain wins for placeholder/error UX.
+  const displayOrigin = canonicalOrigin;
 
   const isValidSiteUrl = (url: string) => {
     try {
       const parsed = new URL(url);
-      return parsed.origin === siteOrigin;
+      return acceptedOrigins.includes(parsed.origin);
     } catch {
       return false;
     }
@@ -841,8 +854,12 @@ function CustomLinkGenerator({ referralCode }: { referralCode: string }) {
     if (!url.trim() || !referralCode) return "";
     try {
       const parsed = new URL(url.trim());
-      parsed.searchParams.set("ref", referralCode);
-      return parsed.toString();
+      // Always emit the canonical (custom-domain) origin, even if the user
+      // pasted a dev/preview URL. Affiliates should always share the public
+      // brand URL, never the *.replit.dev preview.
+      const rewritten = new URL(parsed.pathname + parsed.search + parsed.hash, canonicalOrigin);
+      rewritten.searchParams.set("ref", referralCode);
+      return rewritten.toString();
     } catch {
       return "";
     }
@@ -874,14 +891,14 @@ function CustomLinkGenerator({ referralCode }: { referralCode: string }) {
             <Input
               value={inputUrl}
               onChange={e => setInputUrl(e.target.value)}
-              placeholder={`${siteOrigin}/courses/1`}
+              placeholder={`${displayOrigin}/courses/1`}
               className={`bg-background border-border pl-9 font-mono text-xs ${!isValid ? "border-red-500/50 focus-visible:ring-red-500/30" : ""}`}
             />
           </div>
         </div>
         {!isValid && (
           <p className="text-[11px] text-red-400 flex items-center gap-1">
-            <AlertCircle className="w-3 h-3" />URL must be from this site ({siteOrigin})
+            <AlertCircle className="w-3 h-3" />URL must be from this site ({displayOrigin})
           </p>
         )}
       </div>

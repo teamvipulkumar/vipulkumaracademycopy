@@ -535,7 +535,28 @@ router.put("/settings", requireAdmin, async (req, res): Promise<void> => {
   const existing = await db.select().from(platformSettingsTable).limit(1);
   const updates: Record<string, unknown> = {};
   if (siteName !== undefined) updates.siteName = siteName;
-  if (siteUrl !== undefined) updates.siteUrl = String(siteUrl).replace(/\/+$/, ""); // strip trailing slash
+  if (siteUrl !== undefined) {
+    // Normalise siteUrl to origin-only (e.g. "https://academy.com") so any
+    // path/query/trailing-slash an admin pastes is stripped before persisting.
+    // Empty / whitespace clears the value (falls back to deployment default).
+    // If the input is not a valid absolute http(s) URL, we reject the request
+    // so bad data never enters the DB and breaks affiliate links / emails.
+    const raw = String(siteUrl).trim();
+    if (raw === "") {
+      updates.siteUrl = "";
+    } else {
+      let normalised: string | null = null;
+      try {
+        const u = new URL(raw);
+        if (u.protocol === "http:" || u.protocol === "https:") normalised = u.origin;
+      } catch { /* invalid */ }
+      if (!normalised) {
+        res.status(400).json({ error: "siteUrl must be a valid absolute URL starting with http:// or https://" });
+        return;
+      }
+      updates.siteUrl = normalised;
+    }
+  }
   if (siteDescription !== undefined) updates.siteDescription = siteDescription;
   if (commissionRate !== undefined) updates.commissionRate = Math.round(commissionRate * 100);
   if (currency !== undefined) updates.currency = currency;
