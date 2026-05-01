@@ -12,8 +12,8 @@ import { ExternalLink, AlertCircle, ShieldCheck, Eye, EyeOff, Send, Loader2, Che
 
 const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-type PixelForm = { enabled: boolean; pixelId: string; baseCode: string; accessToken: string; testEventCode: string };
-const EMPTY_FORM: PixelForm = { enabled: false, pixelId: "", baseCode: "", accessToken: "", testEventCode: "" };
+type PixelForm = { enabled: boolean; pixelId: string; baseCode: string; accessToken: string };
+const EMPTY_FORM: PixelForm = { enabled: false, pixelId: "", baseCode: "", accessToken: "" };
 
 export default function AdminFacebookPixelPage() {
   const { data: settings } = useGetAdminSettings({ query: { queryKey: getGetAdminSettingsQueryKey() } });
@@ -26,9 +26,12 @@ export default function AdminFacebookPixelPage() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showToken, setShowToken] = useState(false);
-  const [sendingTest, setSendingTest] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [capiStatus, setCapiStatus] = useState<{ configured: boolean; source: string | null; test_mode: boolean } | null>(null);
+
+  // Test Event panel — independent of saved settings, transient input only.
+  const [testCodeInput, setTestCodeInput] = useState("");
+  const [sendingTest, setSendingTest] = useState(false);
 
   const locked = !editing;
 
@@ -49,11 +52,14 @@ export default function AdminFacebookPixelPage() {
         pixelId: s.facebookPixelId as string ?? "",
         baseCode: s.facebookPixelBaseCode as string ?? "",
         accessToken: s.facebookAccessToken as string ?? "",
-        testEventCode: s.facebookTestEventCode as string ?? "",
       };
       setForm(next);
       setSavedSnapshot(next);
       if (s.facebookPixelBaseCode) setAdvancedOpen(true);
+      // Pre-fill the test panel with any saved code (legacy/env-set), but
+      // changes here are NOT persisted — purely a one-shot test input.
+      const savedTestCode = s.facebookTestEventCode as string ?? "";
+      if (savedTestCode) setTestCodeInput(savedTestCode);
     }
   }, [settings]);
 
@@ -73,7 +79,6 @@ export default function AdminFacebookPixelPage() {
         facebookPixelId: form.pixelId,
         facebookPixelBaseCode: form.baseCode,
         facebookAccessToken: form.accessToken,
-        facebookTestEventCode: form.testEventCode,
       } as Parameters<typeof updateSettings.mutate>[0]["data"],
     }, {
       onSuccess: () => {
@@ -93,13 +98,14 @@ export default function AdminFacebookPixelPage() {
   };
 
   const handleSendTestEvent = async () => {
-    if (!form.testEventCode.trim()) return;
+    const code = testCodeInput.trim();
+    if (!code) return;
     setSendingTest(true);
     try {
       const res = await fetch(`${API_BASE}/api/pixel/send-test-event`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ event_name: "InitiateCheckout" }),
+        body: JSON.stringify({ event_name: "InitiateCheckout", test_event_code: code }),
       });
       const data = await res.json();
       if (res.ok && data.sent) {
@@ -274,43 +280,6 @@ export default function AdminFacebookPixelPage() {
 
           <div className="h-px bg-border" />
 
-          {/* Testing section */}
-          <div className="space-y-3">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Testing</p>
-
-            <div>
-              <Label className="text-sm mb-1.5 block">Test Event Code <span className="text-muted-foreground font-normal text-[11px]">· optional</span></Label>
-              <div className="flex gap-2">
-                <Input
-                  value={form.testEventCode}
-                  onChange={e => setForm(f => ({ ...f, testEventCode: e.target.value }))}
-                  placeholder="TEST12345"
-                  className="bg-background font-mono"
-                  autoComplete="off"
-                  spellCheck={false}
-                  disabled={locked}
-                  readOnly={locked}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleSendTestEvent}
-                  disabled={sendingTest || !savedSnapshot.testEventCode.trim()}
-                  className="shrink-0 gap-2"
-                  title={!savedSnapshot.testEventCode.trim() ? "Save a Test Event Code first" : "Send a test event to Meta"}
-                >
-                  {sendingTest ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                  {sendingTest ? "Sending" : "Send Test"}
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1.5">
-                When set, all server-side events route to the Test Events tab instead of production. <span className="text-amber-500/90">Clear after testing.</span>
-              </p>
-            </div>
-          </div>
-
-          <div className="h-px bg-border" />
-
           {/* Advanced collapsible */}
           <div>
             <button
@@ -378,6 +347,50 @@ export default function AdminFacebookPixelPage() {
             )}
           </div>
 
+        </CardContent>
+      </Card>
+
+      {/* ── Standalone Test Event panel ──
+          Independent of the main config card — admin can type any TEST code
+          and fire a one-shot test event WITHOUT saving it to the database. */}
+      <Card className="bg-card border-border mt-5">
+        <CardContent className="p-6 space-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold flex items-center gap-2">
+                <Send className="w-4 h-4 text-primary" />
+                Send a Test Event
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                Fire a synthetic <code className="bg-background px-1 py-0.5 rounded text-[11px]">InitiateCheckout</code> event to verify your CAPI setup. Type any TEST code below and click Send — nothing is saved.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <Input
+              value={testCodeInput}
+              onChange={e => setTestCodeInput(e.target.value)}
+              placeholder="TEST12345"
+              className="bg-background font-mono"
+              autoComplete="off"
+              spellCheck={false}
+            />
+            <Button
+              type="button"
+              onClick={handleSendTestEvent}
+              disabled={sendingTest || !testCodeInput.trim() || !capiStatus?.configured}
+              className="shrink-0 gap-2"
+              title={!capiStatus?.configured ? "Save Access Token first" : !testCodeInput.trim() ? "Enter a TEST code" : "Send test event to Meta"}
+            >
+              {sendingTest ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              {sendingTest ? "Sending" : "Send Test Event"}
+            </Button>
+          </div>
+
+          <p className="text-[11px] text-muted-foreground">
+            Get the code from Events Manager → <strong>Test Events</strong> tab — top of page shows your unique <code className="bg-background px-1 py-0.5 rounded">TEST&lt;digits&gt;</code> code. The event appears in the Test Events tab within 30 seconds and does NOT affect production stats.
+          </p>
         </CardContent>
       </Card>
     </div>

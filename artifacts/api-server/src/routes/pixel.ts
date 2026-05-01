@@ -293,10 +293,15 @@ router.get("/capi-status", requireAdmin, async (_req, res): Promise<void> => {
 /**
  * POST /api/pixel/send-test-event
  * Admin-only diagnostic — fires a synthetic InitiateCheckout event to Meta
- * CAPI using the saved Test Event Code. Within ~30s the event should appear
- * in Events Manager → Test Events tab, confirming the full pipeline works.
+ * CAPI using the Test Event Code passed in the body (preferred) or the
+ * one saved in platform_settings (fallback). Within ~30s the event should
+ * appear in Events Manager → Test Events tab, confirming the full pipeline
+ * works without requiring the test code to be persisted to the database.
  *
- * Body: { event_name?: "InitiateCheckout"|"Purchase" }  (default: InitiateCheckout)
+ * Body: {
+ *   event_name?: "InitiateCheckout"|"Purchase",   // default: InitiateCheckout
+ *   test_event_code?: string,                     // ad-hoc code for one-shot test
+ * }
  */
 router.post("/send-test-event", requireAdmin, async (req, res): Promise<void> => {
   try {
@@ -310,10 +315,15 @@ router.post("/send-test-event", requireAdmin, async (req, res): Promise<void> =>
     const eventName = isString(body.event_name) && ALLOWED_EVENTS.has(body.event_name)
       ? body.event_name : "InitiateCheckout";
 
-    const { pixelId, accessToken, testEventCode } = await getCapiCreds();
+    // Prefer the ad-hoc code from the request body; fall back to whatever is
+    // saved in platform_settings so legacy callers still work.
+    const bodyTestCode = isString(body.test_event_code) ? body.test_event_code.trim() : "";
+    const { pixelId, accessToken, testEventCode: dbTestCode } = await getCapiCreds();
+    const effectiveTestCode = bodyTestCode || dbTestCode;
+
     if (!accessToken) { res.status(400).json({ sent: false, reason: "capi_not_configured" }); return; }
     if (!pixelId) { res.status(400).json({ sent: false, reason: "pixel_id_missing" }); return; }
-    if (!testEventCode) { res.status(400).json({ sent: false, reason: "test_event_code_missing" }); return; }
+    if (!effectiveTestCode) { res.status(400).json({ sent: false, reason: "test_event_code_missing" }); return; }
 
     const data: FbEventData = {
       eventName,
@@ -328,13 +338,13 @@ router.post("/send-test-event", requireAdmin, async (req, res): Promise<void> =>
     };
 
     // Wait for Meta's response so the admin gets immediate feedback.
-    const result = await sendFbEvent(pixelId, accessToken, data, testEventCode);
+    const result = await sendFbEvent(pixelId, accessToken, data, effectiveTestCode);
     if (result.success) {
       res.json({
         sent: true,
         event_name: eventName,
         event_id: data.eventId,
-        test_event_code: testEventCode,
+        test_event_code: effectiveTestCode,
         meta_response: result.result,
         next_step: `Open Events Manager → Pixel ${pixelId} → Test Events tab. The event "${eventName}" should appear within 30 seconds.`,
       });
