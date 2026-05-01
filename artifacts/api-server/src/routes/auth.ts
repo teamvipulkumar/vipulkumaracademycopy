@@ -6,38 +6,36 @@ import { usersTable, platformSettingsTable, adminStaffTable } from "@workspace/d
 import { eq, and } from "drizzle-orm";
 import { signToken, requireAuth, authCookieOptions, clearAuthCookieOptions, type JwtPayload } from "../middlewares/auth";
 import type { Request } from "express";
-import { triggerAutomation, triggerFunnel, sendTransactionalEmail } from "./crm";
+import { triggerAutomation, triggerFunnel, sendTransactionalEmail, getPublicBaseUrl, publicSiteUrlFromRequest } from "./crm";
 import { OAuth2Client } from "google-auth-library";
 
 const router = Router();
 
 /**
- * Resolves the public site URL used in outgoing emails (verify, reset, etc.)
- * and external redirects. Precedence (highest first):
+ * Resolves the public site URL used in outgoing emails (verify, reset, login
+ * confirmation, etc.) and external redirects. Precedence (highest first):
  *
- *   1. Admin-configured siteUrl from platform_settings (Admin → Settings).
- *      This is intentionally first so the live/custom domain in emails stays
- *      consistent regardless of where the email was triggered from — e.g. an
- *      admin testing registration on the dev preview shouldn't leak the
- *      preview URL into emails sent to real users.
- *   2. SITE_URL environment variable (deployment-time fallback).
- *   3. Reconstruction from the incoming request. With `trust proxy = 1`
- *      enabled in app.ts, req.protocol + req.hostname honor X-Forwarded-Proto
- *      and X-Forwarded-Host so this gives the live public URL in production.
+ *   1. The live incoming request's protocol + hostname. With `trust proxy = 1`
+ *      in app.ts, req.protocol + req.hostname honor X-Forwarded-Proto and
+ *      X-Forwarded-Host so this is the *exact* public domain the user is
+ *      currently on. This is the right default: if the user is signing up at
+ *      vipulkumar.online, their verification link should land at
+ *      vipulkumar.online (not at some other hostname the admin once configured
+ *      and forgot about). Localhost / unset hostnames are skipped so this
+ *      never poisons emails triggered from server-to-server callers.
+ *   2. `getPublicBaseUrl()` — admin-configured Site URL → auto-learned
+ *      last-observed host → SITE_URL env. This is the fallback for the rare
+ *      case where the request hostname is local/missing.
+ *   3. Final fallback: reconstruct from the request as-is.
  *
- * Tip for the user: set the public site URL once under Admin → Settings →
- * Site URL after publishing/connecting a custom domain, and every email link
- * will point there forever.
+ * Net effect for the admin: zero configuration required. Connect any custom
+ * domain via Replit Deployments and every email link follows automatically.
  */
 async function resolvePublicSiteUrl(req: Request): Promise<string> {
-  try {
-    const [ps] = await db.select({ siteUrl: platformSettingsTable.siteUrl })
-      .from(platformSettingsTable).limit(1);
-    const fromDb = ps?.siteUrl?.trim();
-    if (fromDb) return fromDb.replace(/\/+$/, "");
-  } catch { /* fall through */ }
-  const fromEnv = process.env.SITE_URL?.trim();
-  if (fromEnv) return fromEnv.replace(/\/+$/, "");
+  const fromReq = publicSiteUrlFromRequest(req);
+  if (fromReq) return fromReq;
+  const fromHelper = await getPublicBaseUrl();
+  if (fromHelper) return fromHelper.replace(/\/+$/, "");
   return `${req.protocol}://${req.hostname}`;
 }
 

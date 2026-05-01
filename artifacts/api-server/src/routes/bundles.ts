@@ -81,7 +81,7 @@ async function enrollInBundle(bundleId: number, userId: number, affiliateRef?: s
     triggerFunnel("new_purchase", buyer.id, {
       course_name: bundle.name,
       amount: String(bundle.price.toFixed(2)),
-      site_url: process.env.SITE_URL || "",
+      
     }).catch(() => {});
   }
 
@@ -169,7 +169,7 @@ async function enrollInBundle(bundleId: number, userId: number, affiliateRef?: s
             name: referrer.name ?? "",
             commission_amount: commission.toFixed(2),
             payout_amount: commission.toFixed(2),
-            site_url: process.env.SITE_URL || "",
+            
           };
           triggerAutomation("affiliate_commission", referrer.id, referrer.email ?? "", commissionVars).catch(e => console.error("[bundle affiliate commission] triggerAutomation error:", e));
           triggerFunnel("affiliate_commission", referrer.id, commissionVars).catch(e => console.error("[bundle affiliate commission] triggerFunnel error:", e));
@@ -421,7 +421,7 @@ router.post("/checkout/guest", async (req, res): Promise<void> => {
       const verifyLink = await getOrCreateWelcomeVerifyLink(freshUser.id);
       const baseUrl = await getPublicBaseUrl();
       triggerAutomation("welcome", freshUser.id, freshUser.email, { name: freshUser.name, email: freshUser.email, verify_link: verifyLink }).catch(() => {});
-      triggerFunnel("user_signup", freshUser.id, { verify_link: verifyLink, site_url: baseUrl || process.env.SITE_URL || "", name: freshUser.name, email: freshUser.email }).catch(e => console.error("[bundle payment new user] triggerFunnel error:", e));
+      triggerFunnel("user_signup", freshUser.id, { verify_link: verifyLink, name: freshUser.name, email: freshUser.email }).catch(e => console.error("[bundle payment new user] triggerFunnel error:", e));
     }
   }
   const token = signToken({ userId: freshUser!.id, email: freshUser!.email, role: freshUser!.role });

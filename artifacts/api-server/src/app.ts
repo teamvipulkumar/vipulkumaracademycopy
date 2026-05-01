@@ -6,6 +6,7 @@ import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { authRateLimiter, paymentRateLimiter, generalRateLimiter } from "./middlewares/rate-limit";
+import { recordPublicHost } from "./routes/crm";
 
 const app: Express = express();
 
@@ -205,6 +206,13 @@ if (SUPABASE_URL) {
     res.redirect(302, `${SUPABASE_URL}/storage/v1/object/public/uploads/${encodeURIComponent(fn)}`);
   });
 }
+
+// Record the public hostname of every incoming request so background email
+// sends (purchase webhooks, scheduled automations, funnels, CRM campaigns)
+// can root their links at the *current* live domain — without requiring the
+// admin to manually configure a Site URL. See routes/crm.ts → recordPublicHost
+// for the cache details and staleness guard.
+app.use((req, _res, next) => { recordPublicHost(req); next(); });
 
 app.use("/api", router);
 

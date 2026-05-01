@@ -116,23 +116,137 @@ let _siteUrlCacheGen = 0;
 let _siteUrlInflight: { promise: Promise<string>; gen: number } | null = null;
 const SITE_URL_CACHE_TTL_MS = 60_000;
 
-async function resolvePublicBaseUrlUncached(): Promise<string> {
+/**
+ * Last-observed public host cache. Every public request flows through the
+ * `recordPublicHost` middleware (mounted in app.ts) which writes the live
+ * request's protocol + hostname here. Background email sends (purchase
+ * confirmations, automations, funnels, scheduled campaigns) read it via
+ * `getLastObservedPublicHost()` so they emit links rooted at whatever domain
+ * the affiliate / customer is currently using — without any admin config.
+ *
+ * If the admin has explicitly set `platform_settings.siteUrl`, that wins over
+ * the auto-learned host (admin intent is sticky). If neither exists, env var
+ * fallbacks kick in (PUBLIC_BASE_URL / SITE_URL / REPLIT_DEV_DOMAIN).
+ *
+ * The value is in-memory only (no DB writes on the hot path). It's refreshed
+ * on every request, so it survives restarts within seconds in any
+ * production-traffic environment. A 24h staleness guard prevents a tiny dev
+ * host from sticking forever after a long idle period.
+ */
+let _lastObservedHost: { host: string; proto: "http" | "https"; observedAt: number } | null = null;
+const LAST_OBSERVED_TTL_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Allowlist of public hostnames the deployment is permitted to be served on.
+ * In Replit Deployments this comes from `REPLIT_DOMAINS` (set by the platform,
+ * not by clients — so it's a trustworthy boundary). When set, we ONLY record
+ * hosts that appear in this list, which neutralizes X-Forwarded-Host header
+ * poisoning attacks (a malicious client can't make us cache `evil.com`).
+ *
+ * In dev (no REPLIT_DOMAINS), we accept any non-local host — there's no
+ * trusted edge proxy to lean on, and dev safety isn't a concern.
+ */
+function isAllowedPublicHost(host: string): boolean {
+  const replitDomains = process.env.REPLIT_DOMAINS?.toLowerCase()
+    .split(",").map(s => s.trim()).filter(Boolean);
+  if (replitDomains && replitDomains.length > 0) {
+    return replitDomains.includes(host);
+  }
+  return true; // dev mode: caller already filtered local hosts
+}
+
+export function recordPublicHost(req: { hostname?: string; protocol?: string; path?: string }): void {
+  const host = String(req.hostname || "").toLowerCase();
+  if (!host) return;
+  // Skip non-public hosts so a dev curl on localhost doesn't poison the cache
+  // for production-bound emails.
+  if (host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0" || host.endsWith(".local")) return;
+  // Skip webhook paths — these come from third-party gateways (Stripe, Razorpay)
+  // that may set their own Host headers unrelated to the user-facing domain.
+  // We don't want a webhook hit to poison the cache for outgoing emails.
+  const path = String(req.path || "").toLowerCase();
+  if (path.includes("/webhook")) return;
+  // Allowlist guard against X-Forwarded-Host poisoning in production.
+  if (!isAllowedPublicHost(host)) return;
+  const proto: "http" | "https" = req.protocol === "http" ? "http" : "https";
+  _lastObservedHost = { host, proto, observedAt: Date.now() };
+}
+
+export function getLastObservedPublicHost(): string {
+  if (!_lastObservedHost) return "";
+  if (Date.now() - _lastObservedHost.observedAt > LAST_OBSERVED_TTL_MS) return "";
+  return `${_lastObservedHost.proto}://${_lastObservedHost.host}`;
+}
+
+/**
+ * Shared helper for request-driven email/redirect URL builders. Returns
+ * `<proto>://<host>` derived from the live request when (a) the host is
+ * non-local and (b) it passes the `isAllowedPublicHost()` allowlist (when
+ * REPLIT_DOMAINS is set). Returns "" otherwise so the caller can fall back to
+ * `getPublicBaseUrl()`. This prevents an attacker from poisoning per-request
+ * email links via X-Forwarded-Host even if the edge proxy were
+ * misconfigured.
+ */
+export function publicSiteUrlFromRequest(req: { hostname?: string; protocol?: string }): string {
+  const host = String(req.hostname || "").toLowerCase();
+  if (!host) return "";
+  if (host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0" || host.endsWith(".local")) return "";
+  if (!isAllowedPublicHost(host)) return "";
+  const proto: "http" | "https" = req.protocol === "http" ? "http" : "https";
+  return `${proto}://${host}`;
+}
+
+/**
+ * Resolves *only* the admin-configured Site URL from `platform_settings`.
+ * This is the single value that is safe to cache for SITE_URL_CACHE_TTL_MS:
+ * it changes only via admin UI (which calls `invalidatePublicBaseUrlCache()`).
+ * Returns "" when no admin override is set; callers fall through to the
+ * (uncached) `lastObservedHost` and then env vars.
+ */
+async function resolveStableBaseUrlUncached(): Promise<string> {
   try {
     const [ps] = await db.select({ siteUrl: platformSettingsTable.siteUrl })
       .from(platformSettingsTable).limit(1);
     const fromDb = ps?.siteUrl?.trim();
     if (fromDb) return fromDb.replace(/\/+$/, "");
   } catch { /* fall through */ }
+  return "";
+}
+
+/**
+ * Final fallback: env-var chain. Read fresh on each call (env doesn't change
+ * mid-process, so caching gives no real benefit and would only delay the
+ * `lastObservedHost` from taking precedence).
+ */
+function resolveEnvBaseUrl(): string {
   const explicit = process.env.PUBLIC_BASE_URL?.trim().replace(/\/+$/, "");
   if (explicit) return explicit;
   const fromSite = process.env.SITE_URL?.trim().replace(/\/+$/, "");
   if (fromSite) return fromSite;
   const dev = process.env.REPLIT_DEV_DOMAIN;
   if (dev) return `https://${dev}`;
+  const replitDomains = process.env.REPLIT_DOMAINS?.split(",").map(s => s.trim()).filter(Boolean);
+  if (replitDomains && replitDomains.length > 0) return `https://${replitDomains[0]}`;
   return "";
 }
 
 export async function getPublicBaseUrl(): Promise<string> {
+  // Required precedence (highest first):
+  //   1. Admin override (`platform_settings.siteUrl`) — sticky intent, cached.
+  //   2. Auto-learned `lastObservedHost` — picks up the live domain from real
+  //      traffic without any admin config; refreshed on every request.
+  //   3. Env vars (PUBLIC_BASE_URL → SITE_URL → REPLIT_DEV_DOMAIN → REPLIT_DOMAINS).
+  //
+  // The auto-learned host MUST beat env vars: a stale `SITE_URL=oldsite.com`
+  // env var should never override the live domain that real users are hitting.
+  const stable = await getStableBaseUrl();
+  if (stable) return stable;
+  const observed = getLastObservedPublicHost();
+  if (observed) return observed;
+  return resolveEnvBaseUrl();
+}
+
+async function getStableBaseUrl(): Promise<string> {
   // Fresh cache hit: return immediately.
   if (_siteUrlCache && _siteUrlCache.expiresAt > Date.now()) {
     return _siteUrlCache.value;
@@ -153,7 +267,7 @@ export async function getPublicBaseUrl(): Promise<string> {
   const startGen = _siteUrlCacheGen;
   const promise = (async () => {
     try {
-      const value = await resolvePublicBaseUrlUncached();
+      const value = await resolveStableBaseUrlUncached();
       if (_siteUrlCacheGen === startGen) {
         _siteUrlCache = { value, expiresAt: Date.now() + SITE_URL_CACHE_TTL_MS, gen: startGen };
       }
@@ -557,14 +671,14 @@ const SAMPLE_VARIABLES_STATIC: Record<string, string> = {
  * see stale sample URLs (e.g. vkacademy.com) leaking into the preview.
  */
 async function resolveSampleSiteUrl(req: import("express").Request): Promise<string> {
-  try {
-    const [ps] = await db.select({ siteUrl: platformSettingsTable.siteUrl })
-      .from(platformSettingsTable).limit(1);
-    const fromDb = ps?.siteUrl?.trim();
-    if (fromDb) return fromDb.replace(/\/+$/, "");
-  } catch { /* fall through */ }
-  const fromEnv = process.env.SITE_URL?.trim();
-  if (fromEnv) return fromEnv.replace(/\/+$/, "");
+  // Prefer the live request hostname via the shared `publicSiteUrlFromRequest`
+  // helper (which applies the same allowlist used by `recordPublicHost`, so
+  // X-Forwarded-Host poisoning is neutralized). Fall back to the unified
+  // `getPublicBaseUrl()` chain when the request host is local/disallowed.
+  const fromReq = publicSiteUrlFromRequest(req);
+  if (fromReq) return fromReq;
+  const fromHelper = await getPublicBaseUrl();
+  if (fromHelper) return fromHelper.replace(/\/+$/, "");
   return `${req.protocol}://${req.hostname}`;
 }
 
@@ -2459,11 +2573,16 @@ export async function triggerFunnel(triggerType: string, userId: number, trigger
           }
           // Guard: skip send if both subject and html are still empty after resolution
           if (!subject && !html) { stepFailed = true; stepError = "empty subject and body"; return; }
-          // Fetch site_url from platform settings if not provided by the caller
+          // Fill in site_url when the caller didn't pass one (or passed an
+          // empty string — common in background webhooks like payments.ts that
+          // historically defaulted to `process.env.SITE_URL || ""`). Use the
+          // unified `getPublicBaseUrl()` chain: admin Site URL → auto-learned
+          // last-observed host → env vars. This is the single source of truth
+          // so admins never have to hand-edit URLs anywhere when the public
+          // domain changes.
           const mergedConfig = { ...triggerConfig };
           if (!mergedConfig.site_url) {
-            const [ps] = await db.select({ siteUrl: platformSettingsTable.siteUrl }).from(platformSettingsTable).limit(1);
-            const resolved = ps?.siteUrl || process.env.SITE_URL || "";
+            const resolved = await getPublicBaseUrl();
             mergedConfig.site_url = resolved.replace(/\/+$/, "");
           }
           // Built-in vars

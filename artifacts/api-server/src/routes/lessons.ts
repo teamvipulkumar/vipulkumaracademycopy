@@ -4,7 +4,7 @@ import { lessonCompletionsTable, lessonsTable, modulesTable, enrollmentsTable, c
 import { eq, and, count } from "drizzle-orm";
 import { requireAuth, type JwtPayload } from "../middlewares/auth";
 import type { Request } from "express";
-import { triggerAutomation, triggerFunnel } from "./crm";
+import { triggerAutomation, triggerFunnel, getPublicBaseUrl, publicSiteUrlFromRequest } from "./crm";
 
 const router = Router();
 type AuthedRequest = Request & { user: JwtPayload };
@@ -16,7 +16,11 @@ router.post("/:lessonId/complete", requireAuth, async (req, res): Promise<void> 
   const existing = await db.select().from(lessonCompletionsTable).where(and(eq(lessonCompletionsTable.userId, authedReq.user.userId), eq(lessonCompletionsTable.lessonId, lessonId))).limit(1);
   if (existing.length === 0) {
     await db.insert(lessonCompletionsTable).values({ userId: authedReq.user.userId, lessonId });
-    const siteUrl = process.env.SITE_URL || (req.headers.origin as string) || "";
+    // Prefer the live request hostname (allowlisted via `publicSiteUrlFromRequest`)
+    // so the funnel email link points at the exact domain the learner is on.
+    // Fall back to the unified helper chain (admin siteUrl → auto-learned host
+    // → env) for the rare local/disallowed-host case.
+    const siteUrl = publicSiteUrlFromRequest(req) || await getPublicBaseUrl();
     triggerFunnel("lesson_completed", authedReq.user.userId, { site_url: siteUrl }).catch(() => {});
   }
 
@@ -63,8 +67,10 @@ router.post("/:lessonId/complete", requireAuth, async (req, res): Promise<void> 
               email: user.email,
               course_name: course.title,
             }).catch(() => {});
-            const completionSiteUrl = process.env.SITE_URL || (req.headers.origin as string) || "";
-            triggerFunnel("course_completed", user.id, { course_name: course.title, site_url: completionSiteUrl }).catch(() => {});
+            // Pass empty site_url so the funnel processor's fallback fills it
+            // via getPublicBaseUrl() (admin Site URL → auto-learned host → env).
+            // No need to compute it here per-request.
+            triggerFunnel("course_completed", user.id, { course_name: course.title }).catch(() => {});
           }
         }
       }
