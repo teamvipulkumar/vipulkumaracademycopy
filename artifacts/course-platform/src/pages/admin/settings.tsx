@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Chrome, Info, Construction, Check, Upload, Globe, ImageIcon, Loader2, FolderOpen, CheckCircle2, Lock, Edit2 } from "lucide-react";
+import { Eye, EyeOff, Chrome, Info, Construction, Check, Upload, Globe, ImageIcon, Loader2, FolderOpen, CheckCircle2, Lock, Edit2, AlertTriangle, Power, Sparkles } from "lucide-react";
 import { useTheme, type Theme } from "@/lib/theme-context";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -181,6 +181,18 @@ export default function AdminSettingsPage() {
   });
   const [maintenanceForm, setMaintenanceForm] = useState({ maintenanceMode: false, maintenanceMessage: "" });
   const [maintenanceSaving, setMaintenanceSaving] = useState(false);
+  // Confirmation dialog state — turning maintenance ON kicks every visitor
+  // off the site, so we ask before flipping the switch.
+  const [confirmEnable, setConfirmEnable] = useState(false);
+  // Track the actual DB value separately from the form so we can show a
+  // dedicated "Turn Off Now" button when maintenance is currently live.
+  const dbMaintenanceOn = (settings as Record<string, unknown> | undefined)?.maintenanceMode as boolean ?? false;
+  const MAINTENANCE_MSG_MAX = 280;
+  const maintenanceTemplates = [
+    { label: "Scheduled", text: "We're performing scheduled maintenance to bring you a better experience. We'll be back in a few minutes!" },
+    { label: "Deploying", text: "Quick deployment in progress. We'll be back online shortly — thanks for your patience!" },
+    { label: "Emergency", text: "We're experiencing a temporary issue and our team is working to resolve it ASAP. Please check back soon." },
+  ];
 
   const [googleForm, setGoogleForm] = useState({ clientId: "", clientSecret: "", enabled: false });
   const [showSecret, setShowSecret] = useState(false);
@@ -260,6 +272,37 @@ export default function AdminSettingsPage() {
         setMaintenanceSaving(false);
       },
       onError: () => { toast({ title: "Error saving maintenance settings", variant: "destructive" }); setMaintenanceSaving(false); },
+    });
+  };
+
+  // Switch handler — only show the confirm dialog when going from OFF→ON.
+  // Turning maintenance OFF is a safe action, no confirm needed.
+  const handleMaintenanceToggle = (next: boolean) => {
+    if (next && !maintenanceForm.maintenanceMode) {
+      setConfirmEnable(true);
+      return;
+    }
+    setMaintenanceForm(f => ({ ...f, maintenanceMode: next }));
+  };
+
+  // One-click "kill the maintenance banner now" — useful when site is live in
+  // maintenance and admin wants to immediately bring it back without scrolling
+  // down to find the Save button.
+  const turnMaintenanceOff = () => {
+    setMaintenanceSaving(true);
+    setMaintenanceForm(f => ({ ...f, maintenanceMode: false }));
+    updateSettings.mutate({
+      data: {
+        maintenanceMode: false,
+        maintenanceMessage: maintenanceForm.maintenanceMessage,
+      } as Parameters<typeof updateSettings.mutate>[0]["data"],
+    }, {
+      onSuccess: () => {
+        toast({ title: "Site is live again", description: "Maintenance mode disabled." });
+        queryClient.invalidateQueries({ queryKey: getGetAdminSettingsQueryKey() });
+        setMaintenanceSaving(false);
+      },
+      onError: () => { toast({ title: "Error disabling maintenance", variant: "destructive" }); setMaintenanceSaving(false); },
     });
   };
 
@@ -666,12 +709,38 @@ export default function AdminSettingsPage() {
               <Construction className={`w-4 h-4 ${maintenanceForm.maintenanceMode ? "text-amber-400" : "text-muted-foreground"}`} />
               Maintenance Mode
               {maintenanceForm.maintenanceMode && (
-                <span className="ml-auto text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-amber-400/15 text-amber-400 border border-amber-400/30">Active</span>
+                <span className="ml-auto flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-amber-400/15 text-amber-400 border border-amber-400/30">
+                  <span className="relative flex w-1.5 h-1.5">
+                    <span className="absolute inline-flex w-full h-full rounded-full bg-amber-400 opacity-75 animate-ping" />
+                    <span className="relative inline-flex w-1.5 h-1.5 rounded-full bg-amber-400" />
+                  </span>
+                  Active
+                </span>
               )}
             </CardTitle>
             <CardDescription>When enabled, visitors see a maintenance page. Admins can still access the site.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Live banner — only shown when maintenance is currently ON in
+                the DB. Gives a one-click escape hatch separate from Save. */}
+            {dbMaintenanceOn && (
+              <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                <div className="flex items-center gap-2 text-xs text-amber-300 min-w-0">
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                  <span className="font-medium truncate">Site is currently in maintenance — visitors are blocked.</span>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={turnMaintenanceOff}
+                  disabled={maintenanceSaving}
+                  className="flex-shrink-0 bg-amber-500 hover:bg-amber-600 text-white gap-1.5 h-8"
+                >
+                  <Power className="w-3.5 h-3.5" />Turn Off Now
+                </Button>
+              </div>
+            )}
+
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">Enable Maintenance Mode</p>
@@ -679,29 +748,108 @@ export default function AdminSettingsPage() {
               </div>
               <Switch
                 checked={maintenanceForm.maintenanceMode}
-                onCheckedChange={v => setMaintenanceForm(f => ({ ...f, maintenanceMode: v }))}
+                onCheckedChange={handleMaintenanceToggle}
               />
             </div>
+
             <div>
-              <Label className="text-sm mb-1.5 block">Maintenance Message <span className="text-muted-foreground font-normal">(optional)</span></Label>
+              <div className="flex items-center justify-between mb-1.5">
+                <Label className="text-sm">Maintenance Message <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                <span className={`text-[10px] font-mono tabular-nums ${maintenanceForm.maintenanceMessage.length > MAINTENANCE_MSG_MAX ? "text-red-400" : "text-muted-foreground"}`}>
+                  {maintenanceForm.maintenanceMessage.length}/{MAINTENANCE_MSG_MAX}
+                </span>
+              </div>
               <Textarea
                 value={maintenanceForm.maintenanceMessage}
-                onChange={e => setMaintenanceForm(f => ({ ...f, maintenanceMessage: e.target.value }))}
+                onChange={e => setMaintenanceForm(f => ({ ...f, maintenanceMessage: e.target.value.slice(0, MAINTENANCE_MSG_MAX) }))}
                 placeholder="We're performing scheduled maintenance. We'll be back shortly!"
                 className="bg-background border-border resize-none h-20 text-sm"
+                maxLength={MAINTENANCE_MSG_MAX}
               />
+              {/* Quick template chips — one click fills the textarea with a
+                  ready-made message. Saves time for common scenarios. */}
+              <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold flex items-center gap-1">
+                  <Sparkles className="w-3 h-3" />Quick fill:
+                </span>
+                {maintenanceTemplates.map(t => (
+                  <button
+                    key={t.label}
+                    type="button"
+                    onClick={() => setMaintenanceForm(f => ({ ...f, maintenanceMessage: t.text }))}
+                    className="text-[11px] px-2 py-0.5 rounded-md bg-secondary hover:bg-secondary/80 text-secondary-foreground border border-border transition-colors"
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
             </div>
-            {maintenanceForm.maintenanceMode && (
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300">
-                <Construction className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                <span>Maintenance mode is <strong>ON</strong>. All visitors (except admins) will see the maintenance screen until you turn this off.</span>
+
+            {/* Live preview — show admins exactly what visitors will see. */}
+            {maintenanceForm.maintenanceMessage.trim() && (
+              <div className="border border-dashed border-border rounded-lg overflow-hidden">
+                <div className="flex items-center justify-between px-3 py-1.5 bg-muted/40 border-b border-border">
+                  <span className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1">
+                    <Eye className="w-3 h-3" />Preview
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">What visitors will see</span>
+                </div>
+                <div className="text-center py-5 px-4 bg-background/50">
+                  <Construction className="w-8 h-8 text-amber-400 mx-auto mb-2" />
+                  <p className="text-sm font-semibold text-foreground mb-1">Site Under Maintenance</p>
+                  <p className="text-xs text-muted-foreground max-w-sm mx-auto">{maintenanceForm.maintenanceMessage}</p>
+                </div>
               </div>
             )}
+
+            {maintenanceForm.maintenanceMode && !dbMaintenanceOn && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300">
+                <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                <span>Click <strong>Save</strong> below to enable maintenance mode. All visitors (except admins) will be blocked until you turn this off.</span>
+              </div>
+            )}
+
             <Button type="button" onClick={handleSaveMaintenance} disabled={maintenanceSaving} variant={maintenanceForm.maintenanceMode ? "default" : "outline"} className={`w-full border-border ${maintenanceForm.maintenanceMode ? "bg-amber-500 hover:bg-amber-600 text-white" : ""}`}>
-              {maintenanceSaving ? "Saving..." : maintenanceForm.maintenanceMode ? "Save & Keep Maintenance Active" : "Save Maintenance Settings"}
+              {maintenanceSaving ? "Saving..." : maintenanceForm.maintenanceMode ? (dbMaintenanceOn ? "Save Changes" : "Enable Maintenance & Save") : "Save Maintenance Settings"}
             </Button>
           </CardContent>
         </Card>
+
+        {/* Confirm dialog — guards the OFF→ON switch toggle. */}
+        <Dialog open={confirmEnable} onOpenChange={setConfirmEnable}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-amber-400" />
+                Enable Maintenance Mode?
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 text-sm text-muted-foreground">
+              <p>This will <strong className="text-foreground">block every visitor</strong> from accessing the site once you save.</p>
+              <ul className="list-disc list-inside space-y-1 text-xs pl-1">
+                <li>All non-admin users will see the maintenance screen</li>
+                <li>Active sessions will be interrupted on next page load</li>
+                <li>Admins can still log in and access the dashboard</li>
+                <li>You'll need to click <strong>Save</strong> after this to apply</li>
+              </ul>
+            </div>
+            <div className="flex gap-2 mt-2">
+              <Button type="button" variant="outline" onClick={() => setConfirmEnable(false)} className="flex-1">
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={() => {
+                  setMaintenanceForm(f => ({ ...f, maintenanceMode: true }));
+                  setConfirmEnable(false);
+                }}
+                className="flex-1 bg-amber-500 hover:bg-amber-600 text-white gap-2"
+              >
+                <Construction className="w-4 h-4" />Yes, enable
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Social Login */}
         <Card className="bg-card border-border">
