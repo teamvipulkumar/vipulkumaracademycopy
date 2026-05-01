@@ -373,7 +373,7 @@ function AffiliateDashboard({ user }: { user: any }) {
 
   const SidebarContent = () => (
     <>
-      <nav className="flex-1 py-3 overflow-y-auto">
+      <nav className="flex-1 pt-0 pb-3 overflow-y-auto">
         {TABS.map(t => (
           <button
             key={t.id}
