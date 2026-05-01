@@ -132,15 +132,15 @@ export default function AdminFacebookPixelPage() {
       if (res.ok && data.sent) {
         toast({
           title: "Test event sent",
-          description: `"${data.event_name}" 30 seconds mein Test Events tab mein dikhega.`,
+          description: `"${data.event_name}" will appear in the Test Events tab within 30 seconds.`,
         });
       } else {
         toast({
           title: "Test failed",
           description: data.reason === "test_event_code_missing"
-            ? "Test Event Code save karein pehle."
+            ? "Save a Test Event Code first."
             : data.reason === "capi_not_configured"
-              ? "Access Token nahi hai."
+              ? "Access Token is not configured."
               : data.reason === "meta_rejected"
                 ? `Meta: ${data.error?.message ?? "rejected"}`
                 : data.reason ?? "Unknown error",
@@ -183,7 +183,7 @@ export default function AdminFacebookPixelPage() {
       if (failures.length === 0) {
         toast({
           title: `All ${successes.length} events sent ✓`,
-          description: `${events.join(", ")} — 30 seconds mein Test Events tab mein dikhne lagenge.`,
+          description: `${events.join(", ")} — will appear in the Test Events tab within 30 seconds.`,
         });
       } else if (successes.length > 0) {
         toast({
@@ -195,7 +195,7 @@ export default function AdminFacebookPixelPage() {
         toast({
           title: "All events failed",
           description: failures[0].reason === "capi_not_configured"
-            ? "Access Token configure karein pehle."
+            ? "Configure the Access Token first."
             : failures.map(f => `${f.event_name}: ${f.error?.message ?? f.reason ?? "unknown"}`).join("; "),
           variant: "destructive",
         });
