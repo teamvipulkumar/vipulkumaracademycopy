@@ -32,6 +32,7 @@ export default function AdminFacebookPixelPage() {
   // Test Event panel — independent of saved settings, transient input only.
   const [testCodeInput, setTestCodeInput] = useState("");
   const [sendingTest, setSendingTest] = useState(false);
+  const [sendingAll, setSendingAll] = useState(false);
 
   const locked = !editing;
 
@@ -97,7 +98,27 @@ export default function AdminFacebookPixelPage() {
     });
   };
 
+  // Clears the persisted facebookTestEventCode from platform_settings so
+  // /api/pixel/event no longer routes real visitor events to Test Events.
+  // The local transient testCodeInput is left alone — admin may still test.
+  const handleClearPersistedTestCode = () => {
+    if (saving) return;
+    setSaving(true);
+    updateSettings.mutate({
+      data: { facebookTestEventCode: "" } as Parameters<typeof updateSettings.mutate>[0]["data"],
+    }, {
+      onSuccess: () => {
+        toast({ title: "Test mode cleared", description: "Real-user events will now hit production again." });
+        queryClient.invalidateQueries({ queryKey: getGetAdminSettingsQueryKey() });
+        refreshCapiStatus();
+      },
+      onError: (e) => toast({ title: "Failed to clear", description: String(e), variant: "destructive" }),
+      onSettled: () => setSaving(false),
+    });
+  };
+
   const handleSendTestEvent = async () => {
+    if (sendingTest || sendingAll) return;
     const code = testCodeInput.trim();
     if (!code) return;
     setSendingTest(true);
@@ -130,6 +151,57 @@ export default function AdminFacebookPixelPage() {
       toast({ title: "Network error", description: String(e), variant: "destructive" });
     } finally {
       setSendingTest(false);
+    }
+  };
+
+  // Fire all 3 production events in parallel for full pipeline verification.
+  // Each call uses the same TEST code so they all land in the Test Events tab.
+  const handleSendAllEvents = async () => {
+    if (sendingAll || sendingTest) return;
+    const code = testCodeInput.trim();
+    if (!code) return;
+    setSendingAll(true);
+    const events = ["PageView", "InitiateCheckout", "Purchase"] as const;
+    try {
+      const results = await Promise.all(events.map(async (event_name) => {
+        try {
+          const res = await fetch(`${API_BASE}/api/pixel/send-test-event`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ event_name, test_event_code: code }),
+          });
+          const data = await res.json();
+          return { event_name, ok: res.ok && data.sent === true, reason: data.reason as string | undefined, error: data.error };
+        } catch (e) {
+          return { event_name, ok: false, reason: "network_error", error: { message: String(e) } };
+        }
+      }));
+
+      const successes = results.filter(r => r.ok);
+      const failures = results.filter(r => !r.ok);
+
+      if (failures.length === 0) {
+        toast({
+          title: `All ${successes.length} events sent ✓`,
+          description: `${events.join(", ")} — 30 seconds mein Test Events tab mein dikhne lagenge.`,
+        });
+      } else if (successes.length > 0) {
+        toast({
+          title: `${successes.length}/${events.length} events sent`,
+          description: `Failed: ${failures.map(f => `${f.event_name} (${f.error?.message ?? f.reason ?? "unknown"})`).join("; ")}`,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "All events failed",
+          description: failures[0].reason === "capi_not_configured"
+            ? "Access Token configure karein pehle."
+            : failures.map(f => `${f.event_name}: ${f.error?.message ?? f.reason ?? "unknown"}`).join("; "),
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setSendingAll(false);
     }
   };
 
@@ -177,14 +249,26 @@ export default function AdminFacebookPixelPage() {
         </div>
       </div>
 
-      {/* Test mode banner */}
+      {/* Test mode banner — appears only when a TEST code is persisted in DB
+          (legacy state, env config, or someone using SQL). The transient input
+          in the bottom card does NOT trigger this. */}
       {capiStatus?.test_mode && (
         <div className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 flex items-start gap-3">
           <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-          <div className="text-xs">
+          <div className="text-xs flex-1">
             <p className="font-semibold text-amber-500 mb-0.5">Test mode is active</p>
-            <p className="text-muted-foreground">All server-side events route to Meta's Test Events tab — production stats are not being recorded. Clear the Test Event Code below and Save to resume normal tracking.</p>
+            <p className="text-muted-foreground">All server-side events route to Meta's Test Events tab — production stats are NOT being recorded. A TEST code is persisted in your settings; click Clear to resume normal tracking.</p>
           </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="shrink-0 h-7 text-xs border-amber-500/40 hover:bg-amber-500/20"
+            onClick={handleClearPersistedTestCode}
+            disabled={saving}
+          >
+            {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : "Clear test mode"}
+          </Button>
         </div>
       )}
 
@@ -367,7 +451,8 @@ export default function AdminFacebookPixelPage() {
             </div>
           </div>
 
-          <div className="flex gap-2">
+          <div>
+            <Label className="text-sm mb-1.5 block">Test Event Code</Label>
             <Input
               value={testCodeInput}
               onChange={e => setTestCodeInput(e.target.value)}
@@ -375,21 +460,45 @@ export default function AdminFacebookPixelPage() {
               className="bg-background font-mono"
               autoComplete="off"
               spellCheck={false}
+              disabled={sendingTest || sendingAll}
             />
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-2">
             <Button
               type="button"
+              variant="outline"
               onClick={handleSendTestEvent}
-              disabled={sendingTest || !testCodeInput.trim() || !capiStatus?.configured}
-              className="shrink-0 gap-2"
-              title={!capiStatus?.configured ? "Save Access Token first" : !testCodeInput.trim() ? "Enter a TEST code" : "Send test event to Meta"}
+              disabled={sendingTest || sendingAll || !testCodeInput.trim() || !capiStatus?.configured}
+              className="gap-2"
+              title={!capiStatus?.configured ? "Save Access Token first" : !testCodeInput.trim() ? "Enter a TEST code" : "Send InitiateCheckout test"}
             >
               {sendingTest ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              {sendingTest ? "Sending" : "Send Test Event"}
+              {sendingTest ? "Sending…" : "Send InitiateCheckout"}
+            </Button>
+            <Button
+              type="button"
+              onClick={handleSendAllEvents}
+              disabled={sendingTest || sendingAll || !testCodeInput.trim() || !capiStatus?.configured}
+              className="gap-2"
+              title={!capiStatus?.configured ? "Save Access Token first" : !testCodeInput.trim() ? "Enter a TEST code" : "Send PageView + InitiateCheckout + Purchase"}
+            >
+              {sendingAll ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              {sendingAll ? "Sending all 3…" : "Send All Events"}
             </Button>
           </div>
 
+          <div className="rounded-md border border-border bg-background/50 p-3 space-y-1.5">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">What "Send All Events" does</p>
+            <ul className="text-xs text-muted-foreground space-y-0.5 list-disc pl-4">
+              <li><strong className="text-foreground">PageView</strong> — verifies basic CAPI connectivity</li>
+              <li><strong className="text-foreground">InitiateCheckout</strong> — verifies checkout funnel tracking</li>
+              <li><strong className="text-foreground">Purchase</strong> — verifies conversion / revenue tracking (₹1 synthetic)</li>
+            </ul>
+          </div>
+
           <p className="text-[11px] text-muted-foreground">
-            Get the code from Events Manager → <strong>Test Events</strong> tab — top of page shows your unique <code className="bg-background px-1 py-0.5 rounded">TEST&lt;digits&gt;</code> code. The event appears in the Test Events tab within 30 seconds and does NOT affect production stats.
+            Get the code from Events Manager → <strong>Test Events</strong> tab — top of page shows your unique <code className="bg-background px-1 py-0.5 rounded">TEST&lt;digits&gt;</code> code. Events appear within 30 seconds and do NOT affect production stats.
           </p>
         </CardContent>
       </Card>

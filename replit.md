@@ -67,9 +67,11 @@ Includes a responsive design with specific layouts for admin dashboards and repo
   - Returns 400 for malformed bodies, `{sent:false, reason:"capi_not_configured"}` if no token configured — failures never propagate to user-facing flows
   - When `platform_settings.facebook_test_event_code` is set, every event is automatically tagged with `test_event_code` and routed to Meta's Test Events tab instead of production stats
 - Admin UI at `/admin/facebook-pixel`:
-  - Editable inputs for Pixel ID, Base Code, **Access Token (password-masked with show/hide toggle)**, and **Test Event Code** — all persisted to `platform_settings` via `PUT /api/admin/settings`
-  - **Send Test Event button** — fires a synthetic InitiateCheckout via `POST /api/pixel/send-test-event` and reports Meta's response via toast (validates the full pipeline end-to-end without leaving the admin panel)
-  - Status badge queries `GET /api/pixel/capi-status` which returns `{configured, source: "database"|"environment"|null, test_mode}` so admins see whether the active token came from DB or env, plus a banner when test mode is currently active
+  - **Two-card layout**: top card holds the locked main config (Pixel ID, Base Code, Access Token — password-masked with show/hide toggle); bottom card is an always-editable Test Event panel
+  - Top card uses Edit/Save/Cancel pattern (locked by default) so admins can't accidentally mutate prod config — `PUT /api/admin/settings` only persists the 4 main fields, **never** the test code
+  - **Test Event panel** (bottom card, transient): admin types a `TEST<digits>` code into a local-state-only input → clicks **Send InitiateCheckout** (single event) or **Send All Events** (parallel PageView + InitiateCheckout + Purchase) → backend reads `test_event_code` from request body (preferred) or DB (legacy fallback) → Meta returns confirmation. Nothing is persisted, so production traffic stays unaffected
+  - **Test mode banner + Clear button**: appears only when `platform_settings.facebook_test_event_code` is non-empty (legacy/env/SQL-set state). Banner has an inline "Clear test mode" button that PUTs `facebookTestEventCode: ""` to settings — restores production routing in one click without entering edit mode
+  - Status badge queries `GET /api/pixel/capi-status` which returns `{configured, source: "database"|"environment"|null, test_mode}` so admins see whether the active token came from DB or env
 - Affiliate per-user pixels (`affiliate_pixels` table, with their own `access_token` column) are independent of the global CAPI token and continue to work as before
 
 ## External Dependencies
