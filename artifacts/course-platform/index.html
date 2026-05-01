@@ -77,6 +77,18 @@
         var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
         var timeoutId = setTimeout(function() { if (ctrl) ctrl.abort(); }, 4000);
 
+        // Visibility safety net — never keep #root hidden longer than 250ms.
+        // The maintenance API normally responds in <200ms so the gate works
+        // as designed. If it's slower (cold start, network blip), we'd rather
+        // show the page than blank it out for 1-2s on every refresh. The
+        // MaintenanceWatcher (polling every 30s) will reload if maintenance
+        // actually turns on, so worst case is a brief flash for the rare
+        // user hitting refresh during a slow maintenance check while
+        // maintenance is genuinely active.
+        setTimeout(function() {
+          document.documentElement.classList.remove('vka-maintenance-checking');
+        }, 250);
+
         function escapeHtml(s) {
           return String(s).replace(/[&<>"']/g, function(c) {
             return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
