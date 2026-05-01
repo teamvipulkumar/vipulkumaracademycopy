@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getGetMeQueryKey } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import { getPostLoginPath } from "@/lib/auth-context";
 import { Loader2, Phone } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -40,7 +41,11 @@ export function GoogleSignInButton({ mode = "signin" }: GoogleSignInButtonProps)
 
   const handleFinish = () => {
     toast({ title: mode === "signup" ? "Account created!" : "Signed in!", description: "Welcome to Vipul Kumar Academy" });
-    setLocation("/my-courses");
+    // Resolve the right landing page based on role / staff permissions, the
+    // same way email/password login does. Without this, an admin or staff
+    // member who signs in with Google would always land on /my-courses.
+    const fresh = queryClient.getQueryData(getGetMeQueryKey()) as any;
+    setLocation(getPostLoginPath(fresh));
   };
 
   const handleSavePhone = async () => {

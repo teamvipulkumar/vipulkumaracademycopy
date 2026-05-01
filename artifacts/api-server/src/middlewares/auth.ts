@@ -78,10 +78,39 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
 export function requireAdmin(req: Request, res: Response, next: NextFunction): void {
   requireAuth(req, res, () => {
     const user = (req as Request & { user: JwtPayload }).user;
-    if (user?.role !== "admin" && user?.role !== "staff") {
+    // Accept either a true admin role OR an active staff member (the
+    // admin_staff table is the source of truth for staff status — the user's
+    // underlying `role` may still be "student" / "affiliate" since we no
+    // longer mutate it when granting staff access).
+    const isAdmin = user?.role === "admin";
+    const isStaff = user?.isStaff === true;
+    if (!isAdmin && !isStaff) {
       res.status(403).json({ error: "Forbidden: admin only" });
       return;
     }
     next();
   });
+}
+
+/**
+ * Granular permission middleware for staff members. Admins always pass.
+ * Staff must have the specified permission flag set to `true` in their JWT.
+ * Use on admin routes to enforce least-privilege access (e.g. a staff with
+ * only `affiliates` should not be able to ban users via /admin/users/:id/ban).
+ */
+export function requirePermission(perm: string) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    requireAdmin(req, res, () => {
+      const user = (req as Request & { user: JwtPayload }).user;
+      if (user.role === "admin" && !user.isStaff) {
+        next();
+        return;
+      }
+      if (user.isStaff && user.staffPermissions && user.staffPermissions[perm] === true) {
+        next();
+        return;
+      }
+      res.status(403).json({ error: `Forbidden: requires '${perm}' permission` });
+    });
+  };
 }

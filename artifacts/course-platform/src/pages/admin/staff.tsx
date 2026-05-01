@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { UserPlus, Shield, ShieldOff, Trash2, Pencil, ShieldCheck } from "lucide-react";
+import { UserPlus, Shield, ShieldOff, Trash2, Pencil, ShieldCheck, KeyRound, Copy, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
 import { useLocation } from "wouter";
@@ -85,6 +85,18 @@ export default function AdminStaffPage() {
   const [editTarget, setEditTarget] = useState<StaffMember | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<StaffMember | null>(null);
   const [form, setForm] = useState(emptyForm);
+  // After creating a brand-new staff user, show the auto-generated temp
+  // password ONCE so the admin can share it. We never persist this in state
+  // beyond dismissal — closing the dialog clears it permanently.
+  const [credentialsToReveal, setCredentialsToReveal] = useState<{ email: string; password: string; name: string } | null>(null);
+  const [copiedField, setCopiedField] = useState<"email" | "password" | "both" | null>(null);
+
+  function copyToClipboard(text: string, field: "email" | "password" | "both") {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 1500);
+    });
+  }
 
   const { data: staff = [], isLoading } = useQuery<StaffMember[]>({
     queryKey: ["admin-staff"],
@@ -97,7 +109,18 @@ export default function AdminStaffPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["admin-staff"] }); toast({ title: "Staff member added" }); setModalOpen(false); },
+    onSuccess: (created: StaffMember & { generatedPassword: string | null }) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-staff"] });
+      setModalOpen(false);
+      // If the API generated a temp password (i.e. a brand-new account was
+      // created), show it once to the admin so they can pass it on. For
+      // existing users we just confirm the addition silently.
+      if (created.generatedPassword) {
+        setCredentialsToReveal({ email: created.email, password: created.generatedPassword, name: created.name });
+      } else {
+        toast({ title: "Staff member added", description: "Existing user — they can keep using their current password." });
+      }
+    },
     onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
 
@@ -334,6 +357,54 @@ export default function AdminStaffPage() {
             <Button onClick={handleSubmit} disabled={isPending}>
               {isPending ? "Saving…" : editTarget ? "Save Changes" : "Add Staff Member"}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* One-time reveal of the auto-generated temp password for a new staff account */}
+      <Dialog open={!!credentialsToReveal} onOpenChange={(o) => { if (!o) setCredentialsToReveal(null); }}>
+        <DialogContent className="max-w-md bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="w-5 h-5 text-primary" /> Share these credentials with {credentialsToReveal?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-300/90">
+              <strong className="text-amber-300">This password is shown only once.</strong> Copy it now and send it to the new staff member through a secure channel (e.g. password manager, encrypted chat). They can change it after first sign-in.
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs">Email</Label>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 px-3 py-2 rounded-md bg-background border border-border text-sm font-mono break-all">{credentialsToReveal?.email}</code>
+                <Button type="button" size="sm" variant="outline" className="h-9 w-9 p-0 flex-shrink-0" onClick={() => credentialsToReveal && copyToClipboard(credentialsToReveal.email, "email")} title="Copy email">
+                  {copiedField === "email" ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs">Temporary password</Label>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 px-3 py-2 rounded-md bg-background border border-border text-sm font-mono break-all">{credentialsToReveal?.password}</code>
+                <Button type="button" size="sm" variant="outline" className="h-9 w-9 p-0 flex-shrink-0" onClick={() => credentialsToReveal && copyToClipboard(credentialsToReveal.password, "password")} title="Copy password">
+                  {copiedField === "password" ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                </Button>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full gap-2"
+              onClick={() => credentialsToReveal && copyToClipboard(`Email: ${credentialsToReveal.email}\nPassword: ${credentialsToReveal.password}`, "both")}
+            >
+              {copiedField === "both" ? <><Check className="w-4 h-4 text-green-500" /> Copied both</> : <><Copy className="w-4 h-4" /> Copy email and password</>}
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setCredentialsToReveal(null)}>I've saved them</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

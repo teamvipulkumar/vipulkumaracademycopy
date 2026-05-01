@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { LayoutDashboard, Users, BookOpen, Share2, Tag, Settings, ArrowLeft, Menu, X, ShoppingCart, GraduationCap, Landmark, Mail, Layers, FileText, HardDrive, ShieldCheck, Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth, getStaffLandingPath } from "@/lib/auth-context";
 
 function AdminLogo() {
   return (
@@ -22,8 +22,12 @@ const PERMISSION_MAP: Record<string, string> = {
   "/admin/enrollments": "enrollments",
   "/admin/coupons": "coupons",
   "/admin/affiliates": "affiliates",
+  "/admin/affiliate-applications": "affiliates",
+  "/admin/automation-report": "crm",
   "/admin/courses": "courses",
+  "/admin/courses/new": "courses",
   "/admin/pages": "pages",
+  "/admin/page-builder": "pages",
   "/admin/files": "files",
   "/admin/users": "users",
   "/admin/crm": "crm",
@@ -32,6 +36,24 @@ const PERMISSION_MAP: Record<string, string> = {
   "/admin/settings": "settings",
   "/admin/facebook-pixel": "settings",
 };
+
+/**
+ * Match a current path against the PERMISSION_MAP, taking subroutes into
+ * account (e.g. /admin/courses/123/edit → "courses").
+ * Returns null for /admin/staff (admin-only) and unmapped paths.
+ */
+function permissionForPath(path: string): string | null {
+  if (path === "/admin/staff") return null;
+  if (PERMISSION_MAP[path]) return PERMISSION_MAP[path];
+  // Longest-prefix match for nested routes like /admin/courses/123 or /admin/page-builder/foo
+  let best: { len: number; perm: string } | null = null;
+  for (const key of Object.keys(PERMISSION_MAP)) {
+    if (path.startsWith(key + "/") && (!best || key.length > best.len)) {
+      best = { len: key.length, perm: PERMISSION_MAP[key] };
+    }
+  }
+  return best?.perm ?? null;
+}
 
 const navGroups = [
   {
@@ -137,8 +159,29 @@ function NavContent({ location, onNav }: { location: string; onNav?: () => void 
 }
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { isAdmin, isStaff, staffPermissions } = useAuth();
+
+  // Page-level guard: if a staff member lands on an admin page they don't
+  // have permission for (e.g. /admin dashboard with no `dashboard` perm),
+  // redirect them to the first page they ARE allowed to see. Without this
+  // guard the page would render and call APIs that 403, leaving a confusing
+  // "all zeros" dashboard.
+  useEffect(() => {
+    if (isAdmin || !isStaff || !staffPermissions) return;
+    if (location === "/admin/staff") {
+      // Staff can never see Staff & Access — bounce them.
+      const safe = getStaffLandingPath(staffPermissions);
+      if (safe) setLocation(safe);
+      return;
+    }
+    const required = permissionForPath(location);
+    if (required && staffPermissions[required] !== true) {
+      const safe = getStaffLandingPath(staffPermissions);
+      if (safe && safe !== location) setLocation(safe);
+    }
+  }, [location, isAdmin, isStaff, staffPermissions, setLocation]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">

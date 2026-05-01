@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth, getPostLoginPath } from "@/lib/auth-context";
 import { GoogleSignInButton, useGoogleConfig } from "@/components/google-sign-in-button";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
@@ -26,14 +26,16 @@ export default function Login() {
   const loginMutation = useLogin();
   const queryClient = useQueryClient();
   const { isAuthenticated } = useAuth();
+  // (user destructured below alongside isAuthenticated effect for redirect)
   const [showPw, setShowPw] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const googleConfig = useGoogleConfig();
 
+  const { user } = useAuth();
   // If user is already authenticated (e.g. navigated to /login while logged in), redirect them
   useEffect(() => {
-    if (isAuthenticated) setLocation("/my-courses");
-  }, [isAuthenticated, setLocation]);
+    if (isAuthenticated) setLocation(getPostLoginPath(user as any));
+  }, [isAuthenticated, user, setLocation]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -44,13 +46,17 @@ export default function Login() {
     loginMutation.mutate({ data: values }, {
       onSuccess: async (data) => {
         setIsRedirecting(true);
-        // 1. Immediately set auth state so ProtectedRoute sees isAuthenticated = true
-        queryClient.setQueryData(getGetMeQueryKey(), data);
-        // 2. Wait for a fresh server refetch — this gets accurate emailVerified status
-        //    and eliminates any timing race with ProtectedRoute
+        // 1. Immediately set auth state so ProtectedRoute sees isAuthenticated = true.
+        //    The login response wraps the user in `{ user, message }`, so unwrap it.
+        const userData = (data as any)?.user ?? data;
+        queryClient.setQueryData(getGetMeQueryKey(), userData);
+        // 2. Wait for a fresh server refetch — this gets accurate emailVerified status,
+        //    isStaff and staffPermissions, and eliminates timing races with ProtectedRoute.
         await queryClient.refetchQueries({ queryKey: getGetMeQueryKey() });
-        // 3. Navigate only after auth data is fully confirmed from server
-        setLocation("/my-courses");
+        // 3. Compute landing path from the freshly-fetched user (admin → /admin,
+        //    staff → first allowed admin page, others → /my-courses).
+        const fresh = queryClient.getQueryData(getGetMeQueryKey()) as any;
+        setLocation(getPostLoginPath(fresh ?? userData));
       },
       onError: (error: any) => {
         setIsRedirecting(false);
