@@ -607,7 +607,9 @@ export function AppLayout({ children, noFooter }: { children: React.ReactNode; n
   return (
     <div className="relative flex min-h-screen flex-col">
       <Navbar />
-      <div className="pt-16">
+      {/* `pt-14` matches the fixed Navbar height (h-14 = 56px) so the page
+          content sits flush below the header with no visible gap. */}
+      <div className="pt-14">
         <EmailVerificationBanner />
         <main className="flex-1 min-w-0">{children}</main>
       </div>
