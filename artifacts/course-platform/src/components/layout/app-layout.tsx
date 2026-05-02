@@ -89,20 +89,7 @@ function NotificationPopup({ iconSize = "w-4 h-4" }: { iconSize?: string }) {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        collisionPadding={8}
-        sideOffset={8}
-        // On mobile the bell isn't the rightmost element (the hamburger
-        // sits to its right), so `align="end"` anchors the dropdown to a
-        // point ~50px from the viewport edge — leaving the popup
-        // visibly skewed left of centre. By forcing the dropdown to span
-        // the full viewport width (minus 8px gutters) on phones, Radix's
-        // collisionPadding pushes it inward equally on both sides and the
-        // popup ends up perfectly centred. Desktop behaviour is untouched.
-        className="w-[min(20rem,calc(100vw-16px))] max-md:w-[calc(100vw-16px)] border p-0 shadow-2xl"
-        style={{ backgroundColor: "var(--dropdown-bg)", borderColor: "var(--dropdown-border)" }}
-      >
+      <DropdownMenuContent align="end" collisionPadding={8} className="w-[min(20rem,calc(100vw-16px))] border p-0 shadow-2xl" style={{ backgroundColor: "var(--dropdown-bg)", borderColor: "var(--dropdown-border)" }} sideOffset={8}>
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
           <div className="flex items-center gap-2">
