@@ -225,7 +225,10 @@ export function Navbar() {
 
           {/* ── Logo (left) ── */}
           <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 group" onClick={() => setMobileOpen(false)}>
-            <div className={`transition-all duration-300 flex-shrink-0 ${scrolled ? "scale-[0.85] origin-left" : "scale-100"}`}>
+            {/* Logo intentionally stays at full scale even when the sticky
+                header shrinks — user prefers a consistent brand size and
+                explicitly disabled the scroll-shrink behaviour. */}
+            <div className="flex-shrink-0">
               {branding.siteLogo ? (
                 <>
                   <img
