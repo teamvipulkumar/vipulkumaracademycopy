@@ -162,9 +162,14 @@ html, body {
   --elevate-1: rgba(15,23,42, .03);
   --elevate-2: rgba(15,23,42, .06);
 
-  /* Header / dropdown / drawer */
-  --nav-bg: #ffffff;
-  --nav-border: rgba(15,23,42, 0.10);
+  /* Header / dropdown / drawer.
+     Header uses a translucent near-white so the page's subtle blue tint
+     shows through behind it, matched with a backdrop-blur rule below for a
+     modern frosted-glass feel that doesn't read as a flat white slab.
+     Dropdowns and the mobile drawer stay opaque — legibility over content
+     trumps the floating effect when an interactive surface is open. */
+  --nav-bg: rgba(248, 250, 252, 0.78);
+  --nav-border: rgba(15,23,42, 0.08);
   --dropdown-bg: #ffffff;
   --dropdown-border: rgba(15,23,42, 0.10);
   --footer-bg: #f1f5f9;
@@ -477,17 +482,33 @@ html, body {
 .light hr { border-color: hsl(var(--border)); }
 
 /* ── Light-mode header refinements ─────────────────────────────────
-   The header reads as a flat white slab in light mode. Add a soft
-   1px bottom border (always-on, not just on scroll) and a softer
-   shadow when scrolled so the chrome feels grounded against page
-   content without becoming heavy.
+   In light mode the header's `--nav-bg` is intentionally translucent
+   (rgba near-white at 0.78). Pair it with `backdrop-filter` here so
+   the chrome reads as a frosted-glass bar floating over the page —
+   the page's subtle blue tint shows through, removing the flat-white
+   slab feel without sacrificing legibility. Always-on bottom border
+   grounds the bar; scroll shadow stays soft.
    ────────────────────────────────────────────────────────────── */
-.light header[style*="--nav-bg"],
 .light header[class*="fixed"][class*="z-50"] {
   border-bottom: 1px solid hsl(var(--border));
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
 }
 .light header.shadow-\[0_2px_20px_0_rgba\(0\,0\,0\,0\.15\)\] {
   box-shadow: 0 1px 12px 0 rgba(15,23,42,0.06) !important;
+}
+/* Bump inactive nav-link contrast inside the light-mode header.
+   With a translucent --nav-bg, `text-foreground/60` can dip below AA
+   when the bar overlays darker page content. Tighten the alpha here
+   only inside the header so the rest of the app keeps its hierarchy. */
+.light header[class*="fixed"][class*="z-50"] .text-foreground\/60 {
+  color: hsl(var(--foreground) / 0.78) !important;
+}
+.light header[class*="fixed"][class*="z-50"] .text-foreground\/70 {
+  color: hsl(var(--foreground) / 0.82) !important;
+}
+.light header[class*="fixed"][class*="z-50"] .text-foreground\/80 {
+  color: hsl(var(--foreground) / 0.88) !important;
 }
 
 /* Sidebar dividers in admin/affiliate panels */
