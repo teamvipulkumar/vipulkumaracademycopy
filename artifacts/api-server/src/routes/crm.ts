@@ -1085,7 +1085,7 @@ const DEFAULT_TEMPLATES = [
   {
     name: "Staff Welcome Email",
     type: "staff_welcome" as const,
-    subject: "Welcome to the team, {{name}} — Your VKA Admin Access 🎉",
+    subject: "Welcome to the team, {{name}} — Your VKA Staff Access 🎉",
     htmlBody: emailWrap(`
       <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:24px;">
         <tr><td align="center" style="background:#eef2ff;border-radius:12px;padding:26px 20px;">
@@ -1095,7 +1095,7 @@ const DEFAULT_TEMPLATES = [
         </td></tr>
       </table>
       <p style="margin:0 0 14px;font-size:15px;color:#374151;line-height:1.7;">Hi <strong>{{name}}</strong>,</p>
-      <p style="margin:0 0 18px;font-size:15px;color:#374151;line-height:1.7;">Great news — you now have admin access to the <strong>Vipul Kumar Academy</strong> platform. Below are your account details. Please keep them safe and do not share them with anyone.</p>
+      <p style="margin:0 0 18px;font-size:15px;color:#374151;line-height:1.7;">Great news — you now have staff access to the <strong>Vipul Kumar Academy</strong> platform as <strong>{{role_name}}</strong>. Below are your account details. Please keep them safe and do not share them with anyone.</p>
 
       <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:22px;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;font-size:14px;font-family:Arial,Helvetica,sans-serif;">
         <tr style="background:#f9fafb;">
@@ -1127,7 +1127,7 @@ const DEFAULT_TEMPLATES = [
 
       <table cellpadding="0" cellspacing="0" style="margin:8px 0 24px;">
         <tr><td style="background:#4f46e5;border-radius:8px;padding:13px 30px;">
-          <a href="{{login_url}}" data-no-track="1" style="color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;font-family:Arial,Helvetica,sans-serif;">Login to Admin Panel &rarr;</a>
+          <a href="{{login_url}}" data-no-track="1" style="color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;font-family:Arial,Helvetica,sans-serif;">Login to Staff Panel &rarr;</a>
         </td></tr>
       </table>
 
