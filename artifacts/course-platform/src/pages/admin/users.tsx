@@ -17,7 +17,7 @@ import {
   GraduationCap, Share2, Mail, Calendar, BookOpen, BadgeIndianRupee,
   MoreHorizontal, CheckCircle, XCircle, Lock, Phone,
   Download, Upload, FileSpreadsheet, AlertCircle, CheckCircle2, X, Loader2,
-  Square, CheckSquare, Ban, Package, CreditCard,
+  Square, CheckSquare, Ban, Package, CreditCard, Sparkles,
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
@@ -32,11 +32,12 @@ type User = {
 const roleColors: Record<string, string> = {
   admin: "text-red-400 border-red-400/30 bg-red-400/10",
   staff: "text-amber-400 border-amber-400/30 bg-amber-400/10",
+  creator: "text-emerald-400 border-emerald-400/30 bg-emerald-400/10",
   student: "text-blue-400 border-blue-400/30 bg-blue-400/10",
   affiliate: "text-purple-400 border-purple-400/30 bg-purple-400/10",
 };
 const roleIcons: Record<string, React.ElementType> = {
-  admin: ShieldCheck, staff: ShieldCheck, student: GraduationCap, affiliate: Share2,
+  admin: ShieldCheck, staff: ShieldCheck, creator: Sparkles, student: GraduationCap, affiliate: Share2,
 };
 
 function Avatar({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) {
@@ -274,7 +275,7 @@ function ImportUsersDialog({ open, onClose, onSuccess }: { open: boolean; onClos
                               <td className="px-3 py-2 text-muted-foreground">{r.password ? "••••••••" : <span className="text-red-400">missing</span>}</td>
                               <td className="px-3 py-2 text-muted-foreground font-mono">{r.phone || <span className="text-muted-foreground/50">—</span>}</td>
                               <td className="px-3 py-2">
-                                <Badge className={`text-[10px] ${r.role === "admin" ? "text-red-400 border-red-400/30 bg-red-400/10" : r.role === "affiliate" ? "text-purple-400 border-purple-400/30 bg-purple-400/10" : "text-blue-400 border-blue-400/30 bg-blue-400/10"}`}>
+                                <Badge className={`text-[10px] ${r.role === "admin" ? "text-red-400 border-red-400/30 bg-red-400/10" : r.role === "creator" ? "text-emerald-400 border-emerald-400/30 bg-emerald-400/10" : r.role === "affiliate" ? "text-purple-400 border-purple-400/30 bg-purple-400/10" : "text-blue-400 border-blue-400/30 bg-blue-400/10"}`}>
                                   {r.role || "student"}
                                 </Badge>
                               </td>
@@ -836,7 +837,7 @@ export default function AdminUsersPage() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [bulkDialog, setBulkDialog] = useState<"delete" | "ban" | "unban" | null>(null);
   const [bulkLoading, setBulkLoading] = useState(false);
-  const [globalCounts, setGlobalCounts] = useState({ total: 0, admin: 0, staff: 0, student: 0, affiliate: 0 });
+  const [globalCounts, setGlobalCounts] = useState({ total: 0, admin: 0, staff: 0, creator: 0, student: 0, affiliate: 0 });
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -858,12 +859,12 @@ export default function AdminUsersPage() {
   // Fetch global role counts (unfiltered) once and on refresh
   const fetchGlobalCounts = () => {
     Promise.all(
-      ["", "admin", "staff", "student", "affiliate"].map(r =>
+      ["", "admin", "staff", "creator", "student", "affiliate"].map(r =>
         fetch(`${API_BASE}/api/admin/users?limit=1&offset=0${r ? `&role=${r}` : ""}`, { credentials: "include" })
           .then(res => res.json()).then(d => d.total ?? 0).catch(() => 0)
       )
-    ).then(([total, admin, staff, student, affiliate]) => {
-      setGlobalCounts({ total, admin, staff, student, affiliate });
+    ).then(([total, admin, staff, creator, student, affiliate]) => {
+      setGlobalCounts({ total, admin, staff, creator, student, affiliate });
     });
   };
 
@@ -983,11 +984,12 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Stats strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 mb-6">
         {[
           { label: "Total Users", value: roleCounts.total, color: "text-foreground" },
           { label: "Admins", value: roleCounts.admin, color: "text-red-400" },
           { label: "Staff", value: roleCounts.staff, color: "text-amber-400" },
+          { label: "Creators", value: roleCounts.creator, color: "text-emerald-400" },
           { label: "Students", value: roleCounts.student, color: "text-blue-400" },
           { label: "Affiliates", value: roleCounts.affiliate, color: "text-purple-400" },
         ].map(s => (
@@ -1015,6 +1017,7 @@ export default function AdminUsersPage() {
             <SelectItem value="all">All Roles</SelectItem>
             <SelectItem value="admin">Admin</SelectItem>
             <SelectItem value="staff">Staff</SelectItem>
+            <SelectItem value="creator">Creator</SelectItem>
             <SelectItem value="student">Student</SelectItem>
             <SelectItem value="affiliate">Affiliate</SelectItem>
           </SelectContent>
