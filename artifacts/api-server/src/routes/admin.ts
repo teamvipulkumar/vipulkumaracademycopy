@@ -11,6 +11,7 @@ import { eq, count, sum, gte, and, ilike, or, sql, desc, ne, inArray, isNotNull,
 import { requireAdmin, verifyToken, type JwtPayload } from "../middlewares/auth";
 import type { Request } from "express";
 import { triggerAutomation, invalidatePublicBaseUrlCache } from "./crm";
+import { cancelCreatorCommissionsForPayment } from "./creators";
 
 const router = Router();
 type AuthedRequest = Request & { user: JwtPayload };
@@ -791,6 +792,10 @@ router.post("/orders/:orderId/refund", requireAdmin, async (req, res): Promise<v
 
   // Mark as refunded in our DB (always, regardless of gateway result)
   await db.update(paymentsTable).set({ status: "refunded" }).where(eq(paymentsTable.id, orderId));
+
+  // Creator commission cleanup: cancel any earned/pending-payout commissions
+  // tied to this payment. Already-paid rows are flagged for manual claw-back.
+  await cancelCreatorCommissionsForPayment(orderId);
 
   const [refundUser] = await db.select().from(usersTable).where(eq(usersTable.id, payment.userId)).limit(1);
 

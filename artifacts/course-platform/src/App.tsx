@@ -3,7 +3,7 @@ import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AuthProvider, ProtectedRoute } from "@/lib/auth-context";
+import { AuthProvider, ProtectedRoute, ProtectedCreatorRoute } from "@/lib/auth-context";
 import { ThemeProvider } from "@/lib/theme-context";
 import { BrandingProvider } from "@/lib/branding-context";
 import { AppLayout } from "@/components/layout/app-layout";
@@ -115,6 +115,15 @@ import AdminPagesPage from "@/pages/admin/pages";
 import AdminGstInvoicingPage from "@/pages/admin/gst-invoicing";
 import AdminFilesPage from "@/pages/admin/files";
 import AdminStaffPage from "@/pages/admin/staff";
+import AdminCreatorsPage from "@/pages/admin/creators";
+import AdminCreatorDetailPage from "@/pages/admin/creator-detail";
+import AdminCreatorPayoutsPage from "@/pages/admin/creator-payouts";
+import { CreatorLayout } from "@/components/layout/creator-layout";
+import CreatorDashboardPage from "@/pages/creator/dashboard";
+import CreatorSalesPage from "@/pages/creator/sales";
+import CreatorPayoutsPage from "@/pages/creator/payouts";
+import CreatorCoursesPage from "@/pages/creator/courses";
+import CreatorKycPage from "@/pages/creator/kyc";
 import PageBuilderPage from "@/pages/admin/page-builder";
 import PageRendererPage from "@/pages/page-renderer";
 import PaymentVerifyPage from "@/pages/payment-verify";
@@ -195,8 +204,19 @@ function Router() {
         <Route key={`${prefix}/gst-invoicing`} path={`${prefix}/gst-invoicing`} component={() => <ProtectedRoute adminOnly><AdminLayout><AdminGstInvoicingPage /></AdminLayout></ProtectedRoute>} />,
         <Route key={`${prefix}/files`} path={`${prefix}/files`} component={() => <ProtectedRoute adminOnly><AdminLayout><AdminFilesPage /></AdminLayout></ProtectedRoute>} />,
         <Route key={`${prefix}/staff`} path={`${prefix}/staff`} component={() => <ProtectedRoute adminOnly><AdminLayout><AdminStaffPage /></AdminLayout></ProtectedRoute>} />,
+        <Route key={`${prefix}/creators`} path={`${prefix}/creators`} component={() => <ProtectedRoute adminOnly><AdminLayout><AdminCreatorsPage /></AdminLayout></ProtectedRoute>} />,
+        <Route key={`${prefix}/creators/:id`} path={`${prefix}/creators/:id`} component={() => <ProtectedRoute adminOnly><AdminLayout><AdminCreatorDetailPage /></AdminLayout></ProtectedRoute>} />,
+        <Route key={`${prefix}/creator-payouts`} path={`${prefix}/creator-payouts`} component={() => <ProtectedRoute adminOnly><AdminLayout><AdminCreatorPayoutsPage /></AdminLayout></ProtectedRoute>} />,
         <Route key={`${prefix}/pages/:id/builder`} path={`${prefix}/pages/:id/builder`} component={() => <ProtectedRoute adminOnly><PageBuilderPage /></ProtectedRoute>} />,
       ])}
+
+      {/* ── Creator panel ── Read-only dashboard for external course creators. */}
+      <Route path="/creator" component={() => <ProtectedCreatorRoute><CreatorLayout><CreatorDashboardPage /></CreatorLayout></ProtectedCreatorRoute>} />
+      <Route path="/creator/sales" component={() => <ProtectedCreatorRoute><CreatorLayout><CreatorSalesPage /></CreatorLayout></ProtectedCreatorRoute>} />
+      <Route path="/creator/payouts" component={() => <ProtectedCreatorRoute><CreatorLayout><CreatorPayoutsPage /></CreatorLayout></ProtectedCreatorRoute>} />
+      <Route path="/creator/courses" component={() => <ProtectedCreatorRoute><CreatorLayout><CreatorCoursesPage /></CreatorLayout></ProtectedCreatorRoute>} />
+      <Route path="/creator/kyc" component={() => <ProtectedCreatorRoute><CreatorLayout><CreatorKycPage /></CreatorLayout></ProtectedCreatorRoute>} />
+
       <Route path="/checkout/:id" component={() => <CheckoutPage />} />
       <Route path="/bundles/:id" component={() => <AppLayout><BundleDetailPage /></AppLayout>} />
       <Route path="/bundles/:id/checkout" component={() => <BundleCheckoutPage />} />

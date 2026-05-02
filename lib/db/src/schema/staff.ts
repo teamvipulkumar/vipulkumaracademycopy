@@ -16,6 +16,8 @@ export interface StaffPermissions {
   paymentGateways: boolean;
   gstInvoicing: boolean;
   settings: boolean;
+  /** Manage course creators + creator commission payouts. */
+  creators: boolean;
 }
 
 export const DEFAULT_PERMISSIONS: StaffPermissions = {
@@ -33,6 +35,7 @@ export const DEFAULT_PERMISSIONS: StaffPermissions = {
   paymentGateways: false,
   gstInvoicing: false,
   settings: false,
+  creators: false,
 };
 
 export const PRESET_ROLES: Record<string, { label: string; permissions: StaffPermissions }> = {
@@ -62,6 +65,7 @@ export const PRESET_ROLES: Record<string, { label: string; permissions: StaffPer
       dashboard: true, orders: true, enrollments: true, coupons: true, affiliates: true,
       payouts: true, courses: true, pages: true, files: true, users: true,
       crm: true, paymentGateways: true, gstInvoicing: true, settings: true,
+      creators: true,
     },
   },
 };

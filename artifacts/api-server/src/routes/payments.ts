@@ -14,6 +14,7 @@ import { bundlesTable, bundleCoursesTable } from "@workspace/db";
 import { requireAuth, requireAdmin, signToken, verifyToken, authCookieOptions, type JwtPayload } from "../middlewares/auth";
 import type { Request } from "express";
 import { triggerAutomation, triggerFunnel, getPublicBaseUrl } from "./crm";
+import { recordCreatorCommissions } from "./creators";
 import { sendFbEvent } from "../lib/facebook-pixel";
 import { generateGstInvoice } from "./gst";
 
@@ -403,6 +404,7 @@ router.post("/verify", requireAuth, async (req, res): Promise<void> => {
       triggerFunnel("new_purchase", buyer.id, { course_name: course?.title ?? "", amount: String(parseFloat(String(payment.amount)).toFixed(2)) }).catch(() => {});
     }
     await recordAffiliateCommission(payment.affiliateRef, authedReq.user.userId, payment.courseId, parseFloat(String(payment.amount)));
+    if (payment.courseId) await recordCreatorCommissions(payment, [payment.courseId]);
   } else {
     enrollmentId = existing[0].id;
   }
@@ -572,6 +574,12 @@ router.post("/checkout/guest", async (req, res): Promise<void> => {
     await db.insert(enrollmentsTable).values({ userId, courseId: parseInt(courseId) });
     await db.insert(notificationsTable).values({ userId, title: "Enrollment Confirmed!", message: `You are now enrolled in ${course.title}`, type: "success" });
     await recordAffiliateCommission(affiliateRef, userId, parseInt(courseId), amount);
+    if (newPayment) {
+      await recordCreatorCommissions(
+        { id: newPayment.id, userId, amount, courseId: parseInt(courseId), bundleId: null },
+        [parseInt(courseId)],
+      );
+    }
   }
 
   // Auto-login: set JWT cookie
@@ -831,6 +839,7 @@ router.post("/cashfree/verify", async (req, res): Promise<void> => {
           if (coupon) await db.update(couponsTable).set({ usedCount: coupon.usedCount + 1 }).where(eq(couponsTable.id, coupon.id));
         }
         await recordAffiliateCommission(payment.affiliateRef, payment.userId, null, parseFloat(String(payment.amount)));
+        await recordCreatorCommissions(payment, bundleCourses.map(bc => bc.courseId).filter((x): x is number => x != null));
         res.json({ success: true, enrolled: true, bundleId: payment.bundleId, bundleName: bundle?.name, courseCount: bundleCourses.length, amount: parseFloat(String(payment.amount)), currency: "INR" });
         return;
       }
@@ -851,6 +860,7 @@ router.post("/cashfree/verify", async (req, res): Promise<void> => {
           triggerFunnel("new_purchase", buyer.id, { course_name: course.title, amount: String(parseFloat(String(payment.amount)).toFixed(2)) }).catch(() => {});
         }
         await recordAffiliateCommission(payment.affiliateRef, payment.userId, payment.courseId, parseFloat(String(payment.amount)));
+        if (payment.courseId) await recordCreatorCommissions(payment, [payment.courseId]);
       }
 
       const [course] = await db.select().from(coursesTable).where(eq(coursesTable.id, payment.courseId)).limit(1);
@@ -950,6 +960,7 @@ router.post("/cashfree/webhook", async (req, res): Promise<void> => {
       if (coupon) await db.update(couponsTable).set({ usedCount: coupon.usedCount + 1 }).where(eq(couponsTable.id, coupon.id));
     }
     await recordAffiliateCommission(payment.affiliateRef, payment.userId, null, parseFloat(String(payment.amount)));
+    await recordCreatorCommissions(payment, bundleCourses.map(bc => bc.courseId).filter((x): x is number => x != null));
   } else {
     const [existing] = await db.select().from(enrollmentsTable).where(and(eq(enrollmentsTable.userId, payment.userId), eq(enrollmentsTable.courseId, payment.courseId))).limit(1);
     if (!existing) {
@@ -966,6 +977,7 @@ router.post("/cashfree/webhook", async (req, res): Promise<void> => {
         if (coupon) await db.update(couponsTable).set({ usedCount: coupon.usedCount + 1 }).where(eq(couponsTable.id, coupon.id));
       }
       await recordAffiliateCommission(payment.affiliateRef, payment.userId, payment.courseId, parseFloat(String(payment.amount)));
+      if (payment.courseId) await recordCreatorCommissions(payment, [payment.courseId]);
     }
   }
   res.json({ received: true });
@@ -1312,6 +1324,7 @@ async function completePaytmPayment(payment: typeof paymentsTable.$inferSelect, 
       if (coupon) await db.update(couponsTable).set({ usedCount: coupon.usedCount + 1 }).where(eq(couponsTable.id, coupon.id));
     }
     await recordAffiliateCommission(payment.affiliateRef, payment.userId, null, parseFloat(String(payment.amount)));
+    await recordCreatorCommissions(payment, bundleCourses.map(bc => bc.courseId).filter((x): x is number => x != null));
     return;
   }
 
@@ -1331,6 +1344,7 @@ async function completePaytmPayment(payment: typeof paymentsTable.$inferSelect, 
       triggerFunnel("new_purchase", buyer.id, { course_name: course.title, amount: String(parseFloat(String(payment.amount)).toFixed(2)) }).catch(() => {});
     }
     await recordAffiliateCommission(payment.affiliateRef, payment.userId, payment.courseId, parseFloat(String(payment.amount)));
+    if (payment.courseId) await recordCreatorCommissions(payment, [payment.courseId]);
   }
 }
 
@@ -1866,6 +1880,7 @@ router.post("/stripe/verify", async (req, res): Promise<void> => {
       }).catch(() => {});
       triggerFunnel("new_purchase", buyer.id, { course_name: course?.title ?? "", amount: String(parseFloat(String(payment.amount)).toFixed(2)) }).catch(() => {});
       await recordAffiliateCommission(payment.affiliateRef, payment.userId, payment.courseId, parseFloat(String(payment.amount)));
+      if (payment.courseId) await recordCreatorCommissions(payment, [payment.courseId]);
     }
   }
 

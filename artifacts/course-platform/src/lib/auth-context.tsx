@@ -9,6 +9,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   isStaff: boolean;
+  isCreator: boolean;
   staffPermissions: Record<string, boolean> | null;
   canAccess: (permission: string) => boolean;
   refetchUser: () => void;
@@ -70,13 +71,15 @@ export function getStaffLandingPath(perms: Record<string, boolean> | null, base:
 }
 
 /** Resolve the post-login destination based on user role/permissions. */
-export function getPostLoginPath(user: { role?: string; isStaff?: boolean; staffPermissions?: Record<string, boolean> | null } | null | undefined): string {
+export function getPostLoginPath(user: { role?: string; isStaff?: boolean; isCreator?: boolean; staffPermissions?: Record<string, boolean> | null } | null | undefined): string {
   if (!user) return "/my-courses";
   if (user.role === "admin" && !user.isStaff) return "/admin";
   if (user.isStaff) {
     const path = getStaffLandingPath(user.staffPermissions ?? null, "/staff");
     if (path) return path;
   }
+  if (user.isCreator) return "/creator";
+  if (user.role === "affiliate") return "/affiliate";
   return "/my-courses";
 }
 
@@ -87,6 +90,7 @@ const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   isAdmin: false,
   isStaff: false,
+  isCreator: false,
   staffPermissions: null,
   canAccess: () => false,
   refetchUser: () => {},
@@ -96,6 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { data: user, isLoading, isFetching, refetch } = useGetMe({ query: { retry: false } });
 
   const isStaff = !!(user as any)?.isStaff;
+  const isCreator = !!(user as any)?.isCreator;
   const staffPermissions: Record<string, boolean> | null = (user as any)?.staffPermissions ?? null;
   const isAdmin = user?.role === "admin" && !isStaff;
 
@@ -112,6 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: !!user,
     isAdmin,
     isStaff,
+    isCreator,
     staffPermissions,
     canAccess,
     refetchUser: () => { refetch(); },
@@ -158,5 +164,35 @@ export function ProtectedRoute({ children, adminOnly = false }: { children: Reac
     );
   }
 
+  return <>{children}</>;
+}
+
+/**
+ * Guard for the Creator panel. Allows users flagged as creators (isCreator=true).
+ * Admins are also allowed in (so the site owner can preview the panel).
+ * Everyone else is bounced to /my-courses.
+ */
+export function ProtectedCreatorRoute({ children }: { children: ReactNode }) {
+  const { isAuthenticated, isCreator, isAdmin, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
+  const allowed = isCreator || isAdmin;
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (!isAuthenticated) {
+        setLocation("/login");
+      } else if (!allowed) {
+        setLocation("/my-courses");
+      }
+    }
+  }, [isLoading, isAuthenticated, allowed, setLocation]);
+
+  if (isLoading || !isAuthenticated || !allowed) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
   return <>{children}</>;
 }

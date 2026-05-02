@@ -2,7 +2,9 @@ import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAdminBase } from "@/lib/auth-context";
 import { useCreateCourse, getAdminListCoursesQueryKey, CreateCourseBody } from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
+
+const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,6 +23,7 @@ const INITIAL_FORM = {
   level: "beginner" as const,
   status: "draft" as const,
   tag: "none" as "none" | "coming_soon",
+  creatorId: "none",
 };
 
 export default function AdminCourseNewPage() {
@@ -30,13 +33,22 @@ export default function AdminCourseNewPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [, navigate] = useLocation();
+  const { data: creatorsList } = useQuery<Array<{ id: number; name: string; email: string; status: string }>>({
+    queryKey: ["admin-creators-picker"],
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE}/api/admin/creators`, { credentials: "include" });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    staleTime: 60_000,
+  });
 
   const handleCreate = () => {
     if (!form.title.trim()) {
       toast({ title: "Course title is required", variant: "destructive" });
       return;
     }
-    const body: CreateCourseBody = {
+    const body: CreateCourseBody & { creatorId?: number | null } = {
       title: form.title,
       description: form.description,
       thumbnailUrl: form.thumbnailUrl || null,
@@ -47,6 +59,7 @@ export default function AdminCourseNewPage() {
       tag: form.tag === "coming_soon" ? "coming_soon" : null,
       ...(form.compareAtPrice ? { compareAtPrice: parseFloat(form.compareAtPrice) } : {}),
       ...(form.durationHours ? { durationMinutes: Math.round(parseFloat(form.durationHours) * 60) } : {}),
+      creatorId: form.creatorId === "none" ? null : parseInt(form.creatorId, 10),
     };
     createCourse.mutate({ data: body }, {
       onSuccess: (data) => {
@@ -196,6 +209,20 @@ export default function AdminCourseNewPage() {
               </Select>
             </div>
           </div>
+          <div>
+            <label className="text-sm font-medium mb-1.5 block">Creator (revenue-share)</label>
+            <Select value={form.creatorId} onValueChange={v => setForm(f => ({ ...f, creatorId: v }))}>
+              <SelectTrigger className="bg-background"><SelectValue placeholder="No creator" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">— No Creator —</SelectItem>
+                {(creatorsList ?? []).filter(c => c.status === "active").map(c => (
+                  <SelectItem key={c.id} value={String(c.id)}>{c.name} ({c.email})</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-1">If set, creator earns 25% of each sale of this course.</p>
+          </div>
+
           <div>
             <label className="text-sm font-medium mb-1.5 block">Tag</label>
             <Select value={form.tag} onValueChange={v => setForm(f => ({ ...f, tag: v as typeof form.tag }))}>

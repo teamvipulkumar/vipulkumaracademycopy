@@ -1,6 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { processSequences, processScheduledCampaigns } from "./routes/crm";
+import { runCreatorPayoutCycle } from "./routes/creators";
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
 
@@ -24,6 +25,101 @@ async function runMigrations() {
     await db.execute(sql`ALTER TABLE platform_settings ADD COLUMN IF NOT EXISTS site_url text NOT NULL DEFAULT ''`);
     await db.execute(sql`ALTER TABLE email_sends ADD COLUMN IF NOT EXISTS html_body text`);
     await db.execute(sql`ALTER TABLE platform_settings ADD COLUMN IF NOT EXISTS email_log_retention_days integer`);
+    await db.execute(sql`ALTER TABLE platform_settings ADD COLUMN IF NOT EXISTS last_creator_payout_cycle_at timestamptz`);
+
+    /* ── Creator panel + revenue-share commission system ─────────────────── */
+    // Creators table — like admin_staff but for external course authors.
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS creators (
+        id serial PRIMARY KEY,
+        user_id integer NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+        name text NOT NULL,
+        email text NOT NULL,
+        pan_number text,
+        id_proof_url text,
+        address_proof_url text,
+        kyc_status text NOT NULL DEFAULT 'pending',
+        kyc_admin_note text,
+        kyc_reviewed_at timestamptz,
+        account_holder_name text,
+        account_number text,
+        ifsc_code text,
+        bank_name text,
+        upi_id text,
+        preferred_payment_method text DEFAULT 'bank',
+        status text NOT NULL DEFAULT 'active',
+        invited_by integer REFERENCES users(id) ON DELETE SET NULL,
+        notes text,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        updated_at timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+    // FK from courses.creator_id → creators.id (added separately because the
+    // schema declares the column without a Drizzle reference — we attach the
+    // constraint here to keep migrations idempotent).
+    await db.execute(sql`ALTER TABLE courses ADD COLUMN IF NOT EXISTS creator_id integer`);
+    await db.execute(sql`
+      DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint WHERE conname = 'courses_creator_id_fkey'
+        ) THEN
+          ALTER TABLE courses
+            ADD CONSTRAINT courses_creator_id_fkey
+            FOREIGN KEY (creator_id) REFERENCES creators(id) ON DELETE SET NULL;
+        END IF;
+      END $$;
+    `);
+    await db.execute(sql`CREATE INDEX IF NOT EXISTS courses_creator_id_idx ON courses(creator_id)`);
+
+    // Payout batches (system-released on Saturday OR admin manual trigger)
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS creator_payouts (
+        id serial PRIMARY KEY,
+        creator_id integer NOT NULL REFERENCES creators(id) ON DELETE CASCADE,
+        user_id integer NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        amount numeric(10, 2) NOT NULL,
+        status text NOT NULL DEFAULT 'pending',
+        release_date timestamptz NOT NULL DEFAULT now(),
+        paid_at timestamptz,
+        released_by integer REFERENCES users(id) ON DELETE SET NULL,
+        released_by_system boolean NOT NULL DEFAULT false,
+        payment_method text,
+        payment_reference text,
+        failure_reason text,
+        notes text,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        updated_at timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+    await db.execute(sql`CREATE INDEX IF NOT EXISTS creator_payouts_creator_id_idx ON creator_payouts(creator_id)`);
+    await db.execute(sql`CREATE INDEX IF NOT EXISTS creator_payouts_status_idx ON creator_payouts(status)`);
+
+    // Per-course commission ledger (one row per (sale, course-with-creator))
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS creator_commissions (
+        id serial PRIMARY KEY,
+        creator_id integer NOT NULL REFERENCES creators(id) ON DELETE CASCADE,
+        user_id integer NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        payment_id integer NOT NULL REFERENCES payments(id) ON DELETE CASCADE,
+        course_id integer REFERENCES courses(id) ON DELETE SET NULL,
+        bundle_id integer REFERENCES bundles(id) ON DELETE SET NULL,
+        sale_amount_share numeric(10, 2) NOT NULL,
+        commission_percent numeric(5, 2) NOT NULL DEFAULT 25,
+        commission_amount numeric(10, 2) NOT NULL,
+        status text NOT NULL DEFAULT 'earned',
+        payout_id integer REFERENCES creator_payouts(id) ON DELETE SET NULL,
+        created_at timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+    await db.execute(sql`CREATE INDEX IF NOT EXISTS creator_commissions_creator_id_idx ON creator_commissions(creator_id)`);
+    await db.execute(sql`CREATE INDEX IF NOT EXISTS creator_commissions_payment_id_idx ON creator_commissions(payment_id)`);
+    await db.execute(sql`CREATE INDEX IF NOT EXISTS creator_commissions_status_idx ON creator_commissions(status)`);
+    await db.execute(sql`CREATE INDEX IF NOT EXISTS creator_commissions_payout_id_idx ON creator_commissions(payout_id)`);
+    // Idempotency guard: at most ONE commission row per (payment, course). Concurrent
+    // payment completion handlers (verify + webhook + bundle path) would otherwise
+    // race to double-insert — this unique index makes any such race a no-op via
+    // ON CONFLICT DO NOTHING in the insert helper.
+    await db.execute(sql`CREATE UNIQUE INDEX IF NOT EXISTS creator_commissions_payment_course_uniq ON creator_commissions(payment_id, course_id)`);
 
     // Reconcile CHECK constraints on email_templates.type and email_automation_rules.event
     // so newly added enum values (e.g. "staff_welcome") are accepted at runtime before the
@@ -200,5 +296,20 @@ runMigrations().then(() => {
     };
     runEmailLogCleanup();
     setInterval(runEmailLogCleanup, 6 * 60 * 60 * 1000);
+
+    // Saturday creator-payout auto-cycle. Hourly tick is idempotent: only the
+    // first tick of any given Saturday IST actually performs work; subsequent
+    // ticks short-circuit on lastCreatorPayoutCycleAt. Also fires once at
+    // boot to handle the case where the server was restarted on Saturday.
+    const runCreatorCycle = async () => {
+      try {
+        const r = await runCreatorPayoutCycle();
+        if (r.ran) logger.info({ payoutIds: r.payoutIds }, "Saturday creator payout cycle ran");
+      } catch (e) {
+        logger.warn({ e }, "Creator payout cycle error (non-fatal)");
+      }
+    };
+    runCreatorCycle();
+    setInterval(runCreatorCycle, 60 * 60 * 1000);
   });
 });

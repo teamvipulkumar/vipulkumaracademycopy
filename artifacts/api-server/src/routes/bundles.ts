@@ -13,6 +13,7 @@ import { requireAuth, requireAdmin, signToken, verifyToken, authCookieOptions, t
 import type { Request } from "express";
 import { triggerAutomation, triggerFunnel, getPublicBaseUrl } from "./crm";
 import { ensureUserForPayment, getOrCreateWelcomeVerifyLink, gatewayFetch } from "./payments";
+import { recordCreatorCommissions, cancelCreatorCommissionsForPayment } from "./creators";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const PaytmChecksum = require("paytmchecksum");
@@ -177,6 +178,21 @@ async function enrollInBundle(bundleId: number, userId: number, affiliateRef?: s
         } // closes else (eligible affiliate)
       }
     } catch (err) { console.error("[bundle affiliate commission]", err); }
+  }
+
+  // Creator commission for the bundle: 25% pool split equally across all bundle courses
+  // (each per-course slice goes to that course's creator if assigned).
+  try {
+    const [bundlePayment] = await db.select().from(paymentsTable)
+      .where(and(eq(paymentsTable.userId, userId), eq(paymentsTable.bundleId, bundleId)))
+      .orderBy(desc(paymentsTable.createdAt))
+      .limit(1);
+    if (bundlePayment) {
+      const bundleCourseIds = bundle.courses.map(c => c.id).filter((x): x is number => x != null);
+      await recordCreatorCommissions(bundlePayment, bundleCourseIds);
+    }
+  } catch (err) {
+    console.error("[bundle creator commission]", err);
   }
 
   return { enrolledCourses, bundleName: bundle.name };

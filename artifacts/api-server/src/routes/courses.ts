@@ -41,13 +41,15 @@ router.get("/", async (req, res): Promise<void> => {
 });
 
 router.post("/", requireAdmin, async (req, res): Promise<void> => {
-  const { title, description, thumbnailUrl, price, compareAtPrice, durationMinutes, category, level, status, tag } = req.body;
+  const { title, description, thumbnailUrl, price, compareAtPrice, durationMinutes, category, level, status, tag, creatorId } = req.body;
   const [course] = await db.insert(coursesTable).values({
     title, description, thumbnailUrl, price: String(price || 0),
     compareAtPrice: compareAtPrice ? String(parseFloat(compareAtPrice)) : null,
     durationMinutes: durationMinutes ? parseInt(durationMinutes, 10) : 0,
     category, level: level || "beginner", status: status || "draft",
     tag: tag === "coming_soon" ? "coming_soon" : null,
+    // Optional: assign a creator at create-time (defaults to null; can be set later via PUT).
+    creatorId: creatorId != null && creatorId !== "" ? parseInt(String(creatorId), 10) : null,
   }).returning();
   res.status(201).json({ ...course, price: parseFloat(course.price), compareAtPrice: course.compareAtPrice ? parseFloat(course.compareAtPrice) : null, moduleCount: 0, lessonCount: 0, enrollmentCount: 0 });
 });
@@ -86,13 +88,17 @@ router.get("/:courseId", async (req, res): Promise<void> => {
 
 router.put("/:courseId", requireAdmin, async (req, res): Promise<void> => {
   const courseId = parseInt(req.params.courseId);
-  const { title, description, thumbnailUrl, price, compareAtPrice, durationMinutes, category, level, status, showOnWebsite, tag } = req.body;
+  const { title, description, thumbnailUrl, price, compareAtPrice, durationMinutes, category, level, status, showOnWebsite, tag, creatorId } = req.body;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updates: any = { title, description, thumbnailUrl, category, level, status, showOnWebsite };
   if (price !== undefined) updates.price = String(price);
   if (compareAtPrice !== undefined) updates.compareAtPrice = compareAtPrice ? String(parseFloat(compareAtPrice)) : null;
   if (durationMinutes !== undefined) updates.durationMinutes = parseInt(durationMinutes, 10);
   if (tag !== undefined) updates.tag = tag === "coming_soon" ? "coming_soon" : null;
+  // Creator picker: empty string / null clears the assignment, a numeric id sets it.
+  if (creatorId !== undefined) {
+    updates.creatorId = creatorId === null || creatorId === "" ? null : parseInt(String(creatorId), 10);
+  }
   const [updated] = await db.update(coursesTable).set(updates).where(eq(coursesTable.id, courseId)).returning();
   if (!updated) { res.status(404).json({ error: "Course not found" }); return; }
   res.json({ ...updated, price: parseFloat(updated.price), compareAtPrice: updated.compareAtPrice ? parseFloat(updated.compareAtPrice) : null, moduleCount: 0, lessonCount: 0, enrollmentCount: 0 });

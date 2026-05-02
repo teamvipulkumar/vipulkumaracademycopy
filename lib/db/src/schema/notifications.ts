@@ -52,6 +52,11 @@ export const platformSettingsTable = pgTable("platform_settings", {
   metaTitle: text("meta_title"),
   metaDescription: text("meta_description"),
   emailLogRetentionDays: integer("email_log_retention_days"),
+  // Tracks the last time the Saturday creator-payout cycle ran (any tz).
+  // We store this on the singleton platform_settings row so a clustered
+  // setup can dedupe the cycle: only the first server to see "today is
+  // Saturday IST AND lastCreatorPayoutCycleAt < today-IST 00:00" runs it.
+  lastCreatorPayoutCycleAt: timestamp("last_creator_payout_cycle_at", { withTimezone: true }),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
 

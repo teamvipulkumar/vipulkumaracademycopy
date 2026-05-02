@@ -10,3 +10,4 @@ export * from "./crm";
 export * from "./gst";
 export * from "./bundles";
 export * from "./staff";
+export * from "./creators";

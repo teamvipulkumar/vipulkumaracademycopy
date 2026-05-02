@@ -21,6 +21,20 @@ import {
   ImageIcon, Clock, Eye, EyeOff, GripVertical, AlertCircle,
 } from "lucide-react";
 import { ImageUploader } from "@/components/image-uploader";
+import { useQuery } from "@tanstack/react-query";
+
+const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+function useCreatorsList() {
+  return useQuery<Array<{ id: number; name: string; email: string; status: string }>>({
+    queryKey: ["admin-creators-picker"],
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE}/api/admin/creators`, { credentials: "include" });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    staleTime: 60_000,
+  });
+}
 
 type LessonType = "video" | "text" | "pdf" | "link" | "quiz" | "embed";
 
@@ -73,7 +87,8 @@ export default function AdminCourseEditPage() {
   const updateLesson = useUpdateLesson();
 
   // Course settings state
-  const [courseForm, setCourseForm] = useState({ title: "", description: "", thumbnailUrl: "", price: "", compareAtPrice: "", durationHours: "", category: "", level: "beginner", status: "draft", tag: "none" });
+  const [courseForm, setCourseForm] = useState({ title: "", description: "", thumbnailUrl: "", price: "", compareAtPrice: "", durationHours: "", category: "", level: "beginner", status: "draft", tag: "none", creatorId: "none" });
+  const { data: creatorsList } = useCreatorsList();
   const [courseSaving, setCourseSaving] = useState(false);
 
   // Curriculum state
@@ -103,6 +118,7 @@ export default function AdminCourseEditPage() {
         level: course.level ?? "beginner",
         status: course.status ?? "draft",
         tag: (course as { tag?: string | null }).tag ?? "none",
+        creatorId: c.creatorId != null ? String(c.creatorId) : "none",
       });
     }
   }, [course]);
@@ -111,7 +127,7 @@ export default function AdminCourseEditPage() {
 
   const handleSaveCourse = () => {
     setCourseSaving(true);
-    const body: UpdateCourseBody & { compareAtPrice?: number | null; durationMinutes?: number } = {
+    const body: UpdateCourseBody & { compareAtPrice?: number | null; durationMinutes?: number; creatorId?: number | null } = {
       title: courseForm.title,
       description: courseForm.description,
       thumbnailUrl: courseForm.thumbnailUrl || null,
@@ -122,6 +138,7 @@ export default function AdminCourseEditPage() {
       tag: (courseForm.tag === "coming_soon" ? "coming_soon" : null) as any,
       compareAtPrice: courseForm.compareAtPrice ? parseFloat(courseForm.compareAtPrice) : null,
       durationMinutes: courseForm.durationHours ? Math.round(parseFloat(courseForm.durationHours) * 60) : 0,
+      creatorId: courseForm.creatorId === "none" ? null : parseInt(courseForm.creatorId, 10),
     };
     updateCourse.mutate({ courseId, data: body as UpdateCourseBody }, {
       onSuccess: () => { toast({ title: "Course saved!" }); setCourseSaving(false); invalidateCourse(); },
@@ -322,6 +339,21 @@ export default function AdminCourseEditPage() {
                 <SelectItem value="published">Published</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Creator (revenue-share) */}
+          <div className="md:col-span-2">
+            <label className="text-sm font-medium mb-1.5 block">Creator (revenue-share)</label>
+            <Select value={courseForm.creatorId} onValueChange={v => setCourseForm(f => ({ ...f, creatorId: v }))}>
+              <SelectTrigger className="bg-background"><SelectValue placeholder="No creator (platform keeps 100% after affiliate)" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">— No Creator —</SelectItem>
+                {(creatorsList ?? []).filter(c => c.status === "active").map(c => (
+                  <SelectItem key={c.id} value={String(c.id)}>{c.name} ({c.email})</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-1">If set, this creator earns 25% of each sale of this course (split with co-creators in bundles).</p>
           </div>
 
           {/* Tag */}

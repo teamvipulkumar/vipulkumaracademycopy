@@ -15,6 +15,13 @@ export const coursesTable = pgTable("courses", {
   durationMinutes: integer("duration_minutes").notNull().default(0),
   compareAtPrice: numeric("compare_at_price", { precision: 10, scale: 2 }),
   showOnWebsite: boolean("show_on_website").notNull().default(true),
+  // Optional course author/creator (FK → creators.id). Nullable so legacy
+  // courses without an assigned creator keep working — those simply don't
+  // generate a creator-commission row on sale. Set via admin → Courses →
+  // Edit → Creator dropdown. `ON DELETE SET NULL` (declared in runtime
+  // migration) so revoking/deleting a creator doesn't cascade away their
+  // courses; admin can re-assign.
+  creatorId: integer("creator_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

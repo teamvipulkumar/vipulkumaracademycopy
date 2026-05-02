@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Users, BookOpen, Share2, Tag, Settings, ArrowLeft, Menu, X, ShoppingCart, GraduationCap, Landmark, Mail, Layers, FileText, HardDrive, ShieldCheck, Megaphone } from "lucide-react";
+import { LayoutDashboard, Users, BookOpen, Share2, Tag, Settings, ArrowLeft, Menu, X, ShoppingCart, GraduationCap, Landmark, Mail, Layers, FileText, HardDrive, ShieldCheck, Megaphone, Sparkles, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth, getStaffLandingPath, useAdminBase, adminPathSuffix } from "@/lib/auth-context";
 
@@ -38,6 +38,8 @@ const PERMISSION_MAP: Record<string, string> = {
   "/crm": "crm",
   "/payment-gateways": "paymentGateways",
   "/gst-invoicing": "gstInvoicing",
+  "/creators": "creators",
+  "/creator-payouts": "creators",
   "/settings": "settings",
   "/facebook-pixel": "settings",
 };
@@ -95,6 +97,7 @@ const navGroups: { label: string; items: { suffix: string; icon: typeof LayoutDa
     label: "Users & CRM",
     items: [
       { suffix: "/users", icon: Users, label: "Users" },
+      { suffix: "/creators", icon: Sparkles, label: "Creators" },
       { suffix: "/crm", icon: Mail, label: "CRM & Email" },
     ],
   },
@@ -103,6 +106,7 @@ const navGroups: { label: string; items: { suffix: string; icon: typeof LayoutDa
     items: [
       { suffix: "/payment-gateways", icon: Landmark, label: "Payment Gateways" },
       { suffix: "/gst-invoicing", icon: FileText, label: "GST Invoicing" },
+      { suffix: "/creator-payouts", icon: Wallet, label: "Creator Payouts" },
     ],
   },
   {

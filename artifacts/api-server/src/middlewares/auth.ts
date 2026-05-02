@@ -27,6 +27,14 @@ export interface JwtPayload {
   role: string;
   isStaff?: boolean;
   staffPermissions?: Record<string, boolean> | null;
+  /**
+   * True iff the user has an active row in the `creators` table. Set at
+   * login (and at /me) by querying creators-table directly. The user's
+   * underlying `role` is NOT mutated when they become a creator (parallel
+   * to the admin_staff pattern), so this flag is the SOURCE OF TRUTH for
+   * "show /creator/* panel".
+   */
+  isCreator?: boolean;
 }
 
 export function signToken(payload: JwtPayload): string {
@@ -86,6 +94,22 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction): v
     const isStaff = user?.isStaff === true;
     if (!isAdmin && !isStaff) {
       res.status(403).json({ error: "Forbidden: admin only" });
+      return;
+    }
+    next();
+  });
+}
+
+/**
+ * Gate for the creator panel (`/api/creator/*`). Mirrors `requireAdmin`:
+ * runs `requireAuth` first, then enforces `isCreator === true` in the JWT.
+ * Admins do NOT automatically pass this check — they have their own panel.
+ */
+export function requireCreator(req: Request, res: Response, next: NextFunction): void {
+  requireAuth(req, res, () => {
+    const user = (req as Request & { user: JwtPayload }).user;
+    if (user?.isCreator !== true) {
+      res.status(403).json({ error: "Forbidden: creator only" });
       return;
     }
     next();

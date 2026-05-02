@@ -17,6 +17,7 @@ import gstRouter from "./gst";
 import bundlesRouter from "./bundles";
 import staffRouter from "./staff";
 import pixelRouter from "./pixel";
+import creatorRouter, { adminCreatorsRouter, adminCreatorPayoutsRouter } from "./creators";
 import { db } from "@workspace/db";
 import { platformSettingsTable } from "@workspace/db";
 
@@ -57,6 +58,9 @@ router.use("/email", emailTrackingRouter);
 router.use("/admin/gst", gstRouter);
 router.use("/bundles", bundlesRouter);
 router.use("/admin/staff", staffRouter);
+router.use("/admin/creators", adminCreatorsRouter);
+router.use("/admin/creator-payouts", adminCreatorPayoutsRouter);
+router.use("/creator", creatorRouter);
 router.use("/pixel", pixelRouter);
 
 export default router;

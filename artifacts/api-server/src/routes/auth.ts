@@ -2,7 +2,7 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { nanoid } from "nanoid";
 import { db } from "@workspace/db";
-import { usersTable, platformSettingsTable, adminStaffTable } from "@workspace/db";
+import { usersTable, platformSettingsTable, adminStaffTable, creatorsTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { signToken, requireAuth, authCookieOptions, clearAuthCookieOptions, type JwtPayload } from "../middlewares/auth";
 import type { Request } from "express";
@@ -135,10 +135,14 @@ router.post("/login", async (req, res): Promise<void> => {
     .limit(1);
   const isStaff = !!staffRecord;
   const staffPermissions = staffRecord?.permissions ?? null;
-  const token = signToken({ userId: user.id, email: user.email, role: user.role, isStaff, staffPermissions });
+  const [creatorRecord] = await db.select({ id: creatorsTable.id }).from(creatorsTable)
+    .where(and(eq(creatorsTable.userId, user.id), eq(creatorsTable.status, "active")))
+    .limit(1);
+  const isCreator = !!creatorRecord;
+  const token = signToken({ userId: user.id, email: user.email, role: user.role, isStaff, staffPermissions, isCreator });
   res.cookie("token", token, authCookieOptions());
   const { password: _, emailVerifyToken: _vt, emailVerifyTokenExpiresAt: _vte, resetToken: _rt, resetTokenExpiresAt: _rte, ...safeUser } = user;
-  res.json({ user: { ...safeUser, isStaff, staffPermissions }, message: "Login successful" });
+  res.json({ user: { ...safeUser, isStaff, staffPermissions, isCreator }, message: "Login successful" });
   const loginOrigin = await resolvePublicSiteUrl(req);
   triggerFunnel("user_login", user.id, { site_url: loginOrigin }).catch(() => {});
 });
@@ -160,8 +164,12 @@ router.get("/me", requireAuth, async (req, res): Promise<void> => {
     .limit(1);
   const isStaff = !!staffRecord;
   const staffPermissions = staffRecord?.permissions ?? null;
+  const [creatorRecord] = await db.select({ id: creatorsTable.id }).from(creatorsTable)
+    .where(and(eq(creatorsTable.userId, dbUser.id), eq(creatorsTable.status, "active")))
+    .limit(1);
+  const isCreator = !!creatorRecord;
   const { password: _, emailVerifyToken: _vt, emailVerifyTokenExpiresAt: _vte, resetToken: _rt, resetTokenExpiresAt: _rte, ...safeUser } = dbUser;
-  res.json({ ...safeUser, isStaff, staffPermissions });
+  res.json({ ...safeUser, isStaff, staffPermissions, isCreator });
 });
 
 /* ── Verify email via token from link ── */
@@ -324,7 +332,11 @@ router.post("/change-password", requireAuth, async (req, res): Promise<void> => 
     .limit(1);
   const isStaff = !!staffRecord;
   const staffPermissions = staffRecord?.permissions ?? null;
-  const newToken = signToken({ userId: user.id, email: user.email, role: user.role, isStaff, staffPermissions });
+  const [creatorRecord] = await db.select({ id: creatorsTable.id }).from(creatorsTable)
+    .where(and(eq(creatorsTable.userId, user.id), eq(creatorsTable.status, "active")))
+    .limit(1);
+  const isCreator = !!creatorRecord;
+  const newToken = signToken({ userId: user.id, email: user.email, role: user.role, isStaff, staffPermissions, isCreator });
   res.cookie("token", newToken, authCookieOptions());
 
   res.json({ message: "Password changed successfully" });
