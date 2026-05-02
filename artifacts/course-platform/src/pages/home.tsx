@@ -378,7 +378,17 @@ export default function Home() {
             <Button size="lg" className="h-11 sm:h-12 px-8 sm:px-10 text-sm font-semibold shadow-lg shadow-primary/25 w-full sm:w-auto" asChild>
               <Link href="/register">Create Free Account <ArrowRight className="w-4 h-4 ml-2" /></Link>
             </Button>
-            <Button size="lg" variant="outline" className="h-11 sm:h-12 px-8 sm:px-10 text-sm border-border/60 hover:border-border w-full sm:w-auto" asChild>
+            {/* Secondary CTA — solid card surface (auto-adapts: white in
+                light, deep navy in dark via the `card` token) plus a brand-
+                tinted border so it sits with definition next to the primary
+                CTA in light mode without competing visually. Hover fills with
+                a faint primary tint and tightens the border. */}
+            <Button
+              size="lg"
+              variant="outline"
+              className="h-11 sm:h-12 px-8 sm:px-10 text-sm font-semibold w-full sm:w-auto bg-card text-foreground border-primary/25 hover:border-primary/60 hover:bg-primary/5 hover:text-primary shadow-sm transition-colors"
+              asChild
+            >
               <Link href="/courses">Browse Courses</Link>
             </Button>
           </div>
