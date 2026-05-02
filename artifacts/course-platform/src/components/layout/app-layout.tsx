@@ -89,7 +89,20 @@ function NotificationPopup({ iconSize = "w-4 h-4" }: { iconSize?: string }) {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" collisionPadding={8} className="w-[min(20rem,calc(100vw-16px))] border p-0 shadow-2xl" style={{ backgroundColor: "var(--dropdown-bg)", borderColor: "var(--dropdown-border)" }} sideOffset={8}>
+      <DropdownMenuContent
+        align="end"
+        collisionPadding={8}
+        sideOffset={8}
+        // Mobile (<md): bell isn't the right-most element (hamburger sits
+        // to its right), so `align="end"` anchors the popup ~50px in from
+        // the viewport edge and the 320px panel ends up visibly skewed
+        // left. Forcing the panel to `100vw - 16px` on phones lets Radix's
+        // collisionPadding push it inward equally on both sides → perfectly
+        // centred 8px gutters. Desktop (md+) keeps the original 20rem panel
+        // right-aligned to the bell — completely untouched.
+        className="w-[min(20rem,calc(100vw-16px))] max-md:w-[calc(100vw-16px)] border p-0 shadow-2xl"
+        style={{ backgroundColor: "var(--dropdown-bg)", borderColor: "var(--dropdown-border)" }}
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
           <div className="flex items-center gap-2">
