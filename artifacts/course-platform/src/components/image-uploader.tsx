@@ -9,6 +9,10 @@ interface ImageUploaderProps {
   hint?: string;
   aspectRatio?: "video" | "square" | "banner";
   className?: string;
+  /** Hide the "From Library" media-picker option — useful for end-user uploads
+   *  (e.g. Creator KYC) where the shared media library is irrelevant and the
+   *  user should only upload from their own device. */
+  hideLibrary?: boolean;
 }
 
 const ASPECT: Record<string, string> = {
@@ -26,6 +30,7 @@ export function ImageUploader({
   hint = "Recommended: 1280×720px · JPG, PNG, WebP · Max 10MB",
   aspectRatio = "video",
   className = "",
+  hideLibrary = false,
 }: ImageUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -110,13 +115,15 @@ export function ImageUploader({
             />
             {/* Overlay on hover */}
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-150 flex items-center justify-center gap-3">
-              <button
-                type="button"
-                onClick={e => { e.stopPropagation(); setPickerOpen(true); }}
-                className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/20 backdrop-blur-sm rounded-xl px-3 py-2 flex items-center gap-2 text-white text-xs font-medium hover:bg-white/30 cursor-pointer"
-              >
-                <FolderOpen className="w-3.5 h-3.5" />Library
-              </button>
+              {!hideLibrary && (
+                <button
+                  type="button"
+                  onClick={e => { e.stopPropagation(); setPickerOpen(true); }}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/20 backdrop-blur-sm rounded-xl px-3 py-2 flex items-center gap-2 text-white text-xs font-medium hover:bg-white/30 cursor-pointer"
+                >
+                  <FolderOpen className="w-3.5 h-3.5" />Library
+                </button>
+              )}
               <button
                 type="button"
                 onClick={e => { e.stopPropagation(); inputRef.current?.click(); }}
@@ -153,20 +160,24 @@ export function ImageUploader({
                   </p>
                   {!dragOver && (
                     <div className="flex items-center gap-2 justify-center">
-                      <button
-                        type="button"
-                        onClick={e => { e.stopPropagation(); setPickerOpen(true); }}
-                        className="text-xs px-3 py-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors flex items-center gap-1.5 font-medium cursor-pointer"
-                      >
-                        <FolderOpen className="w-3 h-3" />From Library
-                      </button>
-                      <span className="text-xs text-muted-foreground">or</span>
+                      {!hideLibrary && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={e => { e.stopPropagation(); setPickerOpen(true); }}
+                            className="text-xs px-3 py-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors flex items-center gap-1.5 font-medium cursor-pointer"
+                          >
+                            <FolderOpen className="w-3 h-3" />From Library
+                          </button>
+                          <span className="text-xs text-muted-foreground">or</span>
+                        </>
+                      )}
                       <button
                         type="button"
                         onClick={e => { e.stopPropagation(); inputRef.current?.click(); }}
                         className="text-xs px-3 py-1.5 rounded-lg bg-card border border-border hover:border-primary/40 transition-colors flex items-center gap-1.5 font-medium text-foreground cursor-pointer"
                       >
-                        <Upload className="w-3 h-3" />Upload
+                        <Upload className="w-3 h-3" />Upload from device
                       </button>
                     </div>
                   )}

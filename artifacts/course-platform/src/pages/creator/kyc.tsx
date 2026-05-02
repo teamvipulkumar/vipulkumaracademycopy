@@ -184,8 +184,9 @@ export default function CreatorKycPage() {
           <div>
             <ImageUploader
               label="Upload PAN Card (front side)"
-              hint="Clear photo or scan · JPG / PNG / WebP · Max 10MB"
+              hint="Upload from your device · Clear photo or scan · JPG / PNG / WebP · Max 10MB"
               aspectRatio="banner"
+              hideLibrary
               value={form.kyc.panFrontUrl ?? ""}
               onChange={url => !locked && setKyc("panFrontUrl", url)}
             />
