@@ -5,9 +5,9 @@ import { db } from "@workspace/db";
 import {
   usersTable, coursesTable, modulesTable, enrollmentsTable, paymentsTable, referralsTable,
   payoutRequestsTable, platformSettingsTable, lessonCompletionsTable, lessonsTable,
-  paymentGatewaysTable, bundlesTable, bundleCoursesTable
+  paymentGatewaysTable, bundlesTable, bundleCoursesTable, adminStaffTable
 } from "@workspace/db";
-import { eq, count, sum, gte, and, ilike, or, sql, desc, ne, inArray, isNotNull } from "drizzle-orm";
+import { eq, count, sum, gte, and, ilike, or, sql, desc, ne, inArray, isNotNull, isNull } from "drizzle-orm";
 import { requireAdmin, verifyToken, type JwtPayload } from "../middlewares/auth";
 import type { Request } from "express";
 import { triggerAutomation, invalidatePublicBaseUrlCache } from "./crm";
@@ -17,34 +17,62 @@ type AuthedRequest = Request & { user: JwtPayload };
 
 router.get("/users", requireAdmin, async (req, res): Promise<void> => {
   const { search, role, status, limit = "50", offset = "0" } = req.query as Record<string, string>;
-  let query = db.select({
-    id: usersTable.id, email: usersTable.email, name: usersTable.name,
-    role: usersTable.role, avatarUrl: usersTable.avatarUrl, referralCode: usersTable.referralCode,
-    isBanned: usersTable.isBanned, createdAt: usersTable.createdAt,
-    phone: (usersTable as any).phone,
-  }).from(usersTable).$dynamic();
+
+  // The `users.role` enum is intentionally limited to admin/student/affiliate
+  // (staff status lives in admin_staff). To surface "staff" in the Users page
+  // we LEFT JOIN admin_staff and derive the displayed role at query time.
+  const derivedRole = sql<string>`CASE WHEN ${adminStaffTable.status} = 'active' THEN 'staff' ELSE ${usersTable.role} END`;
 
   const conditions = [];
   if (search) conditions.push(or(ilike(usersTable.name, `%${search}%`), ilike(usersTable.email, `%${search}%`))!);
-  if (role) conditions.push(eq(usersTable.role, role as "admin" | "student" | "affiliate"));
+  if (role === "staff") {
+    conditions.push(eq(adminStaffTable.status, "active"));
+  } else if (role === "admin") {
+    conditions.push(eq(usersTable.role, "admin"));
+  } else if (role === "student" || role === "affiliate") {
+    // Active staff users get displayed under "staff", so exclude them from
+    // their underlying role bucket to avoid double-counting / duplicates.
+    conditions.push(eq(usersTable.role, role));
+    conditions.push(or(isNull(adminStaffTable.id), ne(adminStaffTable.status, "active"))!);
+  }
   if (status === "active") conditions.push(eq(usersTable.isBanned, false));
   if (status === "banned") conditions.push(eq(usersTable.isBanned, true));
+
+  let query = db.select({
+    id: usersTable.id, email: usersTable.email, name: usersTable.name,
+    role: derivedRole.as("role"),
+    avatarUrl: usersTable.avatarUrl, referralCode: usersTable.referralCode,
+    isBanned: usersTable.isBanned, createdAt: usersTable.createdAt,
+    phone: (usersTable as any).phone,
+  })
+    .from(usersTable)
+    .leftJoin(adminStaffTable, eq(adminStaffTable.userId, usersTable.id))
+    .$dynamic();
   if (conditions.length > 0) query = query.where(and(...conditions));
 
   const [users, totalResult] = await Promise.all([
     query.orderBy(desc(usersTable.createdAt)).limit(parseInt(limit)).offset(parseInt(offset)),
-    db.select({ count: count() }).from(usersTable).where(conditions.length > 0 ? and(...conditions) : undefined),
+    db.select({ count: count() })
+      .from(usersTable)
+      .leftJoin(adminStaffTable, eq(adminStaffTable.userId, usersTable.id))
+      .where(conditions.length > 0 ? and(...conditions) : undefined),
   ]);
   res.json({ users, total: totalResult[0]?.count ?? 0, limit: parseInt(limit), offset: parseInt(offset) });
 });
 
 router.get("/users/export", requireAdmin, async (req, res): Promise<void> => {
+  // Derive role same as the list endpoint so exported CSV matches what the
+  // admin sees on screen (active staff → "staff").
+  const derivedRole = sql<string>`CASE WHEN ${adminStaffTable.status} = 'active' THEN 'staff' ELSE ${usersTable.role} END`;
   const users = await db.select({
     id: usersTable.id, name: usersTable.name, email: usersTable.email,
-    role: usersTable.role, isBanned: usersTable.isBanned,
+    role: derivedRole.as("role"), isBanned: usersTable.isBanned,
     phone: (usersTable as any).phone,
     referralCode: usersTable.referralCode, createdAt: usersTable.createdAt,
-  }).from(usersTable).orderBy(desc(usersTable.createdAt));
+  })
+    .from(usersTable)
+    .leftJoin(adminStaffTable, eq(adminStaffTable.userId, usersTable.id))
+    .orderBy(desc(usersTable.createdAt));
 
   const allEnrollments = await db
     .select({ userId: enrollmentsTable.userId, courseTitle: coursesTable.title, enrolledAt: enrollmentsTable.enrolledAt })
@@ -87,12 +115,18 @@ router.get("/users/export", requireAdmin, async (req, res): Promise<void> => {
 
 router.get("/users/:userId", requireAdmin, async (req, res): Promise<void> => {
   const userId = parseInt(req.params.userId);
+  const derivedRole = sql<string>`CASE WHEN ${adminStaffTable.status} = 'active' THEN 'staff' ELSE ${usersTable.role} END`;
   const [user] = await db.select({
     id: usersTable.id, email: usersTable.email, name: usersTable.name,
-    role: usersTable.role, avatarUrl: usersTable.avatarUrl, referralCode: usersTable.referralCode,
+    role: derivedRole.as("role"),
+    avatarUrl: usersTable.avatarUrl, referralCode: usersTable.referralCode,
     isBanned: usersTable.isBanned, createdAt: usersTable.createdAt,
     phone: (usersTable as any).phone,
-  }).from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+  })
+    .from(usersTable)
+    .leftJoin(adminStaffTable, eq(adminStaffTable.userId, usersTable.id))
+    .where(eq(usersTable.id, userId))
+    .limit(1);
   if (!user) { res.status(404).json({ error: "User not found" }); return; }
 
   const [spentResult] = await db.select({ total: sum(paymentsTable.amount) }).from(paymentsTable).where(and(eq(paymentsTable.userId, userId), eq(paymentsTable.status, "completed")));
@@ -152,7 +186,10 @@ router.put("/users/:userId", requireAdmin, async (req, res): Promise<void> => {
   const updates: Record<string, unknown> = {};
   if (name !== undefined) updates.name = name;
   if (email !== undefined) updates.email = email.toLowerCase();
-  if (role !== undefined) updates.role = role;
+  // "staff" is a derived role (admin_staff table), not a value in the users
+  // role enum. Skip it silently so editing a staff user without changing
+  // their role doesn't crash with a Postgres enum error.
+  if (role !== undefined && role !== "staff") updates.role = role;
   if (isBanned !== undefined) updates.isBanned = isBanned;
   if (password !== undefined && password.length > 0) updates.password = await bcrypt.hash(password, 10);
   if (phone !== undefined) updates.phone = phone.trim() || null;
