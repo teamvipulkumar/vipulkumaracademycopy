@@ -444,14 +444,18 @@ function AffiliateDashboard({ user }: { user: any }) {
   );
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] bg-background overflow-hidden">
+    // Heights below use `3.5rem` (56px) to match the global Navbar height
+    // (h-14). Previously these were `4rem`/`top-16` from the old h-16 navbar
+    // and left an 8px gap between the header and the affiliate sidebar on
+    // mobile. Keep these in sync if the navbar height ever changes again.
+    <div className="flex h-[calc(100vh-3.5rem)] bg-background overflow-hidden">
       {/* Mobile overlay */}
       {sidebarOpen && (
-        <div className="fixed top-16 inset-x-0 bottom-0 z-40 bg-black/60 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed top-14 inset-x-0 bottom-0 z-40 bg-black/60 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
       {/* Sidebar — fixed on desktop, slide-over on mobile (force-open during tour) */}
       <aside className={`
-        fixed lg:sticky top-16 h-[calc(100vh-4rem)] z-50 lg:z-auto
+        fixed lg:sticky top-14 h-[calc(100vh-3.5rem)] z-50 lg:z-auto
         w-56 flex-shrink-0 bg-card border-r border-border flex flex-col overflow-hidden
         transition-transform duration-200
         ${sidebarOpen || tourSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
