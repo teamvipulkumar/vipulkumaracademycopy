@@ -30,7 +30,12 @@ export const creatorsTable = pgTable("creators", {
   email: text("email").notNull(),
 
   // KYC documents (creator-uploaded; admin reviews)
+  // panName = "Name as per PAN card" (must match the legal name on the PAN).
+  // panFrontUrl = uploaded image (front side) of the PAN card itself.
+  // idProofUrl/addressProofUrl kept as legacy/optional secondary documents.
+  panName: text("pan_name"),
   panNumber: text("pan_number"),
+  panFrontUrl: text("pan_front_url"),
   idProofUrl: text("id_proof_url"),
   addressProofUrl: text("address_proof_url"),
   kycStatus: text("kyc_status", { enum: ["pending", "approved", "rejected"] }).notNull().default("pending"),

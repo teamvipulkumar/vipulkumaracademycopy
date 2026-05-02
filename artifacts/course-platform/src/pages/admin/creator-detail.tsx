@@ -20,7 +20,8 @@ interface CreatorDetail {
     id: number; userId: number; name: string; email: string;
     status: string; notes: string | null; createdAt: string;
     kyc: {
-      panNumber: string | null; idProofUrl: string | null; addressProofUrl: string | null;
+      panName: string | null; panNumber: string | null; panFrontUrl: string | null;
+      idProofUrl: string | null; addressProofUrl: string | null;
       status: string | null; adminNote: string | null; reviewedAt: string | null;
     };
     bank: {
@@ -129,35 +130,75 @@ export default function AdminCreatorDetailPage() {
             <CardHeader><CardTitle className="text-base">KYC Review</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                <div><b>PAN:</b> {c.kyc.panNumber || "—"}</div>
+                <div><b>Name (as on PAN):</b> {c.kyc.panName || "—"}</div>
+                <div><b>PAN Number:</b> {c.kyc.panNumber || "—"}</div>
                 <div><b>Reviewed:</b> {c.kyc.reviewedAt ? new Date(c.kyc.reviewedAt).toLocaleString("en-IN") : "Not reviewed"}</div>
+                <div><b>Current Status:</b> {c.kyc.status || "—"}</div>
                 <div className="md:col-span-2">
-                  <b>ID Proof:</b>{" "}
-                  {c.kyc.idProofUrl ? <a href={c.kyc.idProofUrl} target="_blank" rel="noreferrer" className="text-primary underline">View</a> : "—"}
+                  <b>PAN Card (front):</b>
+                  {c.kyc.panFrontUrl ? (
+                    <div className="mt-2">
+                      <a href={c.kyc.panFrontUrl} target="_blank" rel="noreferrer" className="inline-block border rounded-md overflow-hidden hover:opacity-90">
+                        <img src={c.kyc.panFrontUrl} alt="PAN card front" className="max-h-64 max-w-full object-contain bg-muted" />
+                      </a>
+                      <div className="text-[11px] text-muted-foreground mt-1">Click image to open full size in new tab</div>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground"> — not uploaded</span>
+                  )}
                 </div>
-                <div className="md:col-span-2">
-                  <b>Address Proof:</b>{" "}
-                  {c.kyc.addressProofUrl ? <a href={c.kyc.addressProofUrl} target="_blank" rel="noreferrer" className="text-primary underline">View</a> : "—"}
-                </div>
+                {(c.kyc.idProofUrl || c.kyc.addressProofUrl) && (
+                  <div className="md:col-span-2 text-xs text-muted-foreground border-t pt-2">
+                    Legacy: {c.kyc.idProofUrl && <a href={c.kyc.idProofUrl} target="_blank" rel="noreferrer" className="text-primary underline mr-3">ID Proof</a>}
+                    {c.kyc.addressProofUrl && <a href={c.kyc.addressProofUrl} target="_blank" rel="noreferrer" className="text-primary underline">Address Proof</a>}
+                  </div>
+                )}
               </div>
               <div className="border-t pt-3 space-y-3">
                 <div>
-                  <Label>Status</Label>
+                  <Label>Set Status</Label>
                   <Select value={kycStatus || "pending"} onValueChange={setKycStatus}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="pending">Pending Review</SelectItem>
                       <SelectItem value="approved">Approved</SelectItem>
                       <SelectItem value="rejected">Rejected</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label>Admin Note (visible to creator if rejected)</Label>
-                  <Textarea value={kycNote} onChange={e => setKycNote(e.target.value)} rows={3} />
+                  <Label>
+                    Admin Note {kycStatus === "rejected" && <span className="text-destructive">*</span>}
+                    <span className="text-xs text-muted-foreground font-normal ml-1">
+                      {kycStatus === "rejected"
+                        ? "(required — visible to creator so they know what to fix)"
+                        : "(optional)"}
+                    </span>
+                  </Label>
+                  <Textarea
+                    value={kycNote}
+                    onChange={e => setKycNote(e.target.value)}
+                    rows={3}
+                    placeholder={kycStatus === "rejected" ? "e.g. PAN image is blurry, please re-upload a clearer photo." : ""}
+                  />
+                  {kycStatus === "rejected" && kycNote.trim().length < 5 && (
+                    <p className="text-[11px] text-destructive mt-1">Please write at least 5 characters explaining the rejection reason.</p>
+                  )}
                 </div>
-                <Button size="sm" onClick={() => patchMut.mutate({ kycStatus, kycAdminNote: kycNote })} disabled={patchMut.isPending}>
-                  Update KYC
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (kycStatus === "rejected" && kycNote.trim().length < 5) {
+                      toast({ title: "Reason required", description: "Add a rejection reason of at least 5 characters.", variant: "destructive" });
+                      return;
+                    }
+                    patchMut.mutate({ kycStatus, kycAdminNote: kycNote });
+                  }}
+                  disabled={patchMut.isPending || (kycStatus === "rejected" && kycNote.trim().length < 5)}
+                  variant={kycStatus === "rejected" ? "destructive" : "default"}
+                  data-testid="button-update-kyc"
+                >
+                  {kycStatus === "approved" ? "Approve KYC" : kycStatus === "rejected" ? "Reject KYC" : "Update KYC"}
                 </Button>
               </div>
             </CardContent>

@@ -26,6 +26,9 @@ async function runMigrations() {
     await db.execute(sql`ALTER TABLE email_sends ADD COLUMN IF NOT EXISTS html_body text`);
     await db.execute(sql`ALTER TABLE platform_settings ADD COLUMN IF NOT EXISTS email_log_retention_days integer`);
     await db.execute(sql`ALTER TABLE platform_settings ADD COLUMN IF NOT EXISTS last_creator_payout_cycle_at timestamptz`);
+    // Creator KYC redesign: capture name-as-per-PAN + uploaded PAN front image.
+    await db.execute(sql`ALTER TABLE creators ADD COLUMN IF NOT EXISTS pan_name text`);
+    await db.execute(sql`ALTER TABLE creators ADD COLUMN IF NOT EXISTS pan_front_url text`);
 
     /* ── Creator panel + revenue-share commission system ─────────────────── */
     // Creators table — like admin_staff but for external course authors.

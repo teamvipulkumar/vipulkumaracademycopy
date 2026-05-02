@@ -6,7 +6,7 @@ import {
   coursesTable, paymentsTable, usersTable, bundleCoursesTable, bundlesTable,
   enrollmentsTable, notificationsTable, platformSettingsTable,
 } from "@workspace/db";
-import { eq, and, desc, isNull, sql, inArray, gte, lte } from "drizzle-orm";
+import { eq, and, or, desc, isNull, sql, inArray, gte, lte } from "drizzle-orm";
 import { requireAuth, requireAdmin, requireCreator, requirePermission, type JwtPayload } from "../middlewares/auth";
 
 const router = Router();
@@ -497,7 +497,9 @@ adminCreatorsRouter.get("/:id", requirePermission("creators"), async (req, res):
     creator: {
       ...creator,
       kyc: {
+        panName: creator.panName,
         panNumber: creator.panNumber,
+        panFrontUrl: creator.panFrontUrl,
         idProofUrl: creator.idProofUrl,
         addressProofUrl: creator.addressProofUrl,
         status: creator.kycStatus,
@@ -532,6 +534,20 @@ adminCreatorsRouter.patch("/:id", requirePermission("creators"), async (req, res
   const { notes, status, kycStatus, kycAdminNote } = req.body as {
     notes?: string; status?: "active" | "revoked"; kycStatus?: "pending" | "approved" | "rejected"; kycAdminNote?: string;
   };
+  // Load current row so we can compute the FINAL state (status+note) the
+  // request would leave the creator in. The note-required invariant must
+  // hold against that final state — not just against fields named in this
+  // request — otherwise an admin could first reject with a valid note,
+  // then PATCH only `kycAdminNote: ""` (no kycStatus) and silently strip
+  // the rejection reason.
+  const [current] = await db.select().from(creatorsTable).where(eq(creatorsTable.id, id)).limit(1);
+  if (!current) { res.status(404).json({ error: "Creator not found" }); return; }
+  const finalKycStatus = kycStatus ?? current.kycStatus;
+  const finalKycNote = (kycAdminNote !== undefined ? kycAdminNote : current.kycAdminNote ?? "").toString().trim();
+  if (finalKycStatus === "rejected" && finalKycNote.length < 5) {
+    res.status(400).json({ error: "Rejection reason is required (at least 5 characters) and cannot be cleared while KYC is rejected." });
+    return;
+  }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updates: any = {};
   if (notes !== undefined) updates.notes = notes;
@@ -837,14 +853,24 @@ router.get("/courses", requireCreator, async (req, res): Promise<void> => {
 router.get("/kyc", requireCreator, async (req, res): Promise<void> => {
   const c = await loadCreatorForRequest(req as AuthedRequest, res);
   if (!c) return;
+  // Locked = creator has actually submitted KYC docs AND it's either awaiting
+  // review (pending) or already approved. Default `kycStatus='pending'` on
+  // a fresh row WITHOUT any submitted PAN data is treated as "not submitted yet"
+  // so the very first submission isn't accidentally blocked.
+  const hasSubmittedKyc = !!(c.panNumber || c.panName || c.panFrontUrl);
+  const kycLocked = hasSubmittedKyc && (c.kycStatus === "pending" || c.kycStatus === "approved");
   res.json({
     kyc: {
+      panName: c.panName,
       panNumber: c.panNumber,
+      panFrontUrl: c.panFrontUrl,
       idProofUrl: c.idProofUrl,
       addressProofUrl: c.addressProofUrl,
       status: c.kycStatus,
       adminNote: c.kycAdminNote,
       reviewedAt: c.kycReviewedAt,
+      locked: kycLocked,
+      submitted: hasSubmittedKyc,
     },
     bank: {
       accountHolderName: c.accountHolderName,
@@ -867,7 +893,9 @@ router.patch("/kyc", requireCreator, async (req, res): Promise<void> => {
   if (raw && typeof raw === "object" && (raw.kyc || raw.bank)) {
     const k = (raw.kyc ?? {}) as Record<string, string | null | undefined>;
     const b = (raw.bank ?? {}) as Record<string, string | null | undefined>;
+    flat.panName = k.panName;
     flat.panNumber = k.panNumber;
+    flat.panFrontUrl = k.panFrontUrl;
     flat.idProofUrl = k.idProofUrl;
     flat.addressProofUrl = k.addressProofUrl;
     flat.accountHolderName = b.accountHolderName;
@@ -879,14 +907,16 @@ router.patch("/kyc", requireCreator, async (req, res): Promise<void> => {
     Object.assign(flat, raw);
   }
   const {
-    panNumber, idProofUrl, addressProofUrl,
+    panName, panNumber, panFrontUrl, idProofUrl, addressProofUrl,
     accountHolderName, accountNumber, ifscCode, bankName, upiId,
     preferredPaymentMethod,
   } = flat;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updates: any = {};
-  if (panNumber !== undefined) updates.panNumber = panNumber || null;
+  if (panName !== undefined) updates.panName = panName ? panName.trim() : null;
+  if (panNumber !== undefined) updates.panNumber = panNumber ? panNumber.toUpperCase().trim() : null;
+  if (panFrontUrl !== undefined) updates.panFrontUrl = panFrontUrl || null;
   if (idProofUrl !== undefined) updates.idProofUrl = idProofUrl || null;
   if (addressProofUrl !== undefined) updates.addressProofUrl = addressProofUrl || null;
   if (accountHolderName !== undefined) updates.accountHolderName = accountHolderName || null;
@@ -897,16 +927,79 @@ router.patch("/kyc", requireCreator, async (req, res): Promise<void> => {
   if (preferredPaymentMethod !== undefined && (preferredPaymentMethod === "bank" || preferredPaymentMethod === "upi")) {
     updates.preferredPaymentMethod = preferredPaymentMethod;
   }
-  // ANY change to KYC documents resets KYC review status to pending
-  const kycFieldsTouched = ["panNumber", "idProofUrl", "addressProofUrl"].some(k => updates[k] !== undefined);
+  // KYC fields that count as "submission documents" (changing any of these
+  // means the creator is (re)submitting their PAN). Bank fields are NOT
+  // included — bank account stays editable independently of KYC review.
+  const kycDocFields = ["panName", "panNumber", "panFrontUrl", "idProofUrl", "addressProofUrl"];
+  const kycFieldsTouched = kycDocFields.some(k => updates[k] !== undefined);
+
+  // Lock check: if this creator has previously submitted KYC and it's
+  // currently pending/approved, we must NOT let them silently overwrite
+  // the documents while admin is reviewing or after approval. Bank-only
+  // edits still pass through.
+  const hasSubmittedKyc = !!(c.panNumber || c.panName || c.panFrontUrl);
+  const kycLocked = hasSubmittedKyc && (c.kycStatus === "pending" || c.kycStatus === "approved");
+  if (kycLocked && kycFieldsTouched) {
+    res.status(409).json({
+      error: c.kycStatus === "approved"
+        ? "Your KYC is already approved and locked. Contact admin to change it."
+        : "Your KYC is under review. Wait for admin decision before re-submitting.",
+    });
+    return;
+  }
+
   if (kycFieldsTouched) {
+    // Validate required submission fields (final post-update state must have all three).
+    const finalPanName = (updates.panName ?? c.panName)?.toString().trim();
+    const finalPanNumber = (updates.panNumber ?? c.panNumber)?.toString().trim();
+    const finalPanFront = (updates.panFrontUrl ?? c.panFrontUrl)?.toString().trim();
+    if (!finalPanName || !finalPanNumber || !finalPanFront) {
+      res.status(400).json({ error: "Name as per PAN, PAN number and PAN front image are all required." });
+      return;
+    }
+    // Basic PAN format check: 5 letters + 4 digits + 1 letter
+    if (!/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(finalPanNumber)) {
+      res.status(400).json({ error: "PAN number format invalid. Expected 10 chars (e.g. ABCDE1234F)." });
+      return;
+    }
+    // Submitting / re-submitting → set status back to pending review and clear prior notes.
     updates.kycStatus = "pending";
     updates.kycAdminNote = null;
     updates.kycReviewedAt = null;
   }
 
   if (Object.keys(updates).length === 0) { res.status(400).json({ error: "Nothing to update" }); return; }
-  const [updated] = await db.update(creatorsTable).set(updates).where(eq(creatorsTable.id, c.id)).returning();
+
+  // Atomic write: when KYC fields are involved, the lock check above used a
+  // pre-loaded snapshot. To prevent two concurrent resubmits from racing
+  // (both observe status='rejected' before either updates), re-assert the
+  // unlocked condition INSIDE the WHERE clause. If admin flipped the row
+  // to 'pending'/'approved' between our SELECT and UPDATE, or another
+  // resubmit got there first, this UPDATE returns 0 rows and we 409.
+  let updated;
+  if (kycFieldsTouched) {
+    const rows = await db.update(creatorsTable).set(updates).where(
+      and(
+        eq(creatorsTable.id, c.id),
+        // unlocked condition: never-submitted-yet OR currently rejected
+        or(
+          and(
+            isNull(creatorsTable.panNumber),
+            isNull(creatorsTable.panName),
+            isNull(creatorsTable.panFrontUrl),
+          ),
+          eq(creatorsTable.kycStatus, "rejected"),
+        ),
+      ),
+    ).returning();
+    updated = rows[0];
+    if (!updated) {
+      res.status(409).json({ error: "KYC state changed — please refresh and try again." });
+      return;
+    }
+  } else {
+    [updated] = await db.update(creatorsTable).set(updates).where(eq(creatorsTable.id, c.id)).returning();
+  }
   res.json({ creator: updated });
 });
 
