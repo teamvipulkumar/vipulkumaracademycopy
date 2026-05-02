@@ -165,7 +165,11 @@ function NotificationPopup({ iconSize = "w-4 h-4" }: { iconSize?: string }) {
 }
 
 export function Navbar() {
-  const { user, isAuthenticated, isAdmin } = useAuth();
+  const { user, isAuthenticated, isAdmin, isStaff } = useAuth();
+  // Staff/team members and full admins both have access to the admin
+  // panel (gated per-permission inside). Show the same nav entry for
+  // both so staff aren't forced to type `/admin` manually.
+  const hasAdminAccess = isAdmin || isStaff;
   const { theme, toggleTheme } = useTheme();
   const branding = useBranding();
   const [, setLocation] = useLocation();
@@ -206,7 +210,7 @@ export function Navbar() {
       { href: "/my-courses", label: "My Learning", icon: GraduationCap },
       { href: "/affiliate", label: "Affiliate", icon: Share2 },
     ] : []),
-    ...(isAdmin ? [{ href: "/admin", label: "Admin", icon: ShieldCheck }] : []),
+    ...(hasAdminAccess ? [{ href: "/admin", label: "Admin", icon: ShieldCheck }] : []),
   ];
 
   const linkClass = (href: string) =>
@@ -307,7 +311,7 @@ export function Navbar() {
                     <DropdownMenuItem asChild><Link href="/profile">My Profile</Link></DropdownMenuItem>
                     <DropdownMenuItem asChild><Link href="/my-courses">My Learning</Link></DropdownMenuItem>
                     <DropdownMenuItem asChild><Link href="/affiliate">Affiliate</Link></DropdownMenuItem>
-                    {isAdmin && (
+                    {hasAdminAccess && (
                       <>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild><Link href="/admin">Admin Panel</Link></DropdownMenuItem>
