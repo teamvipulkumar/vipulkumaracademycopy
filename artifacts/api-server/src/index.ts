@@ -25,6 +25,24 @@ async function runMigrations() {
     await db.execute(sql`ALTER TABLE email_sends ADD COLUMN IF NOT EXISTS html_body text`);
     await db.execute(sql`ALTER TABLE platform_settings ADD COLUMN IF NOT EXISTS email_log_retention_days integer`);
 
+    // Loosen CHECK constraints on email_templates.type and email_automation_rules.event
+    // so newly added enum values (e.g. "staff_welcome") are accepted at runtime
+    // before the next drizzle-kit push. The TypeScript enum still gates writes.
+    await db.execute(sql`
+      DO $$
+      DECLARE c record;
+      BEGIN
+        FOR c IN
+          SELECT conrelid::regclass::text AS tbl, conname FROM pg_constraint
+          WHERE contype = 'c'
+            AND conrelid IN ('public.email_templates'::regclass, 'public.email_automation_rules'::regclass)
+            AND pg_get_constraintdef(oid) ~* 'welcome'
+        LOOP
+          EXECUTE format('ALTER TABLE %s DROP CONSTRAINT %I', c.tbl, c.conname);
+        END LOOP;
+      END $$;
+    `);
+
     // Funnel execution tracking (per-user runs through automation funnels)
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS funnel_executions (

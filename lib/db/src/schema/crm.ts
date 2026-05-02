@@ -39,7 +39,7 @@ export const emailTemplatesTable = pgTable("email_templates", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   type: text("type", {
-    enum: ["welcome", "purchase", "refund", "forgot_password", "remarketing", "completion", "affiliate_commission", "affiliate_application_submitted", "affiliate_application_approved", "affiliate_application_rejected", "custom"],
+    enum: ["welcome", "purchase", "refund", "forgot_password", "remarketing", "completion", "affiliate_commission", "affiliate_application_submitted", "affiliate_application_approved", "affiliate_application_rejected", "staff_welcome", "custom"],
   }).notNull().default("custom"),
   subject: text("subject").notNull(),
   htmlBody: text("html_body").notNull(),
@@ -72,6 +72,7 @@ export const emailAutomationRulesTable = pgTable("email_automation_rules", {
     enum: [
       "welcome", "purchase", "refund", "forgot_password", "remarketing", "completion", "affiliate_commission",
       "affiliate_application_submitted", "affiliate_application_approved", "affiliate_application_rejected",
+      "staff_welcome",
     ],
   }).notNull().unique(),
   templateId: integer("template_id").references(() => emailTemplatesTable.id, { onDelete: "set null" }),

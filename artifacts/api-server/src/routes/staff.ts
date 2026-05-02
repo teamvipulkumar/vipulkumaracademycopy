@@ -2,12 +2,81 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { nanoid } from "nanoid";
 import { db } from "@workspace/db";
-import { usersTable, adminStaffTable } from "@workspace/db";
+import { usersTable, adminStaffTable, emailTemplatesTable } from "@workspace/db";
 import { DEFAULT_PERMISSIONS } from "@workspace/db";
 import type { StaffPermissions } from "@workspace/db";
-import { eq, desc } from "drizzle-orm";
+import { and, eq, desc } from "drizzle-orm";
 import { requireAdmin, type JwtPayload } from "../middlewares/auth";
+import { sendTransactionalEmail, substituteSiteUrl, publicSiteUrlFromRequest } from "./crm";
 import type { Request } from "express";
+
+const PERMISSION_LABELS: Record<keyof StaffPermissions, string> = {
+  dashboard: "Dashboard",
+  orders: "Orders",
+  enrollments: "Enrollments",
+  coupons: "Coupons",
+  affiliates: "Affiliates",
+  payouts: "Payouts",
+  courses: "Courses",
+  pages: "Pages",
+  files: "Files",
+  users: "Users",
+  crm: "CRM & Email",
+  paymentGateways: "Payment Gateways",
+  gstInvoicing: "GST & Invoicing",
+  settings: "Settings",
+};
+
+function summarizePermissions(p: StaffPermissions | null | undefined): string {
+  if (!p) return "Dashboard";
+  const enabled = (Object.entries(p) as [keyof StaffPermissions, boolean][])
+    .filter(([, v]) => v)
+    .map(([k]) => PERMISSION_LABELS[k] ?? String(k));
+  return enabled.length > 0 ? enabled.join(", ") : "Dashboard";
+}
+
+async function sendStaffWelcomeEmail(args: {
+  req: Request;
+  toName: string;
+  toEmail: string;
+  roleName: string;
+  generatedPassword: string | null;
+  permissions: StaffPermissions;
+}) {
+  try {
+    const [tmpl] = await db.select().from(emailTemplatesTable)
+      .where(and(eq(emailTemplatesTable.type, "staff_welcome"), eq(emailTemplatesTable.isActive, true)))
+      .limit(1);
+    if (!tmpl) return;
+
+    const origin = await publicSiteUrlFromRequest(args.req);
+    const loginUrl = `${origin}/login`;
+    const passwordDisplay = args.generatedPassword
+      ? args.generatedPassword
+      : "(unchanged — keep using your existing password)";
+
+    const vars: Record<string, string> = {
+      name: args.toName,
+      email: args.toEmail,
+      role_name: args.roleName,
+      password: passwordDisplay,
+      permissions_summary: summarizePermissions(args.permissions),
+      login_url: loginUrl,
+      site_url: origin,
+    };
+
+    let html = tmpl.htmlBody;
+    let subject = tmpl.subject;
+    for (const [k, v] of Object.entries(vars)) {
+      html = html.replaceAll(`{{${k}}}`, v);
+      subject = subject.replaceAll(`{{${k}}}`, v);
+    }
+    [subject, html] = await substituteSiteUrl(subject, html);
+    await sendTransactionalEmail(args.toEmail, subject, html);
+  } catch (e) {
+    console.error("[staff welcome email] send failed:", e);
+  }
+}
 
 const router = Router();
 type AuthedRequest = Request & { user: JwtPayload };
@@ -84,6 +153,18 @@ router.post("/", requireAdmin, async (req: Request, res): Promise<void> => {
     invitedBy: authed.user.userId,
     notes: notes ?? null,
   }).returning();
+
+  // Fire welcome email asynchronously — don't block the create response or fail
+  // the request if SMTP/template is misconfigured. The email is sent every time
+  // a staff member is created (both new users and existing users being elevated).
+  sendStaffWelcomeEmail({
+    req,
+    toName: targetUser.name,
+    toEmail: targetUser.email,
+    roleName,
+    generatedPassword,
+    permissions: (permissions ?? DEFAULT_PERMISSIONS) as StaffPermissions,
+  }).catch(() => {});
 
   res.status(201).json({ ...staffRecord, generatedPassword });
 });

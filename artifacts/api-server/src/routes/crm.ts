@@ -392,7 +392,7 @@ export async function isUserUnsubscribed(userId: number | null | undefined): Pro
 
 /** Public function called from other routes to fire automation emails */
 export async function triggerAutomation(
-  event: "welcome" | "purchase" | "refund" | "forgot_password" | "completion" | "affiliate_commission" | "affiliate_application_submitted" | "affiliate_application_approved" | "affiliate_application_rejected",
+  event: "welcome" | "purchase" | "refund" | "forgot_password" | "completion" | "affiliate_commission" | "affiliate_application_submitted" | "affiliate_application_approved" | "affiliate_application_rejected" | "staff_welcome",
   userId: number,
   email: string,
   variables: Record<string, string> = {},
@@ -1082,6 +1082,60 @@ const DEFAULT_TEMPLATES = [
       <p style="margin:8px 0 0;font-size:13px;color:#6b7280;">Wishing you all the best,<br><strong style="color:#374151;">The VKA Team</strong></p>
     `),
   },
+  {
+    name: "Staff Welcome Email",
+    type: "staff_welcome" as const,
+    subject: "Welcome to the team, {{name}} — Your VKA Admin Access 🎉",
+    htmlBody: emailWrap(`
+      <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:24px;">
+        <tr><td align="center" style="background:#eef2ff;border-radius:12px;padding:26px 20px;">
+          <p style="margin:0 0 6px;font-size:48px;line-height:1;">🎉</p>
+          <h1 style="margin:8px 0 4px;font-size:22px;font-weight:700;color:#4338ca;font-family:Arial,Helvetica,sans-serif;">Welcome to the Team!</h1>
+          <p style="margin:6px 0 0;font-size:13px;color:#4f46e5;font-family:Arial,Helvetica,sans-serif;">You've been added as a staff member at Vipul Kumar Academy</p>
+        </td></tr>
+      </table>
+      <p style="margin:0 0 14px;font-size:15px;color:#374151;line-height:1.7;">Hi <strong>{{name}}</strong>,</p>
+      <p style="margin:0 0 18px;font-size:15px;color:#374151;line-height:1.7;">Great news — you now have admin access to the <strong>Vipul Kumar Academy</strong> platform. Below are your account details. Please keep them safe and do not share them with anyone.</p>
+
+      <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:22px;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;font-size:14px;font-family:Arial,Helvetica,sans-serif;">
+        <tr style="background:#f9fafb;">
+          <td style="padding:11px 16px;color:#6b7280;border-bottom:1px solid #e5e7eb;width:42%;">Name</td>
+          <td style="padding:11px 16px;color:#111827;font-weight:600;border-bottom:1px solid #e5e7eb;">{{name}}</td>
+        </tr>
+        <tr>
+          <td style="padding:11px 16px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Login Email</td>
+          <td style="padding:11px 16px;color:#111827;font-weight:600;border-bottom:1px solid #e5e7eb;">{{email}}</td>
+        </tr>
+        <tr style="background:#f9fafb;">
+          <td style="padding:11px 16px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Role</td>
+          <td style="padding:11px 16px;color:#4338ca;font-weight:700;border-bottom:1px solid #e5e7eb;">{{role_name}}</td>
+        </tr>
+        <tr>
+          <td style="padding:11px 16px;color:#6b7280;">Temporary Password</td>
+          <td style="padding:11px 16px;color:#111827;font-weight:700;font-family:'Courier New',Courier,monospace;letter-spacing:0.5px;">{{password}}</td>
+        </tr>
+      </table>
+
+      <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:22px;">
+        <tr><td style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:14px 16px;">
+          <p style="margin:0;font-size:13px;color:#92400e;font-family:Arial,Helvetica,sans-serif;line-height:1.6;">&#128274; <strong>Security tip:</strong> Please change this temporary password right after your first login from your account settings.</p>
+        </td></tr>
+      </table>
+
+      <p style="margin:0 0 8px;font-size:14px;color:#374151;line-height:1.7;"><strong>Your role gives you access to:</strong></p>
+      <p style="margin:0 0 22px;padding:12px 16px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;color:#374151;line-height:1.7;font-family:Arial,Helvetica,sans-serif;">{{permissions_summary}}</p>
+
+      <table cellpadding="0" cellspacing="0" style="margin:8px 0 24px;">
+        <tr><td style="background:#4f46e5;border-radius:8px;padding:13px 30px;">
+          <a href="{{login_url}}" data-no-track="1" style="color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;font-family:Arial,Helvetica,sans-serif;">Login to Admin Panel &rarr;</a>
+        </td></tr>
+      </table>
+
+      <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0 16px;" />
+      <p style="margin:0 0 6px;font-size:13px;color:#6b7280;line-height:1.7;">If you have any questions, please reach out to the admin who invited you, or email <a href="mailto:support@vipulkumaracademy.com" style="color:#2563eb;text-decoration:none;">support@vipulkumaracademy.com</a>.</p>
+      <p style="margin:8px 0 0;font-size:14px;color:#6b7280;">Welcome aboard,<br><strong style="color:#374151;">The VKA Team</strong></p>
+    `),
+  },
 ];
 
 router.post("/templates/seed-defaults", requireAdmin, async (_req, res): Promise<void> => {
@@ -1142,6 +1196,7 @@ const AUTOMATION_EVENTS = [
   { event: "affiliate_application_submitted", label: "Affiliate Application Submitted", description: "Sent when a user submits an affiliate application" },
   { event: "affiliate_application_approved", label: "Affiliate Application Approved", description: "Sent when an admin approves an affiliate application" },
   { event: "affiliate_application_rejected", label: "Affiliate Application Rejected", description: "Sent when an admin rejects an affiliate application" },
+  { event: "staff_welcome", label: "Staff Welcome", description: "Sent when a new staff member is added with their login details" },
 ];
 
 router.get("/automation", requireAdmin, async (_req, res): Promise<void> => {
