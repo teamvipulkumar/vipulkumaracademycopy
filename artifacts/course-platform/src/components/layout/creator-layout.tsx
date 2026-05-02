@@ -1,11 +1,8 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, ShoppingCart, Wallet, BookOpen, IdCard, ArrowLeft, Menu, X, LogOut } from "lucide-react";
+import { LayoutDashboard, ShoppingCart, Wallet, BookOpen, IdCard, ArrowLeft, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
-import { useToast } from "@/hooks/use-toast";
-
-const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 function CreatorLogo() {
   return (
@@ -26,18 +23,6 @@ const navItems: { path: string; icon: typeof LayoutDashboard; label: string }[] 
 ];
 
 function NavContent({ location, onNav }: { location: string; onNav?: () => void }) {
-  const { toast } = useToast();
-  const [, setLocation] = useLocation();
-
-  async function handleLogout() {
-    try {
-      await fetch(`${API_BASE}/api/auth/logout`, { method: "POST", credentials: "include" });
-      window.location.href = "/login";
-    } catch {
-      toast({ title: "Logout failed", description: "Try again", variant: "destructive" });
-    }
-  }
-
   return (
     <>
       <nav className="flex-1 p-3 overflow-y-auto space-y-0.5">
@@ -62,12 +47,6 @@ function NavContent({ location, onNav }: { location: string; onNav?: () => void 
             Back to Site
           </div>
         </Link>
-        <button onClick={handleLogout} className="w-full text-left">
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:bg-background cursor-pointer transition-colors">
-            <LogOut className="w-3.5 h-3.5" />
-            Logout
-          </div>
-        </button>
       </div>
     </>
   );
