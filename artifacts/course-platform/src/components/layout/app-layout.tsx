@@ -6,7 +6,7 @@ import { useBranding } from "@/lib/branding-context";
 import { Button } from "@/components/ui/button";
 import { useLogout, useListNotifications, getListNotificationsQueryKey, getGetMeQueryKey, useMarkNotificationRead, useMarkAllNotificationsRead } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Bell, Menu, X, BookOpen, Share2, GraduationCap, LogOut, ShieldCheck, ChevronRight, Mail, Youtube, Twitter, Linkedin, Instagram, CheckCheck, Sun, Moon, User } from "lucide-react";
+import { Bell, Menu, X, BookOpen, Share2, GraduationCap, LogOut, ShieldCheck, ChevronRight, Mail, Youtube, Twitter, Linkedin, Instagram, CheckCheck, Sun, Moon, User, Sparkles } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { EmailVerificationBanner } from "@/components/email-verification-banner";
 
@@ -165,11 +165,16 @@ function NotificationPopup({ iconSize = "w-4 h-4" }: { iconSize?: string }) {
 }
 
 export function Navbar() {
-  const { user, isAuthenticated, isAdmin, isStaff } = useAuth();
+  const { user, isAuthenticated, isAdmin, isStaff, isCreator } = useAuth();
   // Staff/team members and full admins both have access to the admin
   // panel (gated per-permission inside). Show the same nav entry for
   // both so staff aren't forced to type the URL manually.
   const hasAdminAccess = isAdmin || isStaff;
+  // Creators get a dedicated "Creator" nav entry pointing at /creator
+  // so they don't have to type the URL manually after logging in.
+  // Admins who happen to also be creators don't see this — they
+  // already have the Admin entry which exposes everything.
+  const showCreatorNav = isCreator && !isAdmin;
   // Staff users see "Staff Panel" pointing at `/staff`; full admins see
   // "Admin" pointing at `/admin`. Same component renders for both URL
   // prefixes — only the label/href change so a team member's URL bar
@@ -217,6 +222,7 @@ export function Navbar() {
       { href: "/my-courses", label: "My Learning", icon: GraduationCap },
       { href: "/affiliate", label: "Affiliate", icon: Share2 },
     ] : []),
+    ...(showCreatorNav ? [{ href: "/creator", label: "Creator", icon: Sparkles }] : []),
     ...(hasAdminAccess ? [{ href: adminNavHref, label: adminNavLabel, icon: ShieldCheck }] : []),
   ];
 
@@ -318,6 +324,12 @@ export function Navbar() {
                     <DropdownMenuItem asChild><Link href="/profile">My Profile</Link></DropdownMenuItem>
                     <DropdownMenuItem asChild><Link href="/my-courses">My Learning</Link></DropdownMenuItem>
                     <DropdownMenuItem asChild><Link href="/affiliate">Affiliate</Link></DropdownMenuItem>
+                    {showCreatorNav && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild><Link href="/creator"><Sparkles className="w-3.5 h-3.5 mr-2 text-emerald-400" />Creator Dashboard</Link></DropdownMenuItem>
+                      </>
+                    )}
                     {hasAdminAccess && (
                       <>
                         <DropdownMenuSeparator />
