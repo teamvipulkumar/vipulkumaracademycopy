@@ -168,8 +168,15 @@ export function Navbar() {
   const { user, isAuthenticated, isAdmin, isStaff } = useAuth();
   // Staff/team members and full admins both have access to the admin
   // panel (gated per-permission inside). Show the same nav entry for
-  // both so staff aren't forced to type `/admin` manually.
+  // both so staff aren't forced to type the URL manually.
   const hasAdminAccess = isAdmin || isStaff;
+  // Staff users see "Staff Panel" pointing at `/staff`; full admins see
+  // "Admin" pointing at `/admin`. Same component renders for both URL
+  // prefixes — only the label/href change so a team member's URL bar
+  // never says "/admin" (which would mislead them into thinking they
+  // own the site).
+  const adminNavLabel = isStaff ? "Staff Panel" : "Admin";
+  const adminNavHref = isStaff ? "/staff" : "/admin";
   const { theme, toggleTheme } = useTheme();
   const branding = useBranding();
   const [, setLocation] = useLocation();
@@ -210,7 +217,7 @@ export function Navbar() {
       { href: "/my-courses", label: "My Learning", icon: GraduationCap },
       { href: "/affiliate", label: "Affiliate", icon: Share2 },
     ] : []),
-    ...(hasAdminAccess ? [{ href: "/admin", label: "Admin", icon: ShieldCheck }] : []),
+    ...(hasAdminAccess ? [{ href: adminNavHref, label: adminNavLabel, icon: ShieldCheck }] : []),
   ];
 
   const linkClass = (href: string) =>
@@ -314,7 +321,7 @@ export function Navbar() {
                     {hasAdminAccess && (
                       <>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild><Link href="/admin">Admin Panel</Link></DropdownMenuItem>
+                        <DropdownMenuItem asChild><Link href={adminNavHref}>{isStaff ? "Staff Panel" : "Admin Panel"}</Link></DropdownMenuItem>
                       </>
                     )}
                     <DropdownMenuSeparator />

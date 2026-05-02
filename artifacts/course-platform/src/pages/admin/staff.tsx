@@ -78,7 +78,10 @@ export default function AdminStaffPage() {
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    if (!isAdmin && isStaff) setLocation("/admin");
+    // Staff & Access page is admin-only. If a staff user somehow lands
+    // here, bounce them to their own panel home (`/staff`) rather than
+    // `/admin` so their URL bar stays consistent with their role.
+    if (!isAdmin && isStaff) setLocation("/staff");
   }, [isAdmin, isStaff, setLocation]);
 
   const [modalOpen, setModalOpen] = useState(false);

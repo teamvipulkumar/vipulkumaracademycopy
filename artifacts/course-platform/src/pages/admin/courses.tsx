@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
+import { useAdminBase } from "@/lib/auth-context";
 import { useAdminListCourses, getAdminListCoursesQueryKey, useUpdateCourse, useDeleteCourse } from "@workspace/api-client-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,7 @@ function useBundles() {
 }
 
 export default function AdminCoursesPage() {
+  const adminBase = useAdminBase();
   const [activeTab, setActiveTab] = useState<Tab>("courses");
 
   /* ── Courses ── */
@@ -172,7 +174,7 @@ export default function AdminCoursesPage() {
         </div>
 
         {activeTab === "courses" ? (
-          <Link href="/admin/courses/new">
+          <Link href={`${adminBase}/courses/new`}>
             <Button size="sm"><Plus className="w-4 h-4 mr-2" />New Course</Button>
           </Link>
         ) : (
@@ -229,7 +231,7 @@ export default function AdminCoursesPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
                         <Button size="sm" variant="ghost" className="h-7 w-7 p-0" asChild>
-                          <Link href={`/admin/courses/${c.id}/edit`}><Pencil className="w-3.5 h-3.5" /></Link>
+                          <Link href={`${adminBase}/courses/${c.id}/edit`}><Pencil className="w-3.5 h-3.5" /></Link>
                         </Button>
                         <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-400 hover:text-red-300" onClick={() => handleDelete(c.id)}>
                           <Trash2 className="w-3.5 h-3.5" />

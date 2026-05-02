@@ -10,8 +10,14 @@ import {
   ComposedChart, Area, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell,
 } from "recharts";
+import { useAuth } from "@/lib/auth-context";
 
 export default function AdminDashboard() {
+  const { isStaff } = useAuth();
+  // Heading reflects role so a team member doesn't see "Admin Dashboard"
+  // (which would mislead them into thinking they own the platform).
+  const heading = isStaff ? "Staff Dashboard" : "Admin Dashboard";
+  const subheading = isStaff ? "Your assigned panel overview." : "Platform overview and analytics.";
   const [period, setPeriod] = useState<"7d" | "30d" | "90d" | "1y">("7d");
   const [summaryPeriod, setSummaryPeriod] = useState<"7d" | "14d" | "30d">("7d");
 
@@ -47,8 +53,8 @@ export default function AdminDashboard() {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-        <p className="text-muted-foreground">Platform overview and analytics.</p>
+        <h1 className="text-2xl font-bold">{heading}</h1>
+        <p className="text-muted-foreground">{subheading}</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

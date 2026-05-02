@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useRoute, Link } from "wouter";
+import { useAdminBase } from "@/lib/auth-context";
 import {
   useGetCourse, getGetCourseQueryKey,
   useCreateModule, useDeleteModule, useUpdateModule,
@@ -52,7 +53,12 @@ function getVideoPlatform(url: string): string {
 }
 
 export default function AdminCourseEditPage() {
-  const [, params] = useRoute("/admin/courses/:id/edit");
+  const adminBase = useAdminBase();
+  // Mounted under both `/admin/courses/:id/edit` and
+  // `/staff/courses/:id/edit`; match either to extract the course id.
+  const [, paramsAdmin] = useRoute("/admin/courses/:id/edit");
+  const [, paramsStaff] = useRoute("/staff/courses/:id/edit");
+  const params = paramsAdmin ?? paramsStaff;
   const courseId = parseInt(params?.id ?? "0");
   const { data: course, isLoading } = useGetCourse(courseId, { query: { queryKey: getGetCourseQueryKey(courseId), enabled: courseId > 0 } });
   const queryClient = useQueryClient();
@@ -222,7 +228,7 @@ export default function AdminCourseEditPage() {
     <div className="p-6 max-w-4xl space-y-8">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Link href="/admin/courses">
+        <Link href={`${adminBase}/courses`}>
           <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground">
             <ArrowLeft className="w-4 h-4" /> Courses
           </Button>

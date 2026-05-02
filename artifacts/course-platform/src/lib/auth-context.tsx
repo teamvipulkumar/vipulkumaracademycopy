@@ -14,30 +14,57 @@ interface AuthContextType {
   refetchUser: () => void;
 }
 
-// Ordered list of admin paths and the permission they require. Used to find
-// the first allowed page for a staff member after login or when they hit a
-// page they don't have permission for. Order = priority (dashboard first).
-export const ADMIN_PERMISSION_ROUTES: { path: string; perm: string }[] = [
-  { path: "/admin", perm: "dashboard" },
-  { path: "/admin/orders", perm: "orders" },
-  { path: "/admin/enrollments", perm: "enrollments" },
-  { path: "/admin/coupons", perm: "coupons" },
-  { path: "/admin/affiliates", perm: "affiliates" },
-  { path: "/admin/courses", perm: "courses" },
-  { path: "/admin/pages", perm: "pages" },
-  { path: "/admin/files", perm: "files" },
-  { path: "/admin/users", perm: "users" },
-  { path: "/admin/crm", perm: "crm" },
-  { path: "/admin/payment-gateways", perm: "paymentGateways" },
-  { path: "/admin/gst-invoicing", perm: "gstInvoicing" },
-  { path: "/admin/settings", perm: "settings" },
+/**
+ * The admin panel is mounted under TWO URL prefixes:
+ *   • `/admin/*`  — for the site owner / Super Admin
+ *   • `/staff/*`  — for team members granted partial access
+ *
+ * Both prefixes render the SAME pages/components — the prefix is purely
+ * a labelling convention so a team member's URL bar doesn't say "admin"
+ * (which would mislead them into thinking they own the site). Permission
+ * checks are unchanged and identical for both prefixes.
+ *
+ * Use `getAdminBase(isStaff)` (or the `useAdminBase()` hook) anywhere a
+ * link/redirect targets the admin panel.
+ */
+export function getAdminBase(isStaff: boolean): string {
+  return isStaff ? "/staff" : "/admin";
+}
+
+/** Strip `/admin` or `/staff` prefix → returns the suffix (e.g. `/orders`). */
+export function adminPathSuffix(path: string): string {
+  return path.replace(/^\/(admin|staff)(?=\/|$)/, "");
+}
+
+// Ordered list of admin path SUFFIXES and the permission they require. Used
+// to find the first allowed page for a staff member after login or when
+// they hit a page they don't have permission for. Order = priority
+// (dashboard first). Suffixes are joined with the appropriate base prefix.
+export const ADMIN_PERMISSION_ROUTES: { suffix: string; perm: string }[] = [
+  { suffix: "", perm: "dashboard" },
+  { suffix: "/orders", perm: "orders" },
+  { suffix: "/enrollments", perm: "enrollments" },
+  { suffix: "/coupons", perm: "coupons" },
+  { suffix: "/affiliates", perm: "affiliates" },
+  { suffix: "/courses", perm: "courses" },
+  { suffix: "/pages", perm: "pages" },
+  { suffix: "/files", perm: "files" },
+  { suffix: "/users", perm: "users" },
+  { suffix: "/crm", perm: "crm" },
+  { suffix: "/payment-gateways", perm: "paymentGateways" },
+  { suffix: "/gst-invoicing", perm: "gstInvoicing" },
+  { suffix: "/settings", perm: "settings" },
 ];
 
-/** Find the first admin path a staff member is allowed to see. */
-export function getStaffLandingPath(perms: Record<string, boolean> | null): string | null {
+/**
+ * Find the first admin path a staff member is allowed to see.
+ * `base` defaults to `/staff` because this is almost always called for
+ * staff users — pass `/admin` explicitly for full admins if needed.
+ */
+export function getStaffLandingPath(perms: Record<string, boolean> | null, base: string = "/staff"): string | null {
   if (!perms) return null;
   for (const r of ADMIN_PERMISSION_ROUTES) {
-    if (perms[r.perm] === true) return r.path;
+    if (perms[r.perm] === true) return `${base}${r.suffix}`;
   }
   return null;
 }
@@ -47,7 +74,7 @@ export function getPostLoginPath(user: { role?: string; isStaff?: boolean; staff
   if (!user) return "/my-courses";
   if (user.role === "admin" && !user.isStaff) return "/admin";
   if (user.isStaff) {
-    const path = getStaffLandingPath(user.staffPermissions ?? null);
+    const path = getStaffLandingPath(user.staffPermissions ?? null, "/staff");
     if (path) return path;
   }
   return "/my-courses";
@@ -95,6 +122,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   return useContext(AuthContext);
+}
+
+/**
+ * Returns the URL prefix the admin panel should use for the current user:
+ *   • `/admin` — site owner / Super Admin
+ *   • `/staff` — team members granted partial access
+ * Use whenever you `<Link href={...}>` or `setLocation(...)` into the panel.
+ */
+export function useAdminBase(): string {
+  const { isStaff } = useAuth();
+  return getAdminBase(isStaff);
 }
 
 export function ProtectedRoute({ children, adminOnly = false }: { children: ReactNode; adminOnly?: boolean }) {

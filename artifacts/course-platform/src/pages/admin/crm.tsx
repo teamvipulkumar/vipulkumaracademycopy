@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation, useSearch } from "wouter";
+import { useAdminBase } from "@/lib/auth-context";
 import { Mail, Send, FileText, Users, BarChart2, Plus, Trash2, Edit2, Check, X, Info, RefreshCw, Eye, Zap, Server, TestTube, CheckCircle2, AlertCircle, Loader2, Wand2, List, UserPlus, RotateCcw, Search, ChevronLeft, Tag, GitBranch, Calendar, Clock, ChevronRight, Play, Pause, ArrowRight, Filter, ShieldCheck, ShoppingCart, Flag, Minus, BookOpen, GraduationCap, UserCheck, Gift, XCircle, BookMarked, MousePointerClick, LogIn, KeyRound, MoreVertical, ArrowUpDown, Pencil, TrendingUp } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from "recharts";
 import { Button } from "@/components/ui/button";
@@ -128,6 +129,7 @@ function Stat({ label, value, sub, icon, color = "text-foreground" }: { label: s
 
 /* ── Main CRM Page ── */
 export default function AdminCrmPage() {
+  const adminBase = useAdminBase();
   const search = useSearch();
   // Read deep-link params on first render: ?tab=automation&funnel=3
   const initialParams = (() => {
@@ -1231,8 +1233,8 @@ function AutomationTab({ initialFunnelId = null }: { initialFunnelId?: number | 
   /* ── Report navigation ── */
   const [, navigate] = useLocation();
   const openReport = useCallback((f: any) => {
-    navigate(`/admin/crm/automation/${f.id}/report`);
-  }, [navigate]);
+    navigate(`${adminBase}/crm/automation/${f.id}/report`);
+  }, [navigate, adminBase]);
 
   /* ── Load ── */
   const loadAll = useCallback(async () => {

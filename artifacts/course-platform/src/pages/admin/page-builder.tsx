@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useAdminBase } from "@/lib/auth-context";
 import {
   ArrowLeft, Save, Eye, Plus, Trash2, ChevronUp, ChevronDown, Copy,
   Type, Image as ImageIcon, MousePointerClick, Video, Layout, Minus,
@@ -867,9 +868,15 @@ function BlockProperties({ block, onChange }: { block: Block; onChange: (props: 
 
 /* ─────────────────────── Main Builder ─────────────────────── */
 export default function PageBuilderPage() {
-  const [, params] = useRoute("/admin/pages/:id/builder");
+  // Page-builder is mounted under both `/admin/pages/:id/builder` and
+  // `/staff/pages/:id/builder` (see App.tsx). Match either prefix so the
+  // route param resolves regardless of which one the user landed on.
+  const [, paramsAdmin] = useRoute("/admin/pages/:id/builder");
+  const [, paramsStaff] = useRoute("/staff/pages/:id/builder");
+  const params = paramsAdmin ?? paramsStaff;
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const adminBase = useAdminBase();
 
   const pageId = params?.id ?? "";
   const [page, setPage] = useState<StoredPage | null>(() => loadPage(pageId));
@@ -887,7 +894,7 @@ export default function PageBuilderPage() {
   useEffect(() => {
     if (!page) {
       toast({ variant: "destructive", title: "Page not found" });
-      setLocation("/admin/pages");
+      setLocation(`${adminBase}/pages`);
     }
   }, [page]);
 
@@ -977,7 +984,7 @@ export default function PageBuilderPage() {
             variant="ghost"
             size="sm"
             className="h-8 gap-1.5 text-slate-400 hover:text-slate-200 px-2"
-            onClick={() => setLocation("/admin/pages")}
+            onClick={() => setLocation(`${adminBase}/pages`)}
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="text-xs hidden sm:inline">Pages</span>

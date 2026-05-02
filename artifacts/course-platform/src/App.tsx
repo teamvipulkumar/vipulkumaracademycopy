@@ -166,30 +166,42 @@ function Router() {
       <Route path="/contact-us" component={() => <AppLayout><ContactUsPage /></AppLayout>} />
       <Route path="/help-center" component={() => <AppLayout><HelpCenterPage /></AppLayout>} />
 
-      <Route path="/admin" component={() => <ProtectedRoute adminOnly><AdminLayout><AdminDashboard /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/courses" component={() => <ProtectedRoute adminOnly><AdminLayout><AdminCoursesPage /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/courses/new" component={() => <ProtectedRoute adminOnly><AdminLayout><AdminCourseNewPage /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/courses/:id/edit" component={() => <ProtectedRoute adminOnly><AdminLayout><AdminCourseEditPage /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/users" component={() => <ProtectedRoute adminOnly><AdminLayout><AdminUsersPage /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/affiliates" component={() => <ProtectedRoute adminOnly><AdminLayout><AdminAffiliatesPage /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/coupons" component={() => <ProtectedRoute adminOnly><AdminLayout><AdminCouponsPage /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/orders" component={() => <ProtectedRoute adminOnly><AdminLayout><AdminOrdersPage /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/enrollments" component={() => <ProtectedRoute adminOnly><AdminLayout><AdminEnrollmentsPage /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/payment-gateways" component={() => <ProtectedRoute adminOnly><AdminLayout><AdminPaymentGatewaysPage /></AdminLayout></ProtectedRoute>} />
+      {/* ── Admin panel ──
+          Mounted under TWO URL prefixes that render the SAME components:
+            • `/admin/*` — for the site owner / Super Admin
+            • `/staff/*` — for team members granted partial access
+          The dual prefix is purely a labelling choice so a team member's
+          URL bar doesn't say "admin" (which would mislead them into
+          thinking they own the site). All permission checks inside the
+          panel are identical for both prefixes. The `/admin/staff` page
+          (Staff & Access management) has an internal admin-only guard.
+          See `getAdminBase()` / `useAdminBase()` in `auth-context.tsx`. */}
+      {(["/admin", "/staff"] as const).flatMap(prefix => [
+        <Route key={`${prefix}`} path={prefix} component={() => <ProtectedRoute adminOnly><AdminLayout><AdminDashboard /></AdminLayout></ProtectedRoute>} />,
+        <Route key={`${prefix}/courses`} path={`${prefix}/courses`} component={() => <ProtectedRoute adminOnly><AdminLayout><AdminCoursesPage /></AdminLayout></ProtectedRoute>} />,
+        <Route key={`${prefix}/courses/new`} path={`${prefix}/courses/new`} component={() => <ProtectedRoute adminOnly><AdminLayout><AdminCourseNewPage /></AdminLayout></ProtectedRoute>} />,
+        <Route key={`${prefix}/courses/:id/edit`} path={`${prefix}/courses/:id/edit`} component={() => <ProtectedRoute adminOnly><AdminLayout><AdminCourseEditPage /></AdminLayout></ProtectedRoute>} />,
+        <Route key={`${prefix}/users`} path={`${prefix}/users`} component={() => <ProtectedRoute adminOnly><AdminLayout><AdminUsersPage /></AdminLayout></ProtectedRoute>} />,
+        <Route key={`${prefix}/affiliates`} path={`${prefix}/affiliates`} component={() => <ProtectedRoute adminOnly><AdminLayout><AdminAffiliatesPage /></AdminLayout></ProtectedRoute>} />,
+        <Route key={`${prefix}/coupons`} path={`${prefix}/coupons`} component={() => <ProtectedRoute adminOnly><AdminLayout><AdminCouponsPage /></AdminLayout></ProtectedRoute>} />,
+        <Route key={`${prefix}/orders`} path={`${prefix}/orders`} component={() => <ProtectedRoute adminOnly><AdminLayout><AdminOrdersPage /></AdminLayout></ProtectedRoute>} />,
+        <Route key={`${prefix}/enrollments`} path={`${prefix}/enrollments`} component={() => <ProtectedRoute adminOnly><AdminLayout><AdminEnrollmentsPage /></AdminLayout></ProtectedRoute>} />,
+        <Route key={`${prefix}/payment-gateways`} path={`${prefix}/payment-gateways`} component={() => <ProtectedRoute adminOnly><AdminLayout><AdminPaymentGatewaysPage /></AdminLayout></ProtectedRoute>} />,
+        <Route key={`${prefix}/settings`} path={`${prefix}/settings`} component={() => <ProtectedRoute adminOnly><AdminLayout><AdminSettingsPage /></AdminLayout></ProtectedRoute>} />,
+        <Route key={`${prefix}/facebook-pixel`} path={`${prefix}/facebook-pixel`} component={() => <ProtectedRoute adminOnly><AdminLayout><AdminFacebookPixelPage /></AdminLayout></ProtectedRoute>} />,
+        <Route key={`${prefix}/crm`} path={`${prefix}/crm`} component={() => <ProtectedRoute adminOnly><AdminLayout><AdminCrmPage /></AdminLayout></ProtectedRoute>} />,
+        <Route key={`${prefix}/crm/automation/:id/report`} path={`${prefix}/crm/automation/:id/report`} component={() => <ProtectedRoute adminOnly><AdminLayout><AutomationReportPage /></AdminLayout></ProtectedRoute>} />,
+        <Route key={`${prefix}/pages`} path={`${prefix}/pages`} component={() => <ProtectedRoute adminOnly><AdminLayout><AdminPagesPage /></AdminLayout></ProtectedRoute>} />,
+        <Route key={`${prefix}/gst-invoicing`} path={`${prefix}/gst-invoicing`} component={() => <ProtectedRoute adminOnly><AdminLayout><AdminGstInvoicingPage /></AdminLayout></ProtectedRoute>} />,
+        <Route key={`${prefix}/files`} path={`${prefix}/files`} component={() => <ProtectedRoute adminOnly><AdminLayout><AdminFilesPage /></AdminLayout></ProtectedRoute>} />,
+        <Route key={`${prefix}/staff`} path={`${prefix}/staff`} component={() => <ProtectedRoute adminOnly><AdminLayout><AdminStaffPage /></AdminLayout></ProtectedRoute>} />,
+        <Route key={`${prefix}/pages/:id/builder`} path={`${prefix}/pages/:id/builder`} component={() => <ProtectedRoute adminOnly><PageBuilderPage /></ProtectedRoute>} />,
+      ])}
       <Route path="/checkout/:id" component={() => <CheckoutPage />} />
       <Route path="/bundles/:id" component={() => <AppLayout><BundleDetailPage /></AppLayout>} />
       <Route path="/bundles/:id/checkout" component={() => <BundleCheckoutPage />} />
       <Route path="/payment/verify" component={() => <PaymentVerifyPage />} />
       <Route path="/verify-email" component={() => <VerifyEmailPage />} />
-      <Route path="/admin/settings" component={() => <ProtectedRoute adminOnly><AdminLayout><AdminSettingsPage /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/facebook-pixel" component={() => <ProtectedRoute adminOnly><AdminLayout><AdminFacebookPixelPage /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/crm" component={() => <ProtectedRoute adminOnly><AdminLayout><AdminCrmPage /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/crm/automation/:id/report" component={() => <ProtectedRoute adminOnly><AdminLayout><AutomationReportPage /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/pages" component={() => <ProtectedRoute adminOnly><AdminLayout><AdminPagesPage /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/gst-invoicing" component={() => <ProtectedRoute adminOnly><AdminLayout><AdminGstInvoicingPage /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/files" component={() => <ProtectedRoute adminOnly><AdminLayout><AdminFilesPage /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/staff" component={() => <ProtectedRoute adminOnly><AdminLayout><AdminStaffPage /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/pages/:id/builder" component={() => <ProtectedRoute adminOnly><PageBuilderPage /></ProtectedRoute>} />
 
       <Route path="/p/:slug" component={() => <PageRendererPage />} />
 

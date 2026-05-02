@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import { useAdminBase } from "@/lib/auth-context";
 import {
   Plus, ExternalLink, Trash2, Copy, Layers,
   MousePointerClick, Video, ShoppingCart, Megaphone,
@@ -100,6 +101,7 @@ function getTypeInfo(type: PageType) {
 }
 
 export default function AdminPagesPage() {
+  const adminBase = useAdminBase();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [pages, setPages] = useState<Page[]>(loadPages);
@@ -336,7 +338,7 @@ export default function AdminPagesPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-44">
-                          <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => setLocation(`/admin/pages/${page.id}/builder`)}>
+                          <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => setLocation(`${adminBase}/pages/${page.id}/builder`)}>
                             <PencilLine className="w-3.5 h-3.5" />Edit Page
                           </DropdownMenuItem>
                           <DropdownMenuItem

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef, Fragment } from "react";
 import { useRoute, useLocation, Link } from "wouter";
+import { useAdminBase } from "@/lib/auth-context";
 import {
   ChevronLeft, BarChart2, Mail, MailOpen, Activity, Loader2, Search, RefreshCw, Trash2,
   ChevronRight, ChevronDown, Eye, X, Info, CheckCircle2, XCircle, Clock, Users,
@@ -84,7 +85,12 @@ const TRIGGER_LABELS: Record<string, string> = {
 };
 
 export default function AutomationReportPage() {
-  const [, params] = useRoute("/admin/crm/automation/:id/report");
+  const adminBase = useAdminBase();
+  // Mounted under both `/admin/crm/automation/:id/report` and
+  // `/staff/crm/automation/:id/report` — match either prefix.
+  const [, paramsAdmin] = useRoute("/admin/crm/automation/:id/report");
+  const [, paramsStaff] = useRoute("/staff/crm/automation/:id/report");
+  const params = paramsAdmin ?? paramsStaff;
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const funnelId = params?.id ? parseInt(params.id) : null;
@@ -247,7 +253,7 @@ export default function AutomationReportPage() {
         {/* Breadcrumb row */}
         <div className="px-6 py-3 border-b border-border flex items-center justify-between gap-3 flex-wrap bg-muted/10">
           <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap min-w-0">
-            <Link href="/admin/crm?tab=automation" className="hover:text-foreground cursor-pointer flex items-center gap-1 transition-colors">
+            <Link href={`${adminBase}/crm?tab=automation`} className="hover:text-foreground cursor-pointer flex items-center gap-1 transition-colors">
               <ChevronLeft className="w-3.5 h-3.5" />Automation Funnels
             </Link>
             <ChevronRight className="w-3 h-3 opacity-50" />
@@ -257,7 +263,7 @@ export default function AutomationReportPage() {
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => navigate(`/admin/crm?tab=automation&funnel=${funnelId}`)}
+              onClick={() => navigate(`${adminBase}/crm?tab=automation&funnel=${funnelId}`)}
               className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-border hover:bg-muted/50 cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
             >
               <Pencil className="w-3.5 h-3.5" />Edit Funnel

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
+import { useAdminBase } from "@/lib/auth-context";
 import { useCreateCourse, getAdminListCoursesQueryKey, CreateCourseBody } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ const INITIAL_FORM = {
 };
 
 export default function AdminCourseNewPage() {
+  const adminBase = useAdminBase();
   const [form, setForm] = useState(INITIAL_FORM);
   const createCourse = useCreateCourse();
   const queryClient = useQueryClient();
@@ -50,7 +52,7 @@ export default function AdminCourseNewPage() {
       onSuccess: (data) => {
         toast({ title: "Course created! You can now add modules and lessons." });
         queryClient.invalidateQueries({ queryKey: getAdminListCoursesQueryKey() });
-        navigate(`/admin/courses/${(data as unknown as { id: number }).id}/edit`);
+        navigate(`${adminBase}/courses/${(data as unknown as { id: number }).id}/edit`);
       },
       onError: () => toast({ title: "Failed to create course", variant: "destructive" }),
     });
@@ -60,7 +62,7 @@ export default function AdminCourseNewPage() {
     <div className="p-6 max-w-3xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/admin/courses">
+        <Link href={`${adminBase}/courses`}>
           <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground">
             <ArrowLeft className="w-4 h-4" /> Back to Courses
           </Button>
@@ -212,7 +214,7 @@ export default function AdminCourseNewPage() {
           <Button className="flex-1" onClick={handleCreate} disabled={createCourse.isPending}>
             {createCourse.isPending ? "Creating..." : "Create Course & Add Content"}
           </Button>
-          <Link href="/admin/courses">
+          <Link href={`${adminBase}/courses`}>
             <Button variant="outline">Cancel</Button>
           </Link>
         </div>
