@@ -92,7 +92,7 @@ function NotificationPopup({ iconSize = "w-4 h-4" }: { iconSize?: string }) {
       <DropdownMenuContent
         align="end"
         collisionPadding={8}
-        sideOffset={8}
+        sideOffset={14}
         // The `notification-popup-mobile` marker class is paired with a
         // `@media (max-width: 767px)` rule in `index.css` that overrides
         // the Radix popper wrapper's transform to viewport-centre the

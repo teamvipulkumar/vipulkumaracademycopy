@@ -252,11 +252,10 @@ html, body {
     left: 0 !important;
     top: 0 !important;
     /* `50vw - 50%` shifts the wrapper so the panel's centre lands on the
-       viewport's centre. The Y offset (44px) sits the panel just slightly
-       under the navbar (h-14 = 56px), letting the popup's top edge tuck
-       ~12px behind the navbar's bottom edge — a more compact, tucked-in
-       look that the user prefers over a free-floating gap below the bar. */
-    transform: translate(calc(50vw - 50%), 44px) !important;
+       viewport's centre. The Y offset (70px) sits the panel ~14px below
+       the navbar's bottom edge (navbar h-14 = 56px), giving the popup a
+       small breathing gap from the header instead of tucking behind it. */
+    transform: translate(calc(50vw - 50%), 70px) !important;
   }
 }
 
