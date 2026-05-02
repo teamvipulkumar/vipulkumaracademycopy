@@ -2,101 +2,12 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { nanoid } from "nanoid";
 import { db } from "@workspace/db";
-import { usersTable, adminStaffTable, emailTemplatesTable } from "@workspace/db";
+import { usersTable, adminStaffTable } from "@workspace/db";
 import { DEFAULT_PERMISSIONS } from "@workspace/db";
 import type { StaffPermissions } from "@workspace/db";
-import { and, eq, desc } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { requireAdmin, type JwtPayload } from "../middlewares/auth";
-import { sendTransactionalEmail, substituteSiteUrl, publicSiteUrlFromRequest } from "./crm";
 import type { Request } from "express";
-
-const PERMISSION_LABELS: Record<keyof StaffPermissions, string> = {
-  dashboard: "Dashboard",
-  orders: "Orders",
-  enrollments: "Enrollments",
-  coupons: "Coupons",
-  affiliates: "Affiliates",
-  payouts: "Payouts",
-  courses: "Courses",
-  pages: "Pages",
-  files: "Files",
-  users: "Users",
-  crm: "CRM & Email",
-  paymentGateways: "Payment Gateways",
-  gstInvoicing: "GST & Invoicing",
-  settings: "Settings",
-};
-
-function summarizePermissions(p: StaffPermissions | null | undefined): string {
-  if (!p) return "Dashboard";
-  const enabled = (Object.entries(p) as [keyof StaffPermissions, boolean][])
-    .filter(([, v]) => v)
-    .map(([k]) => PERMISSION_LABELS[k] ?? String(k));
-  return enabled.length > 0 ? enabled.join(", ") : "Dashboard";
-}
-
-/** HTML-escape a value before injecting into an email body so admin-supplied
- *  fields like name/role cannot break out of the template (XSS / layout
- *  injection). Used for both HTML body and subject substitution. */
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
-async function sendStaffWelcomeEmail(args: {
-  req: Request;
-  toName: string;
-  toEmail: string;
-  roleName: string;
-  generatedPassword: string | null;
-  permissions: StaffPermissions;
-}) {
-  try {
-    const [tmpl] = await db.select().from(emailTemplatesTable)
-      .where(and(eq(emailTemplatesTable.type, "staff_welcome"), eq(emailTemplatesTable.isActive, true)))
-      .limit(1);
-    if (!tmpl) {
-      console.warn(
-        `[staff welcome email] skipped for ${args.toEmail}: no active "staff_welcome" template found. ` +
-        `Run "Seed Defaults" in Admin → CRM → Templates to create it.`,
-      );
-      return;
-    }
-
-    const origin = await publicSiteUrlFromRequest(args.req);
-    const loginUrl = `${origin}/login`;
-    const passwordDisplay = args.generatedPassword
-      ? args.generatedPassword
-      : "(unchanged — keep using your existing password)";
-
-    const vars: Record<string, string> = {
-      name: args.toName,
-      email: args.toEmail,
-      role_name: args.roleName,
-      password: passwordDisplay,
-      permissions_summary: summarizePermissions(args.permissions),
-      login_url: loginUrl,
-      site_url: origin,
-    };
-
-    let html = tmpl.htmlBody;
-    let subject = tmpl.subject;
-    for (const [k, v] of Object.entries(vars)) {
-      const safe = escapeHtml(v);
-      html = html.replaceAll(`{{${k}}}`, safe);
-      subject = subject.replaceAll(`{{${k}}}`, safe);
-    }
-    [subject, html] = await substituteSiteUrl(subject, html);
-    await sendTransactionalEmail(args.toEmail, subject, html);
-    console.log(`[staff welcome email] dispatched (or skipped if SMTP inactive) to ${args.toEmail}`);
-  } catch (e) {
-    console.error(`[staff welcome email] send failed for ${args.toEmail}:`, e);
-  }
-}
 
 const router = Router();
 type AuthedRequest = Request & { user: JwtPayload };
@@ -174,17 +85,9 @@ router.post("/", requireAdmin, async (req: Request, res): Promise<void> => {
     notes: notes ?? null,
   }).returning();
 
-  // Fire welcome email asynchronously — don't block the create response or fail
-  // the request if SMTP/template is misconfigured. The email is sent every time
-  // a staff member is created (both new users and existing users being elevated).
-  sendStaffWelcomeEmail({
-    req,
-    toName: targetUser.name,
-    toEmail: targetUser.email,
-    roleName,
-    generatedPassword,
-    permissions: (permissions ?? DEFAULT_PERMISSIONS) as StaffPermissions,
-  }).catch(() => {});
+  // Note: the "Staff Welcome Email" template is intentionally NOT sent from
+  // this route. Admins build a funnel in Admin → Automation with trigger
+  // event "staff_welcome" + action "Send Email" → Staff Welcome template.
 
   res.status(201).json({ ...staffRecord, generatedPassword });
 });

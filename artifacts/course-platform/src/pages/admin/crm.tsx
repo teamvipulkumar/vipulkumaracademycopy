@@ -1206,6 +1206,7 @@ function stepSummaryLabel(step: any): string {
 
 function AutomationTab({ initialFunnelId = null }: { initialFunnelId?: number | null }) {
   const { toast } = useToast();
+  const adminBase = useAdminBase();
 
   /* ── View state ── */
   const [view, setView] = useState<"list" | "builder">("list");
