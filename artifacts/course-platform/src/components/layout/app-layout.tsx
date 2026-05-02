@@ -93,14 +93,14 @@ function NotificationPopup({ iconSize = "w-4 h-4" }: { iconSize?: string }) {
         align="end"
         collisionPadding={8}
         sideOffset={8}
-        // Mobile (<md): bell isn't the right-most element (hamburger sits
-        // to its right), so `align="end"` anchors the popup ~50px in from
-        // the viewport edge and the 320px panel ends up visibly skewed
-        // left. Forcing the panel to `100vw - 16px` on phones lets Radix's
-        // collisionPadding push it inward equally on both sides → perfectly
-        // centred 8px gutters. Desktop (md+) keeps the original 20rem panel
-        // right-aligned to the bell — completely untouched.
-        className="w-[min(20rem,calc(100vw-16px))] max-md:w-[calc(100vw-16px)] border p-0 shadow-2xl"
+        // The `notification-popup-mobile` marker class is paired with a
+        // `@media (max-width: 767px)` rule in `index.css` that overrides
+        // the Radix popper wrapper's transform to viewport-centre the
+        // panel on phones (the bell isn't the right-most element on
+        // mobile, so the default `align="end"` skews the panel leftward).
+        // Desktop (md+) is completely untouched — the marker class only
+        // matches inside the mobile media query.
+        className="notification-popup-mobile w-[min(20rem,calc(100vw-32px))] border p-0 shadow-2xl"
         style={{ backgroundColor: "var(--dropdown-bg)", borderColor: "var(--dropdown-border)" }}
       >
         {/* Header */}

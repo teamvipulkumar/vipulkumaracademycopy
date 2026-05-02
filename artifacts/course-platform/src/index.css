@@ -237,6 +237,30 @@ html, body {
 
 
 /* ──────────────────────────────────────────────────────────────────
+   Mobile centering for the navbar notification popup.
+   On phones the bell icon isn't the right-most element (the hamburger
+   sits to its right), so Radix's `align="end"` anchors the popup ~50px
+   in from the viewport edge — leaving the panel visibly skewed left.
+   We override the Radix popper wrapper's transform to centre the panel
+   on the viewport while preserving its compact 320px width.
+   The `:has()` selector scopes this to ONLY the notification popup, so
+   no other Radix dropdown/popover on the site is affected.
+   Desktop (>=768px) keeps Radix's default trigger-anchored placement.
+   ────────────────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  [data-radix-popper-content-wrapper]:has(> .notification-popup-mobile) {
+    left: 0 !important;
+    top: 0 !important;
+    /* `50vw - 50%` shifts the wrapper so the panel's centre lands on the
+       viewport's centre. The Y offset matches the navbar height (h-16 =
+       64px) plus the Radix `sideOffset={8}` — so the panel sits 8px
+       below the navbar's bottom edge in the default (un-scrolled) state. */
+    transform: translate(calc(50vw - 50%), 72px) !important;
+  }
+}
+
+
+/* ──────────────────────────────────────────────────────────────────
    Light-mode overrides for hardcoded dark/neon Tailwind classes.
    Many components were authored against the dark default and use
    classes like `bg-slate-900`, `text-white`, `border-white/10`,
