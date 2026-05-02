@@ -25,20 +25,29 @@ async function runMigrations() {
     await db.execute(sql`ALTER TABLE email_sends ADD COLUMN IF NOT EXISTS html_body text`);
     await db.execute(sql`ALTER TABLE platform_settings ADD COLUMN IF NOT EXISTS email_log_retention_days integer`);
 
-    // Loosen CHECK constraints on email_templates.type and email_automation_rules.event
-    // so newly added enum values (e.g. "staff_welcome") are accepted at runtime
-    // before the next drizzle-kit push. The TypeScript enum still gates writes.
+    // Reconcile CHECK constraints on email_templates.type and email_automation_rules.event
+    // so newly added enum values (e.g. "staff_welcome") are accepted at runtime before the
+    // next drizzle-kit push. We only drop a constraint when:
+    //   (a) it is on the specific column we care about (`type` for templates, `event` for rules)
+    //   (b) AND its existing definition does NOT already permit the new value
+    // This keeps DB-level validation in place wherever it already covers staff_welcome,
+    // and avoids accidentally dropping unrelated CHECKs that happen to mention "welcome".
     await db.execute(sql`
       DO $$
       DECLARE c record;
       BEGIN
         FOR c IN
-          SELECT conrelid::regclass::text AS tbl, conname FROM pg_constraint
+          SELECT conrelid::regclass::text AS tbl, conname,
+                 pg_get_constraintdef(oid) AS def
+          FROM pg_constraint
           WHERE contype = 'c'
-            AND conrelid IN ('public.email_templates'::regclass, 'public.email_automation_rules'::regclass)
-            AND pg_get_constraintdef(oid) ~* 'welcome'
+            AND (
+              (conrelid = 'public.email_templates'::regclass         AND pg_get_constraintdef(oid) ~* '\\mtype\\M'  AND pg_get_constraintdef(oid) ~* '\\mwelcome\\M') OR
+              (conrelid = 'public.email_automation_rules'::regclass  AND pg_get_constraintdef(oid) ~* '\\mevent\\M' AND pg_get_constraintdef(oid) ~* '\\mwelcome\\M')
+            )
+            AND pg_get_constraintdef(oid) !~* '\\mstaff_welcome\\M'
         LOOP
-          EXECUTE format('ALTER TABLE %s DROP CONSTRAINT %I', c.tbl, c.conname);
+          EXECUTE format('ALTER TABLE %s DROP CONSTRAINT IF EXISTS %I', c.tbl, c.conname);
         END LOOP;
       END $$;
     `);

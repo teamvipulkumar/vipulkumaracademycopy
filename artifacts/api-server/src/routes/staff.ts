@@ -35,6 +35,18 @@ function summarizePermissions(p: StaffPermissions | null | undefined): string {
   return enabled.length > 0 ? enabled.join(", ") : "Dashboard";
 }
 
+/** HTML-escape a value before injecting into an email body so admin-supplied
+ *  fields like name/role cannot break out of the template (XSS / layout
+ *  injection). Used for both HTML body and subject substitution. */
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 async function sendStaffWelcomeEmail(args: {
   req: Request;
   toName: string;
@@ -47,7 +59,13 @@ async function sendStaffWelcomeEmail(args: {
     const [tmpl] = await db.select().from(emailTemplatesTable)
       .where(and(eq(emailTemplatesTable.type, "staff_welcome"), eq(emailTemplatesTable.isActive, true)))
       .limit(1);
-    if (!tmpl) return;
+    if (!tmpl) {
+      console.warn(
+        `[staff welcome email] skipped for ${args.toEmail}: no active "staff_welcome" template found. ` +
+        `Run "Seed Defaults" in Admin → CRM → Templates to create it.`,
+      );
+      return;
+    }
 
     const origin = await publicSiteUrlFromRequest(args.req);
     const loginUrl = `${origin}/login`;
@@ -68,13 +86,15 @@ async function sendStaffWelcomeEmail(args: {
     let html = tmpl.htmlBody;
     let subject = tmpl.subject;
     for (const [k, v] of Object.entries(vars)) {
-      html = html.replaceAll(`{{${k}}}`, v);
-      subject = subject.replaceAll(`{{${k}}}`, v);
+      const safe = escapeHtml(v);
+      html = html.replaceAll(`{{${k}}}`, safe);
+      subject = subject.replaceAll(`{{${k}}}`, safe);
     }
     [subject, html] = await substituteSiteUrl(subject, html);
     await sendTransactionalEmail(args.toEmail, subject, html);
+    console.log(`[staff welcome email] dispatched (or skipped if SMTP inactive) to ${args.toEmail}`);
   } catch (e) {
-    console.error("[staff welcome email] send failed:", e);
+    console.error(`[staff welcome email] send failed for ${args.toEmail}:`, e);
   }
 }
 
