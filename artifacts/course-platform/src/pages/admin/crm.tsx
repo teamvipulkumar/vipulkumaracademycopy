@@ -1159,6 +1159,7 @@ const FUNNEL_TRIGGERS = [
   { type: "user_signup",        label: "User Signs Up",          icon: UserPlus,           color: "text-blue-400",    bg: "bg-blue-500/10",    border: "border-blue-500/20",    desc: "Fires when a new user registers an account" },
   { type: "user_login",         label: "User Logs In",           icon: LogIn,              color: "text-sky-400",     bg: "bg-sky-500/10",     border: "border-sky-500/20",     desc: "Fires each time a user signs in" },
   { type: "forgot_password",    label: "Forgot Password",        icon: KeyRound,           color: "text-amber-400",   bg: "bg-amber-500/10",   border: "border-amber-500/20",   desc: "Fires when a user requests a password reset" },
+  { type: "staff_added",        label: "Staff Member Added",     icon: ShieldCheck,        color: "text-indigo-400",  bg: "bg-indigo-500/10",  border: "border-indigo-500/20",  desc: "Fires when a new staff member is added to the platform" },
   /* ── Purchases & payments ── */
   { type: "new_purchase",       label: "Purchase Completed",     icon: ShoppingCart,       color: "text-green-400",   bg: "bg-green-500/10",   border: "border-green-500/20",   desc: "Fires when any course purchase succeeds" },
   { type: "payment_failed",     label: "Payment Failed",         icon: XCircle,            color: "text-red-400",     bg: "bg-red-500/10",     border: "border-red-500/20",     desc: "Fires when a payment attempt fails" },
@@ -1771,7 +1772,7 @@ function AutomationTab({ initialFunnelId = null }: { initialFunnelId?: number | 
               <div className="grid grid-cols-3 gap-3">
                 {FUNNEL_TRIGGERS.filter(t => {
                   const catMap: Record<string, string> = {
-                    user_signup: "user_lifecycle", user_login: "user_lifecycle", forgot_password: "user_lifecycle",
+                    user_signup: "user_lifecycle", user_login: "user_lifecycle", forgot_password: "user_lifecycle", staff_added: "user_lifecycle",
                     new_purchase: "purchases", payment_failed: "purchases", coupon_used: "purchases",
                     course_enrolled: "courses", course_completed: "courses", lesson_completed: "courses",
                     tag_applied: "crm", list_added: "crm",

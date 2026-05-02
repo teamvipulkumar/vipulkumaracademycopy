@@ -7,10 +7,35 @@ import { DEFAULT_PERMISSIONS } from "@workspace/db";
 import type { StaffPermissions } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
 import { requireAdmin, type JwtPayload } from "../middlewares/auth";
+import { triggerFunnel, publicSiteUrlFromRequest, getPublicBaseUrl } from "./crm";
 import type { Request } from "express";
 
 const router = Router();
 type AuthedRequest = Request & { user: JwtPayload };
+
+const PERMISSION_LABELS: Record<keyof StaffPermissions, string> = {
+  dashboard: "Dashboard",
+  orders: "Orders",
+  enrollments: "Enrollments",
+  coupons: "Coupons",
+  affiliates: "Affiliates",
+  payouts: "Payouts",
+  courses: "Courses",
+  pages: "Pages",
+  files: "Files",
+  users: "Users",
+  crm: "CRM",
+  paymentGateways: "Payment Gateways",
+  gstInvoicing: "GST & Invoicing",
+  settings: "Settings",
+};
+
+function summarizePermissions(perms: StaffPermissions): string {
+  const enabled = (Object.keys(PERMISSION_LABELS) as Array<keyof StaffPermissions>)
+    .filter((k) => perms[k])
+    .map((k) => PERMISSION_LABELS[k]);
+  return enabled.length === 0 ? "No specific permissions assigned yet." : enabled.join(", ");
+}
 
 router.get("/", requireAdmin, async (req, res): Promise<void> => {
   const staff = await db
@@ -73,21 +98,40 @@ router.post("/", requireAdmin, async (req: Request, res): Promise<void> => {
   // now checks the JWT `isStaff` flag instead.
   const previousRole = targetUser.role;
 
+  const finalPermissions = permissions ?? DEFAULT_PERMISSIONS;
   const [staffRecord] = await db.insert(adminStaffTable).values({
     userId: targetUser.id,
     name: targetUser.name,
     email: targetUser.email,
     roleName,
-    permissions: permissions ?? DEFAULT_PERMISSIONS,
+    permissions: finalPermissions,
     previousRole,
     status: "active",
     invitedBy: authed.user.userId,
     notes: notes ?? null,
   }).returning();
 
-  // Note: the "Staff Welcome Email" template is intentionally NOT sent from
-  // this route. Admins build a funnel in Admin → Automation with trigger
-  // event "staff_welcome" + action "Send Email" → Staff Welcome template.
+  // Fire the "Staff Member Added" automation funnel trigger. Admins build a
+  // funnel in Admin → CRM → Automation with trigger "Staff Member Added" +
+  // action "Send Email" → Staff Welcome template. The funnel engine
+  // substitutes {{name}}, {{email}}, {{site_url}} automatically and the
+  // extra config below provides {{role_name}}, {{password}},
+  // {{permissions_summary}}, {{login_url}}.
+  // Use the same fallback chain as triggerFunnel internally: prefer the live
+  // request hostname, then fall back to the configured public base URL so
+  // login_url never ends up as a relative "/login" in emails sent from
+  // background contexts (e.g. localhost-bound dev requests).
+  const fromReq = publicSiteUrlFromRequest(req).replace(/\/+$/, "");
+  const siteUrl = fromReq || (await getPublicBaseUrl()).replace(/\/+$/, "");
+  triggerFunnel("staff_added", targetUser.id, {
+    name: targetUser.name,
+    email: targetUser.email,
+    role_name: roleName,
+    password: generatedPassword ?? "(use your existing password)",
+    permissions_summary: summarizePermissions(finalPermissions),
+    login_url: `${siteUrl}/login`,
+    site_url: siteUrl,
+  }).catch((e) => console.error("[staff added] triggerFunnel error:", e));
 
   res.status(201).json({ ...staffRecord, generatedPassword });
 });
