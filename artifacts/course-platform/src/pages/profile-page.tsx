@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { User, Phone, Mail, ShieldCheck, Loader2, Check, Camera, X, Pencil, Lock, KeyRound, Eye, EyeOff } from "lucide-react";
+import { User, Phone, Mail, ShieldCheck, Loader2, Check, Camera, X, Pencil, Lock, KeyRound, Eye, EyeOff, ChevronDown } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "";
 const BASE_URL = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -33,6 +33,11 @@ export default function ProfilePage() {
   // Change-password card state. Kept separate from the details form so a
   // password change never accidentally fires when the user only meant to
   // update their name/phone, and vice versa.
+  // The card is collapsed by default — only the trigger button is visible
+  // until the user explicitly opts into changing their password. This keeps
+  // a high-stakes credential field out of the way during normal profile
+  // edits and makes accidental input on these inputs impossible.
+  const [passwordExpanded, setPasswordExpanded] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -41,6 +46,18 @@ export default function ProfilePage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
   const [passwordChanged, setPasswordChanged] = useState(false);
+
+  // Single helper to fully reset the change-password card to its initial
+  // (collapsed, empty) state. Used after a successful change and on Cancel.
+  const resetPasswordForm = () => {
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setShowCurrent(false);
+    setShowNew(false);
+    setShowConfirm(false);
+    setPasswordExpanded(false);
+  };
 
   const isDirty =
     name.trim() !== (user?.name ?? "").trim() ||
@@ -120,14 +137,11 @@ export default function ProfilePage() {
         toast({ title: data.error ?? "Failed to change password", variant: "destructive" });
         return;
       }
-      // Clear inputs and flash success — keeps the user on the same page so
-      // they can confirm the action worked without being booted back to login.
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      setShowCurrent(false);
-      setShowNew(false);
-      setShowConfirm(false);
+      // Clear inputs, collapse the card, and flash success — keeps the user
+      // on the same page so they can confirm the action worked without being
+      // booted back to login. Collapsing back to the trigger button matches
+      // the "expand only when needed" pattern set by the initial state.
+      resetPasswordForm();
       setPasswordChanged(true);
       setTimeout(() => setPasswordChanged(false), 3000);
       toast({ title: "Password changed successfully!" });
@@ -406,18 +420,56 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {/* Change password — kept as a separate card so the destructive,
-            credential-altering action is visually isolated from routine
-            profile edits. The current password is required up-front to
-            prevent a hijacked session from silently rotating credentials. */}
-        <div className="bg-card border border-border rounded-2xl p-6 mt-6 space-y-5">
-          <div className="flex items-center gap-2">
-            <Lock className="w-4 h-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-              Change Password
-            </h2>
+        {/* Change password — collapsible card. Default state shows only the
+            header + a trigger button, so the credential-mutating fields stay
+            out of the way during normal profile edits. Expanding requires an
+            explicit click; collapsing happens automatically after a
+            successful change or via the in-form Cancel button. */}
+        <div className="bg-card border border-border rounded-2xl p-6 mt-6 space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <Lock className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+              <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground truncate">
+                Change Password
+              </h2>
+            </div>
+            {/* Persistent disclosure toggle. Stays visible in both states so
+                screen-reader / keyboard users always have a single, predictable
+                control for both expanding and collapsing the panel. */}
+            <button
+              type="button"
+              onClick={() => (passwordExpanded ? resetPasswordForm() : setPasswordExpanded(true))}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer px-2.5 py-1 rounded-md hover:bg-primary/10 flex-shrink-0"
+              aria-expanded={passwordExpanded}
+              aria-controls="change-password-panel"
+            >
+              {passwordExpanded ? "Collapse" : "Change Password"}
+              <ChevronDown
+                className={`w-3.5 h-3.5 transition-transform duration-200 ${passwordExpanded ? "rotate-180" : ""}`}
+              />
+            </button>
           </div>
-          <p className="text-sm text-muted-foreground -mt-2">
+
+          {/* Collapsed-state hint or last-update confirmation. */}
+          {!passwordExpanded && (
+            passwordChanged ? (
+              <div className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-500">
+                <Check className="w-3.5 h-3.5" />
+                Password updated successfully
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Update your account password. Your current password will be required.
+              </p>
+            )
+          )}
+
+          {/* Expanded panel — full form. Rendered only while
+              `passwordExpanded` is true; field values are explicitly cleared
+              by `resetPasswordForm()` on Cancel and on successful change. */}
+          {passwordExpanded && (
+          <div id="change-password-panel" className="space-y-5">
+          <p className="text-sm text-muted-foreground">
             For your security, enter your current password to set a new one.
           </p>
 
@@ -522,7 +574,8 @@ export default function ProfilePage() {
             )}
           </div>
 
-          {/* Action row */}
+          {/* Action row — Update + Cancel. Cancel collapses the panel and
+              clears any half-typed credentials so they don't sit in memory. */}
           <div className="flex items-center gap-3 pt-1">
             <Button
               onClick={handleChangePassword}
@@ -537,19 +590,21 @@ export default function ProfilePage() {
             >
               {changingPassword ? (
                 <><Loader2 className="w-4 h-4 animate-spin" />Updating…</>
-              ) : passwordChanged ? (
-                <><Check className="w-4 h-4" />Updated!</>
               ) : (
                 "Update Password"
               )}
             </Button>
-            {passwordChanged && (
-              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-500">
-                <Check className="w-3.5 h-3.5" />
-                Password updated successfully
-              </span>
-            )}
+            <button
+              type="button"
+              onClick={resetPasswordForm}
+              disabled={changingPassword}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
+            >
+              Cancel
+            </button>
           </div>
+          </div>
+          )}
         </div>
 
       </div>
