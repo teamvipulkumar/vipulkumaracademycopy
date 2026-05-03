@@ -103,7 +103,7 @@ function ApplyForm({ user, onSubmitted }: { user: any; onSubmitted: () => void }
         {/* Perks */}
         <div className="grid grid-cols-3 gap-3 mb-6">
           {[
-            { icon: <BadgeIndianRupee className="w-4 h-4 text-green-400" />, label: "Up to 30%", sub: "Commission" },
+            { icon: <BadgeIndianRupee className="w-4 h-4 text-green-400" />, label: "Up to 50%", sub: "Commission" },
             { icon: <Activity className="w-4 h-4 text-blue-400" />, label: "Real-time", sub: "Analytics" },
             { icon: <Wallet className="w-4 h-4 text-amber-400" />, label: "Fast", sub: "Payouts" },
           ].map(p => (
