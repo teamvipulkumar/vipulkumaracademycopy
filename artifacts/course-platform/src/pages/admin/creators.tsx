@@ -199,7 +199,7 @@ function TabBtn({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
+      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all cursor-pointer ${
         active
           ? "bg-primary text-primary-foreground shadow-sm"
           : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
@@ -281,7 +281,7 @@ function AllCreatorsTab({ creators }: { creators: Creator[] | undefined }) {
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
-              className={`px-2.5 py-1 text-xs rounded capitalize transition-colors ${
+              className={`px-2.5 py-1 text-xs rounded capitalize transition-colors cursor-pointer ${
                 statusFilter === s ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
               }`}
             >
@@ -478,7 +478,7 @@ function KycReviewTab({ creators }: { creators: Creator[] }) {
           <button
             key={key}
             onClick={() => setSub(key)}
-            className={`px-3 py-1.5 text-xs rounded-full transition-colors ${
+            className={`px-3 py-1.5 text-xs rounded-full transition-colors cursor-pointer ${
               sub === key
                 ? "bg-primary text-primary-foreground font-medium"
                 : "bg-muted/50 text-muted-foreground hover:bg-muted"
@@ -540,7 +540,7 @@ function KycReviewTab({ creators }: { creators: Creator[] }) {
                           <button
                             type="button"
                             onClick={() => setLightbox({ url: c.panFrontUrl!, title: `${c.name} · PAN Card` })}
-                            className="group relative inline-block w-14 h-10 rounded border border-border overflow-hidden hover:border-primary hover:ring-2 hover:ring-primary/30 bg-muted transition-all"
+                            className="group relative inline-block w-14 h-10 rounded border border-border overflow-hidden hover:border-primary hover:ring-2 hover:ring-primary/30 bg-muted transition-all cursor-pointer"
                             title="Click to preview"
                           >
                             <img src={c.panFrontUrl} alt="PAN" className="w-full h-full object-cover" />
@@ -797,7 +797,7 @@ function PayoutsTab() {
             <button
               key={s}
               onClick={() => setSub(s)}
-              className={`px-2.5 py-1 text-xs rounded capitalize transition-colors ${
+              className={`px-2.5 py-1 text-xs rounded capitalize transition-colors cursor-pointer ${
                 sub === s ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
               }`}
             >
