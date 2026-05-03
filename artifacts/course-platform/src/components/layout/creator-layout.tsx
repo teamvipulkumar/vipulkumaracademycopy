@@ -85,7 +85,7 @@ export function CreatorLayout({ children }: { children: React.ReactNode }) {
 
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-40">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer" onClick={() => setMobileOpen(false)} />
           <aside className="absolute top-14 left-0 bottom-0 w-64 bg-card border-r border-border flex flex-col shadow-2xl">
             <div className="p-4 border-b border-border">
               <div className="flex items-center gap-2">
