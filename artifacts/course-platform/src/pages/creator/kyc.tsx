@@ -62,11 +62,11 @@ export default function CreatorKycPage() {
       {/* Tabs: KYC and Bank Account in separate tabs */}
       <Tabs defaultValue="kyc" className="w-full">
         <TabsList className="grid w-full grid-cols-2 max-w-md">
-          <TabsTrigger value="kyc" className="gap-2">
+          <TabsTrigger value="kyc" className="gap-2 cursor-pointer">
             <ShieldCheck className="w-4 h-4" />
             KYC Verification
           </TabsTrigger>
-          <TabsTrigger value="bank" className="gap-2">
+          <TabsTrigger value="bank" className="gap-2 cursor-pointer">
             <Landmark className="w-4 h-4" />
             Bank Account
           </TabsTrigger>
