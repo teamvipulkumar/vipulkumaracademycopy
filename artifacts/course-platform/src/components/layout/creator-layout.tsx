@@ -118,21 +118,18 @@ function NavContent({
           Workspace
         </p>
       </div>
-      <nav className="flex-1 px-3 overflow-y-auto space-y-0.5">
+      <nav className="flex-1 px-3 overflow-y-auto space-y-1">
         {navItems.map(item => {
           const isActive = item.path === "/creator"
             ? location === "/creator" || location === "/creator/"
             : location.startsWith(item.path);
           return (
             <Link key={item.path} href={item.path} onClick={onNav}>
-              <div className={`group relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+              <div className={`group flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
                 isActive
-                  ? "bg-gradient-to-r from-violet-500/15 to-blue-500/10 text-foreground shadow-sm"
+                  ? "bg-gradient-to-r from-violet-500/15 to-blue-500/10 text-foreground"
                   : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
               }`}>
-                {isActive && (
-                  <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-r-full bg-gradient-to-b from-violet-400 to-blue-400" />
-                )}
                 <item.icon className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-violet-400" : ""}`} />
                 {item.label}
               </div>
