@@ -1239,7 +1239,9 @@ function KycTab({ kyc, onSaved }: { kyc: any; onSaved: (k: any) => void }) {
               {kyc.addressProofName && (
                 <div>
                   <p className="text-[11px] text-muted-foreground">PAN Front Photo</p>
-                  <img src={kyc.addressProofName} alt="PAN" className="mt-1.5 w-full max-h-40 object-cover rounded-lg border border-border" />
+                  <div className="mt-1.5 mx-auto w-full max-w-[340px] aspect-[1.586/1] rounded-lg overflow-hidden border border-border bg-gradient-to-br from-muted/40 to-muted/10 relative shadow-sm">
+                    <img src={kyc.addressProofName} alt="PAN" className="absolute inset-0 w-full h-full object-cover" />
+                  </div>
                 </div>
               )}
             </div>
@@ -1295,7 +1297,9 @@ function KycTab({ kyc, onSaved }: { kyc: any; onSaved: (k: any) => void }) {
               {kyc.addressProofName && (
                 <div>
                   <p className="text-[11px] text-muted-foreground">PAN Front Photo</p>
-                  <img src={kyc.addressProofName} alt="PAN" className="mt-1.5 w-full max-h-40 object-cover rounded-lg border border-border" />
+                  <div className="mt-1.5 mx-auto w-full max-w-[340px] aspect-[1.586/1] rounded-lg overflow-hidden border border-border bg-gradient-to-br from-muted/40 to-muted/10 relative shadow-sm">
+                    <img src={kyc.addressProofName} alt="PAN" className="absolute inset-0 w-full h-full object-cover" />
+                  </div>
                 </div>
               )}
             </div>
@@ -1372,8 +1376,11 @@ function KycTab({ kyc, onSaved }: { kyc: any; onSaved: (k: any) => void }) {
               onChange={e => handlePanPhoto(e.target.files?.[0])}
             />
             {panPhotoUrl ? (
-              <div className="relative rounded-xl overflow-hidden border border-border group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                <img src={panPhotoUrl} alt="PAN front photo" className="w-full h-40 object-cover" />
+              <div
+                className="relative mx-auto w-full max-w-[340px] aspect-[1.586/1] rounded-xl overflow-hidden border border-border bg-gradient-to-br from-muted/40 to-muted/10 group cursor-pointer shadow-sm"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <img src={panPhotoUrl} alt="PAN front photo" className="absolute inset-0 w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all flex items-center justify-center">
                   <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 text-white text-sm font-medium bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1.5">
                     <Upload className="w-3.5 h-3.5" /> Replace Photo
