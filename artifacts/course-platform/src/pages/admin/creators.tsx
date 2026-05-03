@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  UserPlus, ChevronRight, ShieldCheck, Sparkles, Search, Ban,
+  UserPlus, ChevronRight, ShieldOff, ShieldCheck, Sparkles, Search,
   Users, ShieldAlert, Wallet, CheckCircle2, PlayCircle, Eye, Loader2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -337,24 +337,17 @@ function AllCreatorsTab({ creators }: { creators: Creator[] | undefined }) {
                     <td className="py-2.5 px-3 text-right">{fmt(c.totalEarnings)}</td>
                     <td className="py-2.5 px-3 text-right text-amber-400">{fmt(c.pendingAmount)}</td>
                     <td className="py-2.5 px-3 text-right">
-                      <div className="flex justify-end gap-1.5">
-                        <button
-                          type="button"
-                          title={c.status === "active" ? "Block creator" : "Restore creator"}
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 px-2"
+                          title={c.status === "active" ? "Revoke" : "Restore"}
                           onClick={() => toggleMut.mutate({ id: c.id, status: c.status === "active" ? "revoked" : "active" })}
                           disabled={toggleMut.isPending}
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border transition-colors disabled:opacity-50 ${
-                            c.status === "active"
-                              ? "bg-red-500/10 text-red-500 border-red-500/40 hover:bg-red-500/20"
-                              : "bg-green-500/10 text-green-500 border-green-500/40 hover:bg-green-500/20"
-                          }`}
                         >
-                          {c.status === "active" ? (
-                            <><Ban className="w-3 h-3" /> Block</>
-                          ) : (
-                            <><ShieldCheck className="w-3 h-3" /> Restore</>
-                          )}
-                        </button>
+                          {c.status === "active" ? <ShieldOff className="w-3.5 h-3.5" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+                        </Button>
                         <Link href={`${base}/creators/${c.id}`}>
                           <Button variant="ghost" size="sm" className="h-7 px-2" title="View detail">
                             <ChevronRight className="w-3.5 h-3.5" />
