@@ -173,8 +173,8 @@ export default function CreatorDashboardPage() {
                     <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="creatorEarnBar" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%"   stopColor="#4169E1" stopOpacity={1} />
-                    <stop offset="100%" stopColor="#1e3a8a" stopOpacity={0.9} />
+                    <stop offset="0%"   stopColor="#2563eb" stopOpacity={1} />
+                    <stop offset="100%" stopColor="#2563eb" stopOpacity={0.9} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
