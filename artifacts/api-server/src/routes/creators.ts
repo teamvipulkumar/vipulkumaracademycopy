@@ -74,6 +74,7 @@ export async function recordCreatorCommissions(
     // Pull all course → creator mappings in one query
     const rows = await db.select({
       courseId: coursesTable.id,
+      courseTitle: coursesTable.title,
       creatorId: coursesTable.creatorId,
     }).from(coursesTable).where(inArray(coursesTable.id, courseIds));
 
@@ -81,7 +82,7 @@ export async function recordCreatorCommissions(
     for (const r of rows) {
       if (r.creatorId == null) continue;
       // Verify creator is active (revoked → skip)
-      const [creator] = await db.select({ id: creatorsTable.id, userId: creatorsTable.userId, status: creatorsTable.status })
+      const [creator] = await db.select({ id: creatorsTable.id, userId: creatorsTable.userId, name: creatorsTable.name, email: creatorsTable.email, status: creatorsTable.status })
         .from(creatorsTable).where(eq(creatorsTable.id, r.creatorId)).limit(1);
       if (!creator || creator.status !== "active") {
         console.info(`[creator commission] skip course=${r.courseId} creator=${r.creatorId} (not active)`);
@@ -102,7 +103,19 @@ export async function recordCreatorCommissions(
         commissionAmount: perCourseCommission.toFixed(2),
         status: "earned",
       }).onConflictDoNothing().returning({ id: creatorCommissionsTable.id });
-      if (inserted.length) insertedCount++;
+      if (inserted.length) {
+        insertedCount++;
+        // Fire creator_commission_earned automation funnel (only on first-time
+        // insert, not on duplicate webhook retries thanks to onConflictDoNothing).
+        triggerFunnel("creator_commission_earned", creator.userId, {
+          name: creator.name,
+          email: creator.email,
+          course_name: r.courseTitle,
+          sale_amount: perCourseShare.toFixed(2),
+          commission_amount: perCourseCommission.toFixed(2),
+          commission_percent: "25",
+        }).catch(e => console.error("[creator commission] triggerFunnel error:", e));
+      }
       // Notify the creator (one notification per course; creators with multiple
       // courses in a bundle correctly receive multiple notifications)
       await db.insert(notificationsTable).values({
