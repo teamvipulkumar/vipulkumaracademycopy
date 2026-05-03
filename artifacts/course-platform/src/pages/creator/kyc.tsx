@@ -49,32 +49,41 @@ export default function CreatorKycPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">KYC &amp; Bank Details</h1>
+    <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-8">
+      {/* Page header */}
+      <div className="space-y-1">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">KYC &amp; Bank Details</h1>
         <p className="text-sm text-muted-foreground">
-          Submit your PAN details for verification. Once submitted, your KYC fields are locked until admin reviews them.
+          Submit your PAN details for verification and add your bank account to receive payouts.
+          Once submitted, your KYC fields are locked until admin reviews them.
         </p>
       </div>
 
-      {/* KYC section — affiliate-style 3-state UI */}
-      <div>
-        <h2 className="text-base font-semibold text-foreground mb-1">KYC Verification</h2>
-        <p className="text-xs text-muted-foreground mb-3">Submit identity documents to enable payouts.</p>
-        <KycSection
-          kyc={data.kyc}
-          onSaved={() => qc.invalidateQueries({ queryKey: ["creator-kyc"] })}
-        />
-      </div>
+      {/* Two-column layout: KYC on the left, Bank on the right (stacked on mobile) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        {/* ── KYC column ── */}
+        <section className="space-y-3">
+          <header className="space-y-0.5">
+            <h2 className="text-base font-semibold text-foreground">KYC Verification</h2>
+            <p className="text-xs text-muted-foreground">Submit identity documents to enable payouts.</p>
+          </header>
+          <KycSection
+            kyc={data.kyc}
+            onSaved={() => qc.invalidateQueries({ queryKey: ["creator-kyc"] })}
+          />
+        </section>
 
-      {/* Bank Account — affiliate-style save-then-lock UI */}
-      <div>
-        <h2 className="text-base font-semibold text-foreground mb-1">Bank Account</h2>
-        <p className="text-xs text-muted-foreground mb-3">Add your bank details to receive payout transfers.</p>
-        <BankSection
-          bank={data.bank}
-          onSaved={() => qc.invalidateQueries({ queryKey: ["creator-kyc"] })}
-        />
+        {/* ── Bank column ── */}
+        <section className="space-y-3">
+          <header className="space-y-0.5">
+            <h2 className="text-base font-semibold text-foreground">Bank Account</h2>
+            <p className="text-xs text-muted-foreground">Add your bank details to receive payout transfers.</p>
+          </header>
+          <BankSection
+            bank={data.bank}
+            onSaved={() => qc.invalidateQueries({ queryKey: ["creator-kyc"] })}
+          />
+        </section>
       </div>
     </div>
   );
@@ -154,7 +163,7 @@ function KycSection({ kyc, onSaved }: { kyc: KycData["kyc"]; onSaved: () => void
   /* ── "Pending" state — under review ── */
   if (kyc.status === "pending") {
     return (
-      <div className="max-w-lg space-y-4">
+      <div className="space-y-4">
         <div className="bg-card border border-border rounded-2xl p-6 text-center space-y-4">
           <div className="w-14 h-14 rounded-full bg-amber-400/10 border border-amber-400/20 flex items-center justify-center mx-auto">
             <ShieldCheck className="w-7 h-7 text-amber-400" />
@@ -178,7 +187,7 @@ function KycSection({ kyc, onSaved }: { kyc: KycData["kyc"]; onSaved: () => void
   /* ── "Approved" state ── */
   if (kyc.status === "approved") {
     return (
-      <div className="max-w-lg space-y-4">
+      <div className="space-y-4">
         <div className="bg-card border border-border rounded-2xl p-6 text-center space-y-4">
           <div className="w-14 h-14 rounded-full bg-green-400/10 border border-green-400/20 flex items-center justify-center mx-auto">
             <CheckCircle2 className="w-7 h-7 text-green-400" />
@@ -195,7 +204,7 @@ function KycSection({ kyc, onSaved }: { kyc: KycData["kyc"]; onSaved: () => void
 
   /* ── Form (first submit OR resubmit after rejection) ── */
   return (
-    <div className="max-w-lg space-y-4">
+    <div className="space-y-4">
       <div className="bg-card border border-border rounded-2xl p-5">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-semibold text-foreground">KYC Verification</h3>
@@ -400,7 +409,7 @@ function BankSection({ bank, onSaved }: { bank: KycData["bank"]; onSaved: () => 
   };
 
   return (
-    <div className="max-w-lg">
+    <div>
       <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-foreground">Bank Account Details</h3>
