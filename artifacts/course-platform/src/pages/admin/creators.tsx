@@ -51,6 +51,11 @@ interface Payout {
   paymentReference: string | null;
   notes: string | null;
   createdAt: string;
+  accountHolderName: string | null;
+  accountNumber: string | null;
+  ifscCode: string | null;
+  bankName: string | null;
+  upiId: string | null;
 }
 
 interface CreatorDetail {
@@ -828,6 +833,7 @@ function PayoutsTab() {
               <thead className="bg-muted/30">
                 <tr className="border-b border-border text-left text-xs text-muted-foreground uppercase tracking-wide">
                   <th className="py-2.5 px-3">Creator</th>
+                  <th className="py-2.5 px-3">Bank / UPI</th>
                   <th className="py-2.5 px-3">Released</th>
                   <th className="py-2.5 px-3 text-right">Amount</th>
                   <th className="py-2.5 px-3">Status</th>
@@ -837,24 +843,45 @@ function PayoutsTab() {
                 </tr>
               </thead>
               <tbody>
-                {payouts.map(p => (
-                  <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/20">
-                    <td className="py-2.5 px-3">
-                      <div className="font-medium">{p.creatorName}</div>
-                      <div className="text-xs text-muted-foreground">{p.creatorEmail}</div>
-                    </td>
-                    <td className="py-2.5 px-3 text-xs">{new Date(p.createdAt).toLocaleDateString("en-IN")}</td>
-                    <td className="py-2.5 px-3 text-right font-semibold">{fmt(p.amount)}</td>
-                    <td className="py-2.5 px-3"><Badge variant={statusVariant(p.status)} className="capitalize">{p.status}</Badge></td>
-                    <td className="py-2.5 px-3 text-xs">{p.releasedBy ?? "—"}</td>
-                    <td className="py-2.5 px-3 text-xs font-mono">{p.paymentReference ?? "—"}</td>
-                    <td className="py-2.5 px-3 text-right">
-                      {p.status === "pending" && (
-                        <Button size="sm" variant="outline" className="h-7" onClick={() => setMarkDialog(p)}>Mark…</Button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                {payouts.map(p => {
+                  const hasBank = !!(p.accountNumber && p.ifscCode);
+                  const hasUpi = !!p.upiId;
+                  return (
+                    <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/20">
+                      <td className="py-2.5 px-3">
+                        <div className="font-medium">{p.creatorName}</div>
+                        <div className="text-xs text-muted-foreground">{p.creatorEmail}</div>
+                      </td>
+                      <td className="py-2.5 px-3 text-xs">
+                        {hasBank ? (
+                          <div className="space-y-0.5">
+                            <div className="font-medium text-foreground">{p.accountHolderName ?? p.creatorName}</div>
+                            <div className="font-mono">A/C {p.accountNumber}</div>
+                            <div className="text-muted-foreground">{p.bankName ?? "—"} · <span className="font-mono">{p.ifscCode}</span></div>
+                            {hasUpi && <div className="text-muted-foreground">UPI: <span className="font-mono">{p.upiId}</span></div>}
+                          </div>
+                        ) : hasUpi ? (
+                          <div className="space-y-0.5">
+                            <div className="font-medium text-foreground">{p.accountHolderName ?? p.creatorName}</div>
+                            <div className="text-muted-foreground">UPI: <span className="font-mono">{p.upiId}</span></div>
+                          </div>
+                        ) : (
+                          <span className="text-amber-400 text-[11px]">No bank details</span>
+                        )}
+                      </td>
+                      <td className="py-2.5 px-3 text-xs">{new Date(p.createdAt).toLocaleDateString("en-IN")}</td>
+                      <td className="py-2.5 px-3 text-right font-semibold">{fmt(p.amount)}</td>
+                      <td className="py-2.5 px-3"><Badge variant={statusVariant(p.status)} className="capitalize">{p.status}</Badge></td>
+                      <td className="py-2.5 px-3 text-xs">{p.releasedBy ?? "—"}</td>
+                      <td className="py-2.5 px-3 text-xs font-mono">{p.paymentReference ?? "—"}</td>
+                      <td className="py-2.5 px-3 text-right">
+                        {p.status === "pending" && (
+                          <Button size="sm" variant="outline" className="h-7" onClick={() => setMarkDialog(p)}>Mark…</Button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -867,6 +894,27 @@ function PayoutsTab() {
           <DialogHeader>
             <DialogTitle>Update Payout · {markDialog?.creatorName}</DialogTitle>
           </DialogHeader>
+          {markDialog && (
+            <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs space-y-1">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold">Send Payment To</div>
+              {markDialog.accountNumber && markDialog.ifscCode ? (
+                <div className="space-y-0.5 mt-1">
+                  <div><span className="text-muted-foreground">Account Holder:</span> <span className="font-medium">{markDialog.accountHolderName ?? markDialog.creatorName}</span></div>
+                  <div><span className="text-muted-foreground">Account No:</span> <span className="font-mono font-medium">{markDialog.accountNumber}</span></div>
+                  <div><span className="text-muted-foreground">IFSC:</span> <span className="font-mono font-medium">{markDialog.ifscCode}</span></div>
+                  {markDialog.bankName && <div><span className="text-muted-foreground">Bank:</span> <span className="font-medium">{markDialog.bankName}</span></div>}
+                  {markDialog.upiId && <div><span className="text-muted-foreground">UPI:</span> <span className="font-mono font-medium">{markDialog.upiId}</span></div>}
+                </div>
+              ) : markDialog.upiId ? (
+                <div className="space-y-0.5 mt-1">
+                  <div><span className="text-muted-foreground">Account Holder:</span> <span className="font-medium">{markDialog.accountHolderName ?? markDialog.creatorName}</span></div>
+                  <div><span className="text-muted-foreground">UPI:</span> <span className="font-mono font-medium">{markDialog.upiId}</span></div>
+                </div>
+              ) : (
+                <div className="text-amber-400 mt-1">⚠ Creator has not added bank or UPI details yet.</div>
+              )}
+            </div>
+          )}
           <div className="space-y-3 py-2">
             <div>
               <Label>Status</Label>

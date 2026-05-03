@@ -593,6 +593,11 @@ adminCreatorPayoutsRouter.get("/", requirePermission("creators"), async (req, re
     paymentReference: creatorPayoutsTable.paymentReference,
     releasedBySystem: creatorPayoutsTable.releasedBySystem,
     createdAt: creatorPayoutsTable.createdAt,
+    accountHolderName: creatorsTable.accountHolderName,
+    accountNumber: creatorsTable.accountNumber,
+    ifscCode: creatorsTable.ifscCode,
+    bankName: creatorsTable.bankName,
+    upiId: creatorsTable.upiId,
   })
     .from(creatorPayoutsTable)
     .leftJoin(creatorsTable, eq(creatorPayoutsTable.creatorId, creatorsTable.id))
