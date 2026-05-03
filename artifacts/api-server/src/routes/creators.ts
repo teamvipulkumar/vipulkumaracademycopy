@@ -703,14 +703,27 @@ router.get("/me", requireCreator, async (req, res): Promise<void> => {
   res.json({ creator: c });
 });
 
-// GET /api/creator/dashboard — totals + recent sales
+// GET /api/creator/dashboard — totals + chart + top courses + recent sales + next payout
 router.get("/dashboard", requireCreator, async (req, res): Promise<void> => {
   const c = await loadCreatorForRequest(req as AuthedRequest, res);
   if (!c) return;
 
-  // Date boundaries (IST anchor not required — month is calendar-month UTC for simplicity)
+  // All windows are computed in IST (Asia/Kolkata) since the payout cycle and
+  // business reporting are IST-anchored. We derive IST "now" by shifting UTC by
+  // +5h30m, then take Y/M/D components from the shifted Date's UTC getters.
+  const IST_OFFSET_MIN = 330;
   const now = new Date();
-  const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const istNow = new Date(now.getTime() + IST_OFFSET_MIN * 60 * 1000);
+  const istY = istNow.getUTCFullYear();
+  const istM = istNow.getUTCMonth();
+  const istD = istNow.getUTCDate();
+  // Convert an IST wall-clock date back to a real UTC instant.
+  const istWallToUtc = (y: number, m: number, d: number) =>
+    new Date(Date.UTC(y, m, d) - IST_OFFSET_MIN * 60 * 1000);
+  const startOfMonth     = istWallToUtc(istY, istM,     1);
+  const startOfLastMonth = istWallToUtc(istY, istM - 1, 1);
+  const start30          = istWallToUtc(istY, istM, istD - 29);
+  const start90          = istWallToUtc(istY, istM, istD - 89);
 
   const [totals] = await db.select({
     lifetime: sql<string>`COALESCE(SUM(CASE WHEN ${creatorCommissionsTable.status} <> 'cancelled' THEN ${creatorCommissionsTable.commissionAmount} ELSE 0 END), 0)::text`,
@@ -721,10 +734,53 @@ router.get("/dashboard", requireCreator, async (req, res): Promise<void> => {
 
   const [thisMonth] = await db.select({
     amount: sql<string>`COALESCE(SUM(CASE WHEN ${creatorCommissionsTable.status} <> 'cancelled' THEN ${creatorCommissionsTable.commissionAmount} ELSE 0 END), 0)::text`,
+    count:  sql<string>`COUNT(*) FILTER (WHERE ${creatorCommissionsTable.status} <> 'cancelled')::text`,
   }).from(creatorCommissionsTable)
     .where(and(eq(creatorCommissionsTable.creatorId, c.id), gte(creatorCommissionsTable.createdAt, startOfMonth)));
 
-  // Recent sales (most recent 10 commissions with course title)
+  const [lastMonth] = await db.select({
+    amount: sql<string>`COALESCE(SUM(CASE WHEN ${creatorCommissionsTable.status} <> 'cancelled' THEN ${creatorCommissionsTable.commissionAmount} ELSE 0 END), 0)::text`,
+  }).from(creatorCommissionsTable)
+    .where(and(
+      eq(creatorCommissionsTable.creatorId, c.id),
+      gte(creatorCommissionsTable.createdAt, startOfLastMonth),
+      sql`${creatorCommissionsTable.createdAt} < ${startOfMonth}`,
+    ));
+
+  // Last 30 days daily series (aggregated, bucketed in IST so day boundaries
+  // line up with what creators expect in their local calendar).
+  const dailyRows = await db.select({
+    day: sql<string>`to_char((${creatorCommissionsTable.createdAt} AT TIME ZONE 'Asia/Kolkata')::date, 'YYYY-MM-DD')`,
+    amount: sql<string>`COALESCE(SUM(CASE WHEN ${creatorCommissionsTable.status} <> 'cancelled' THEN ${creatorCommissionsTable.commissionAmount} ELSE 0 END), 0)::text`,
+    sales: sql<string>`COUNT(*) FILTER (WHERE ${creatorCommissionsTable.status} <> 'cancelled')::text`,
+  }).from(creatorCommissionsTable)
+    .where(and(eq(creatorCommissionsTable.creatorId, c.id), gte(creatorCommissionsTable.createdAt, start30)))
+    .groupBy(sql`(${creatorCommissionsTable.createdAt} AT TIME ZONE 'Asia/Kolkata')::date`);
+
+  const dailyMap = new Map(dailyRows.map(r => [r.day, { amount: parseFloat(r.amount), sales: parseInt(r.sales, 10) }]));
+  const chart: Array<{ date: string; amount: number; sales: number }> = [];
+  for (let i = 0; i < 30; i++) {
+    // Iterate IST wall-clock dates so keys match the SQL grouping above.
+    const d = new Date(Date.UTC(istY, istM, istD - 29 + i));
+    const key = d.toISOString().slice(0, 10);
+    const v = dailyMap.get(key);
+    chart.push({ date: key, amount: v?.amount ?? 0, sales: v?.sales ?? 0 });
+  }
+
+  // Top 5 courses by earnings (last 90 days)
+  const topCourses = await db.select({
+    courseId: creatorCommissionsTable.courseId,
+    courseTitle: coursesTable.title,
+    earnings: sql<string>`COALESCE(SUM(CASE WHEN ${creatorCommissionsTable.status} <> 'cancelled' THEN ${creatorCommissionsTable.commissionAmount} ELSE 0 END), 0)::text`,
+    sales: sql<string>`COUNT(*) FILTER (WHERE ${creatorCommissionsTable.status} <> 'cancelled')::text`,
+  }).from(creatorCommissionsTable)
+    .leftJoin(coursesTable, eq(creatorCommissionsTable.courseId, coursesTable.id))
+    .where(and(eq(creatorCommissionsTable.creatorId, c.id), gte(creatorCommissionsTable.createdAt, start90)))
+    .groupBy(creatorCommissionsTable.courseId, coursesTable.title)
+    .orderBy(sql`SUM(CASE WHEN ${creatorCommissionsTable.status} <> 'cancelled' THEN ${creatorCommissionsTable.commissionAmount} ELSE 0 END) DESC`)
+    .limit(5);
+
+  // Recent sales (most recent 8 commissions with course title)
   const recent = await db.select({
     id: creatorCommissionsTable.id,
     courseId: creatorCommissionsTable.courseId,
@@ -739,16 +795,47 @@ router.get("/dashboard", requireCreator, async (req, res): Promise<void> => {
     .leftJoin(coursesTable, eq(creatorCommissionsTable.courseId, coursesTable.id))
     .where(eq(creatorCommissionsTable.creatorId, c.id))
     .orderBy(desc(creatorCommissionsTable.createdAt))
-    .limit(10);
+    .limit(8);
+
+  // Compute next Saturday in IST (the auto-payout cycle ETA). istNow's UTC
+  // getters yield IST wall-clock day-of-week, so we use those, then convert
+  // back to a real UTC instant for the response.
+  const istDow = istNow.getUTCDay(); // 0=Sun..6=Sat in IST
+  const daysToSat = istDow === 6 ? 7 : (6 - istDow);
+  const nextSaturday = istWallToUtc(istY, istM, istD + daysToSat);
+
+  const thisMonthAmt = parseFloat(thisMonth?.amount ?? "0");
+  const lastMonthAmt = parseFloat(lastMonth?.amount ?? "0");
+  const growthPct = lastMonthAmt > 0
+    ? Math.round(((thisMonthAmt - lastMonthAmt) / lastMonthAmt) * 100)
+    : (thisMonthAmt > 0 ? 100 : 0);
 
   res.json({
-    creator: { id: c.id, name: c.name, status: c.status },
+    creator: {
+      id: c.id, name: c.name, status: c.status,
+      kycStatus: c.kycStatus,
+      hasBank: !!((c.accountNumber && c.ifscCode) || c.upiId),
+    },
     totals: {
       lifetimeEarnings: parseFloat(totals?.lifetime ?? "0"),
       pending:  parseFloat(totals?.pending  ?? "0"),
       paid:     parseFloat(totals?.paid     ?? "0"),
       salesCount: parseInt(totals?.salesCount ?? "0", 10),
-      thisMonth: parseFloat(thisMonth?.amount ?? "0"),
+      thisMonth: thisMonthAmt,
+      thisMonthSales: parseInt(thisMonth?.count ?? "0", 10),
+      lastMonth: lastMonthAmt,
+      growthPct,
+    },
+    chart,
+    topCourses: topCourses.map(t => ({
+      courseId: t.courseId,
+      title: t.courseTitle ?? "(deleted course)",
+      earnings: parseFloat(t.earnings),
+      sales: parseInt(t.sales, 10),
+    })),
+    nextPayout: {
+      date: nextSaturday.toISOString(),
+      amount: parseFloat(totals?.pending ?? "0"),
     },
     recentSales: recent.map(r => ({
       id: r.id,
