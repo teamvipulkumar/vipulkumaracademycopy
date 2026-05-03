@@ -397,19 +397,37 @@ export async function triggerAutomation(
   email: string,
   variables: Record<string, string> = {},
 ) {
+  const tag = `[automation:${event}]`;
   try {
     const smtp = await getSmtp();
-    if (!smtp || !smtp.isActive) return;
+    if (!smtp || !smtp.isActive) {
+      console.warn(`${tag} SKIPPED — SMTP not configured or inactive (userId=${userId})`);
+      return;
+    }
 
     const [rule] = await db.select().from(emailAutomationRulesTable)
-      .where(and(eq(emailAutomationRulesTable.event, event), eq(emailAutomationRulesTable.isEnabled, true)))
+      .where(eq(emailAutomationRulesTable.event, event))
       .limit(1);
-    if (!rule || !rule.templateId) return;
+    if (!rule) {
+      console.warn(`${tag} SKIPPED — no rule row in email_automation_rules for this event. Configure it in Admin → CRM → Automation. (userId=${userId})`);
+      return;
+    }
+    if (!rule.isEnabled) {
+      console.warn(`${tag} SKIPPED — rule exists but isEnabled=false. Enable it in Admin → CRM → Automation. (userId=${userId})`);
+      return;
+    }
+    if (!rule.templateId) {
+      console.warn(`${tag} SKIPPED — rule is enabled but has no templateId assigned. Pick a template in Admin → CRM → Automation. (userId=${userId})`);
+      return;
+    }
 
     const [template] = await db.select().from(emailTemplatesTable)
       .where(and(eq(emailTemplatesTable.id, rule.templateId), eq(emailTemplatesTable.isActive, true)))
       .limit(1);
-    if (!template) return;
+    if (!template) {
+      console.warn(`${tag} SKIPPED — assigned template id=${rule.templateId} not found or inactive. (userId=${userId})`);
+      return;
+    }
 
     let html = template.htmlBody;
     let subject = template.subject;
@@ -422,23 +440,31 @@ export async function triggerAutomation(
     [subject, html] = await substituteSiteUrl(subject, html);
 
     const send = async () => {
-      if (await isUserUnsubscribed(userId)) return;
+      if (await isUserUnsubscribed(userId)) {
+        console.info(`${tag} SKIPPED send — user has unsubscribed (userId=${userId})`);
+        return;
+      }
       const token = newTrackingToken();
       const trackedHtml = await injectEmailTracking(html, token);
       try {
         await sendEmailWithFallback(email, subject, trackedHtml);
         await db.insert(emailSendsTable).values({ type: "automation", automationEvent: event, userId, email, subject, htmlBody: trackedHtml, status: "sent", trackingToken: token });
+        console.info(`${tag} SENT to=${email} subject="${subject}"`);
       } catch (err: any) {
-        await db.insert(emailSendsTable).values({ type: "automation", automationEvent: event, userId, email, subject, htmlBody: trackedHtml, status: "failed", failReason: String(err?.message ?? err), trackingToken: token });
+        const reason = String(err?.message ?? err);
+        await db.insert(emailSendsTable).values({ type: "automation", automationEvent: event, userId, email, subject, htmlBody: trackedHtml, status: "failed", failReason: reason, trackingToken: token });
+        console.error(`${tag} SEND FAILED to=${email} reason=${reason}`);
       }
     };
 
     if (rule.delayMinutes > 0) {
+      console.info(`${tag} scheduled in ${rule.delayMinutes}min for ${email}`);
       setTimeout(send, rule.delayMinutes * 60 * 1000);
     } else {
       send();
     }
-  } catch {
+  } catch (err) {
+    console.error(`${tag} UNEXPECTED ERROR:`, err);
   }
 }
 
