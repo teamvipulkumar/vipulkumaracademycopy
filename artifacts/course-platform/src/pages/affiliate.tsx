@@ -1200,7 +1200,7 @@ function KycTab({ kyc, onSaved }: { kyc: any; onSaved: (k: any) => void }) {
       if (!res.ok) throw new Error("Failed");
       const data = await res.json();
       onSaved(data);
-      toast({ title: "KYC submitted!", description: "Under review by admin." });
+      toast({ title: "KYC submitted!", description: "Our verification team will review your documents within 24–48 hours." });
     } catch { toast({ title: "Failed to submit KYC", variant: "destructive" }); }
     finally { setSaving(false); }
   };
