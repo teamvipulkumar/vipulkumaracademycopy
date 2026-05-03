@@ -1196,6 +1196,10 @@ const FUNNEL_TRIGGERS = [
   { type: "affiliate_application_submitted",   label: "Application Submitted",  icon: Mail,         color: "text-blue-400",    bg: "bg-blue-500/10",    border: "border-blue-500/20",    desc: "Fires when a user submits an affiliate application" },
   { type: "affiliate_application_approved",    label: "Application Approved",   icon: CheckCircle2, color: "text-green-400",   bg: "bg-green-500/10",   border: "border-green-500/20",   desc: "Fires when an admin approves an affiliate application" },
   { type: "affiliate_application_rejected",    label: "Application Rejected",   icon: XCircle,      color: "text-red-400",     bg: "bg-red-500/10",     border: "border-red-500/20",     desc: "Fires when an admin rejects an affiliate application" },
+  { type: "affiliate_kyc_submitted",           label: "Affiliate KYC Submitted",icon: FileCheck,    color: "text-cyan-400",    bg: "bg-cyan-500/10",    border: "border-cyan-500/20",    desc: "Fires when an affiliate submits or resubmits their KYC documents" },
+  { type: "affiliate_kyc_approved",            label: "Affiliate KYC Approved", icon: BadgeCheck,   color: "text-green-400",   bg: "bg-green-500/10",   border: "border-green-500/20",   desc: "Fires when an admin approves an affiliate's KYC" },
+  { type: "affiliate_kyc_rejected",            label: "Affiliate KYC Rejected", icon: FileX,        color: "text-red-400",     bg: "bg-red-500/10",     border: "border-red-500/20",     desc: "Fires when an admin rejects an affiliate's KYC" },
+  { type: "affiliate_payout_paid",             label: "Affiliate Payout Sent",  icon: Send,         color: "text-lime-400",    bg: "bg-lime-500/10",    border: "border-lime-500/20",    desc: "Fires when an admin marks an affiliate's payout as paid" },
   /* ── Engagement ── */
   { type: "link_clicked",       label: "Email Link Clicked",     icon: MousePointerClick,  color: "text-orange-400",  bg: "bg-orange-500/10",  border: "border-orange-500/20",  desc: "Fires when a contact clicks a tracked link in an email" },
 ];
@@ -1553,6 +1557,10 @@ function AutomationTab({ initialFunnelId = null }: { initialFunnelId?: number | 
                       <option value="affiliate_application_submitted">Application Submitted</option>
                       <option value="affiliate_application_approved">Application Approved</option>
                       <option value="affiliate_application_rejected">Application Rejected</option>
+                      <option value="affiliate_kyc_submitted">Affiliate KYC Submitted</option>
+                      <option value="affiliate_kyc_approved">Affiliate KYC Approved</option>
+                      <option value="affiliate_kyc_rejected">Affiliate KYC Rejected</option>
+                      <option value="affiliate_payout_paid">Affiliate Payout Sent</option>
                     </optgroup>
                     <optgroup label="Other">
                       <option value="link_clicked">Email Link Clicked</option>
@@ -1808,6 +1816,7 @@ function AutomationTab({ initialFunnelId = null }: { initialFunnelId?: number | 
                     tag_applied: "crm", list_added: "crm",
                     affiliate_joined: "affiliate", affiliate_commission: "affiliate",
                     affiliate_application_submitted: "affiliate", affiliate_application_approved: "affiliate", affiliate_application_rejected: "affiliate",
+                    affiliate_kyc_submitted: "affiliate", affiliate_kyc_approved: "affiliate", affiliate_kyc_rejected: "affiliate", affiliate_payout_paid: "affiliate",
                     link_clicked: "engagement",
                   };
                   return newTriggerCategory === "all" || catMap[t.type] === newTriggerCategory;

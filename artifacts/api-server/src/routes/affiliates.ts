@@ -502,19 +502,38 @@ router.post("/kyc", requireAuth, async (req, res): Promise<void> => {
   if (!idProofName || !addressProofName || !panNumber) {
     res.status(400).json({ error: "Name, PAN number, and PAN photo are required" }); return;
   }
+  const userId = authedReq.user.userId;
   const [existing] = await db.select().from(affiliateKycTable)
-    .where(eq(affiliateKycTable.userId, authedReq.user.userId)).limit(1);
+    .where(eq(affiliateKycTable.userId, userId)).limit(1);
+  let saved: typeof affiliateKycTable.$inferSelect;
   if (existing) {
     const [updated] = await db.update(affiliateKycTable)
       .set({ idProofName, addressProofName, panNumber: panNumber ?? null, status: "pending", adminNote: null, submittedAt: new Date() })
-      .where(eq(affiliateKycTable.userId, authedReq.user.userId)).returning();
-    res.json(updated);
+      .where(eq(affiliateKycTable.userId, userId)).returning();
+    saved = updated;
   } else {
     const [created] = await db.insert(affiliateKycTable).values({
-      userId: authedReq.user.userId, idProofName, addressProofName, panNumber: panNumber ?? null, status: "pending",
+      userId, idProofName, addressProofName, panNumber: panNumber ?? null, status: "pending",
     }).returning();
-    res.json(created);
+    saved = created;
   }
+  // Fire automation trigger (non-blocking)
+  try {
+    const [u] = await db.select({ name: usersTable.name, email: usersTable.email })
+      .from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+    const vars: Record<string, string> = {
+      name: u?.name ?? "Affiliate",
+      email: u?.email ?? "",
+      pan_number: panNumber ?? "",
+      id_proof_name: idProofName ?? "",
+      address_proof_name: addressProofName ?? "",
+      is_resubmission: existing ? "true" : "false",
+      submitted_at: (saved.submittedAt ?? new Date()).toISOString(),
+    };
+    triggerFunnel("affiliate_kyc_submitted", userId, vars).catch(e =>
+      console.error("[affiliate kyc submitted] triggerFunnel error:", e));
+  } catch (e) { console.error("[affiliate kyc submitted] vars build error:", e); }
+  res.json(saved);
 });
 
 /* ── Bank details ── */
@@ -831,17 +850,57 @@ router.delete("/admin/creatives/:id", requireAdmin, async (req, res): Promise<vo
 
 /* ── Admin: KYC review ── */
 router.post("/admin/kyc/:userId/approve", requireAdmin, async (req, res): Promise<void> => {
+  const targetUserId = parseInt(req.params.userId);
+  const [current] = await db.select().from(affiliateKycTable)
+    .where(eq(affiliateKycTable.userId, targetUserId)).limit(1);
+  const reviewedAt = new Date();
   await db.update(affiliateKycTable)
-    .set({ status: "approved", reviewedAt: new Date() })
-    .where(eq(affiliateKycTable.userId, parseInt(req.params.userId)));
+    .set({ status: "approved", reviewedAt })
+    .where(eq(affiliateKycTable.userId, targetUserId));
+  // Fire only on actual transition (skip if already approved)
+  if (current && current.status !== "approved") {
+    try {
+      const [u] = await db.select({ name: usersTable.name, email: usersTable.email })
+        .from(usersTable).where(eq(usersTable.id, targetUserId)).limit(1);
+      const vars: Record<string, string> = {
+        name: u?.name ?? "Affiliate",
+        email: u?.email ?? "",
+        pan_number: current.panNumber ?? "",
+        reviewed_at: reviewedAt.toISOString(),
+      };
+      triggerFunnel("affiliate_kyc_approved", targetUserId, vars).catch(e =>
+        console.error("[affiliate kyc approved] triggerFunnel error:", e));
+    } catch (e) { console.error("[affiliate kyc approved] vars build error:", e); }
+  }
   res.json({ message: "KYC approved" });
 });
 
 router.post("/admin/kyc/:userId/reject", requireAdmin, async (req, res): Promise<void> => {
+  const targetUserId = parseInt(req.params.userId);
   const { adminNote } = req.body;
+  const finalNote = adminNote || "Rejected by admin";
+  const [current] = await db.select().from(affiliateKycTable)
+    .where(eq(affiliateKycTable.userId, targetUserId)).limit(1);
+  const reviewedAt = new Date();
   await db.update(affiliateKycTable)
-    .set({ status: "rejected", adminNote: adminNote || "Rejected by admin", reviewedAt: new Date() })
-    .where(eq(affiliateKycTable.userId, parseInt(req.params.userId)));
+    .set({ status: "rejected", adminNote: finalNote, reviewedAt })
+    .where(eq(affiliateKycTable.userId, targetUserId));
+  // Fire only on actual transition (skip if already rejected)
+  if (current && current.status !== "rejected") {
+    try {
+      const [u] = await db.select({ name: usersTable.name, email: usersTable.email })
+        .from(usersTable).where(eq(usersTable.id, targetUserId)).limit(1);
+      const vars: Record<string, string> = {
+        name: u?.name ?? "Affiliate",
+        email: u?.email ?? "",
+        pan_number: current.panNumber ?? "",
+        rejection_reason: finalNote,
+        reviewed_at: reviewedAt.toISOString(),
+      };
+      triggerFunnel("affiliate_kyc_rejected", targetUserId, vars).catch(e =>
+        console.error("[affiliate kyc rejected] triggerFunnel error:", e));
+    } catch (e) { console.error("[affiliate kyc rejected] vars build error:", e); }
+  }
   res.json({ message: "KYC rejected" });
 });
 
@@ -1131,17 +1190,38 @@ router.post("/admin/scheduled-payouts/:affiliateId/action", requireAdmin, async 
     .where(eq(affiliateBankDetailsTable.userId, affiliateId)).limit(1);
 
   const status = action === "paid" ? "approved" : action === "hold" ? "hold" : "rejected";
+  const paymentMethod = bank ? "bank_transfer" : "admin_direct";
+  const paymentDetails = bank
+    ? `${bank.bankName} · A/C ${bank.accountNumber} · ${bank.ifscCode}`
+    : "Direct admin payout";
+  const processedAt = action === "paid" ? new Date() : null;
   await db.insert(payoutRequestsTable).values({
     userId: affiliateId,
     amount: unpaidAmount.toFixed(2) as any,
-    paymentMethod: bank ? "bank_transfer" : "admin_direct",
-    paymentDetails: bank
-      ? `${bank.bankName} · A/C ${bank.accountNumber} · ${bank.ifscCode}`
-      : "Direct admin payout",
+    paymentMethod,
+    paymentDetails,
     status: status as any,
     rejectionReason: (action === "reject" || action === "hold") && note ? note : null,
-    processedAt: action === "paid" ? new Date() : null,
+    processedAt,
   });
+
+  // Fire payout-paid trigger only when action === "paid"
+  if (action === "paid") {
+    try {
+      const [u] = await db.select({ name: usersTable.name, email: usersTable.email })
+        .from(usersTable).where(eq(usersTable.id, affiliateId)).limit(1);
+      const vars: Record<string, string> = {
+        name: u?.name ?? "Affiliate",
+        email: u?.email ?? "",
+        payout_amount: unpaidAmount.toFixed(2),
+        payment_method: paymentMethod,
+        payment_details: paymentDetails,
+        paid_at: (processedAt ?? new Date()).toISOString(),
+      };
+      triggerFunnel("affiliate_payout_paid", affiliateId, vars).catch(e =>
+        console.error("[affiliate payout paid] triggerFunnel error:", e));
+    } catch (e) { console.error("[affiliate payout paid] vars build error:", e); }
+  }
 
   res.json({ message: action === "paid" ? "Marked as paid" : action === "hold" ? "Put on hold" : "Rejected" });
 });
