@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import {
@@ -46,8 +47,11 @@ const fmt = (n: number) => `₹${n.toLocaleString("en-IN", { maximumFractionDigi
 const fmtCompact = (n: number) =>
   n >= 100000 ? `₹${(n / 100000).toFixed(1)}L` : n >= 1000 ? `₹${(n / 1000).toFixed(1)}K` : `₹${n.toFixed(0)}`;
 
+type ChartRange = "7d" | "30d";
+
 export default function CreatorDashboardPage() {
   const { data, isLoading } = useQuery({ queryKey: ["creator-dashboard"], queryFn: fetchDashboard });
+  const [range, setRange] = useState<ChartRange>("7d");
 
   if (isLoading) {
     return (
@@ -65,7 +69,10 @@ export default function CreatorDashboardPage() {
   if (!data) return <div className="p-6">No data</div>;
 
   const { creator, totals, recentSales } = data;
-  const chart = data.chart ?? [];
+  const fullChart = data.chart ?? [];
+  const chart = range === "7d" ? fullChart.slice(-7) : fullChart;
+  const rangeLabel = range === "7d" ? "Last 7 days" : "Last 30 days";
+  const totalLabel = range === "7d" ? "7-day total" : "30-day total";
   const topCourses = data.topCourses ?? [];
   const nextPayout = data.nextPayout ?? { date: new Date().toISOString(), amount: totals.pending };
   const kycOk = creator.kycStatus === "approved";
@@ -154,14 +161,33 @@ export default function CreatorDashboardPage() {
       {/* ── Earnings chart + Next payout side panel ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         <div className="lg:col-span-2 bg-card border border-border rounded-xl p-4">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
             <div>
-              <h2 className="text-sm font-semibold">Earnings — Last 30 days</h2>
+              <h2 className="text-sm font-semibold">Earnings — {rangeLabel}</h2>
               <p className="text-[11px] text-muted-foreground">Daily commission earned (excludes cancelled).</p>
             </div>
-            <div className="text-right">
-              <div className="text-lg font-bold">{fmt(chart.reduce((a, c) => a + c.amount, 0))}</div>
-              <div className="text-[10px] text-muted-foreground uppercase tracking-wide">30-day total</div>
+            <div className="flex items-center gap-3">
+              {/* Range toggle */}
+              <div className="inline-flex items-center bg-muted/40 border border-border rounded-lg p-0.5">
+                {(["7d", "30d"] as const).map(r => (
+                  <button
+                    key={r}
+                    onClick={() => setRange(r)}
+                    aria-pressed={range === r}
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-semibold tabular-nums transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
+                      range === r
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {r === "7d" ? "7 D" : "30 D"}
+                  </button>
+                ))}
+              </div>
+              <div className="text-right">
+                <div className="text-lg font-bold">{fmt(chart.reduce((a, c) => a + c.amount, 0))}</div>
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{totalLabel}</div>
+              </div>
             </div>
           </div>
           <div className="h-56 cursor-pointer [&_.recharts-bar-rectangle]:cursor-pointer [&_.recharts-area-area]:cursor-pointer">
@@ -185,7 +211,7 @@ export default function CreatorDashboardPage() {
                     const dt = new Date(d);
                     return dt.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
                   }}
-                  interval={Math.floor(chart.length / 6)}
+                  interval={range === "7d" ? 0 : Math.floor(chart.length / 6)}
                 />
                 <YAxis
                   tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
