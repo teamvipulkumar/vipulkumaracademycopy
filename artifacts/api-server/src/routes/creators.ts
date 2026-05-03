@@ -598,6 +598,9 @@ adminCreatorPayoutsRouter.get("/", requirePermission("creators"), async (req, re
     ifscCode: creatorsTable.ifscCode,
     bankName: creatorsTable.bankName,
     upiId: creatorsTable.upiId,
+    panName: creatorsTable.panName,
+    panNumber: creatorsTable.panNumber,
+    kycStatus: creatorsTable.kycStatus,
   })
     .from(creatorPayoutsTable)
     .leftJoin(creatorsTable, eq(creatorPayoutsTable.creatorId, creatorsTable.id))

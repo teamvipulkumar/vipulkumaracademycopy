@@ -58,6 +58,9 @@ interface Payout {
   ifscCode: string | null;
   bankName: string | null;
   upiId: string | null;
+  panName: string | null;
+  panNumber: string | null;
+  kycStatus: "pending" | "approved" | "rejected" | null;
 }
 
 interface CreatorDetail {
@@ -935,19 +938,30 @@ function PayoutsTab() {
             <DialogTitle>Update Payout · {markDialog?.creatorName}</DialogTitle>
           </DialogHeader>
           {markDialog && (
-            <div className="rounded-lg border border-border bg-muted/30 p-3">
-              <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-1">Send Payment To</div>
-              {markDialog.accountNumber || markDialog.upiId ? (
-                <div className="space-y-0">
-                  <CopyField label="Account Holder" value={markDialog.accountHolderName ?? markDialog.creatorName} />
-                  {markDialog.accountNumber && <CopyField label="Account No" value={markDialog.accountNumber} mono />}
-                  {markDialog.ifscCode && <CopyField label="IFSC" value={markDialog.ifscCode} mono />}
-                  {markDialog.bankName && <CopyField label="Bank" value={markDialog.bankName} />}
-                  {markDialog.upiId && <CopyField label="UPI" value={markDialog.upiId} mono />}
+            <div className="space-y-3">
+              {markDialog.kycStatus === "approved" && (markDialog.panName || markDialog.panNumber) && (
+                <div className="rounded-lg border border-border bg-muted/30 p-3">
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-1">KYC / PAN Details</div>
+                  <div className="space-y-0">
+                    {markDialog.panName && <CopyField label="Name as per PAN" value={markDialog.panName} />}
+                    {markDialog.panNumber && <CopyField label="PAN Number" value={markDialog.panNumber} mono />}
+                  </div>
                 </div>
-              ) : (
-                <div className="text-amber-400 text-xs mt-1">⚠ Creator has not added bank or UPI details yet.</div>
               )}
+              <div className="rounded-lg border border-border bg-muted/30 p-3">
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-1">Send Payment To</div>
+                {markDialog.accountNumber || markDialog.upiId ? (
+                  <div className="space-y-0">
+                    <CopyField label="Account Holder" value={markDialog.accountHolderName ?? markDialog.creatorName} />
+                    {markDialog.accountNumber && <CopyField label="Account No" value={markDialog.accountNumber} mono />}
+                    {markDialog.ifscCode && <CopyField label="IFSC" value={markDialog.ifscCode} mono />}
+                    {markDialog.bankName && <CopyField label="Bank" value={markDialog.bankName} />}
+                    {markDialog.upiId && <CopyField label="UPI" value={markDialog.upiId} mono />}
+                  </div>
+                ) : (
+                  <div className="text-amber-400 text-xs mt-1">⚠ Creator has not added bank or UPI details yet.</div>
+                )}
+              </div>
             </div>
           )}
           <div className="space-y-3 py-2">
