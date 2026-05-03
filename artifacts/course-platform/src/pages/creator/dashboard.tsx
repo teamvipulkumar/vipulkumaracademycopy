@@ -164,7 +164,7 @@ export default function CreatorDashboardPage() {
               <div className="text-[10px] text-muted-foreground uppercase tracking-wide">30-day total</div>
             </div>
           </div>
-          <div className="h-56">
+          <div className="h-56 cursor-pointer [&_.recharts-bar-rectangle]:cursor-pointer [&_.recharts-area-area]:cursor-pointer">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={chart} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
                 <defs>
@@ -206,8 +206,8 @@ export default function CreatorDashboardPage() {
                   iconType="circle"
                   wrapperStyle={{ fontSize: 11, paddingTop: 4 }}
                 />
-                <Area type="monotone" dataKey="amount" name="Trend" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#creatorEarn)" />
-                <Bar dataKey="amount" name="Earned" fill="url(#creatorEarnBar)" radius={[3, 3, 0, 0]} maxBarSize={22} />
+                <Area type="monotone" dataKey="amount" name="Trend" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#creatorEarn)" style={{ cursor: "pointer" }} />
+                <Bar dataKey="amount" name="Earned" fill="url(#creatorEarnBar)" radius={[3, 3, 0, 0]} maxBarSize={22} style={{ cursor: "pointer" }} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
