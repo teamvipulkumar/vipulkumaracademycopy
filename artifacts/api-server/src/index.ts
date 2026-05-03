@@ -144,7 +144,10 @@ async function runMigrations() {
               (conrelid = 'public.email_templates'::regclass         AND pg_get_constraintdef(oid) ~* '\\mtype\\M'  AND pg_get_constraintdef(oid) ~* '\\mwelcome\\M') OR
               (conrelid = 'public.email_automation_rules'::regclass  AND pg_get_constraintdef(oid) ~* '\\mevent\\M' AND pg_get_constraintdef(oid) ~* '\\mwelcome\\M')
             )
-            AND pg_get_constraintdef(oid) !~* '\\mstaff_welcome\\M'
+            AND (
+              pg_get_constraintdef(oid) !~* '\\mstaff_welcome\\M' OR
+              pg_get_constraintdef(oid) !~* '\\mcreator_kyc_submitted\\M'
+            )
         LOOP
           EXECUTE format('ALTER TABLE %s DROP CONSTRAINT IF EXISTS %I', c.tbl, c.conname);
         END LOOP;
