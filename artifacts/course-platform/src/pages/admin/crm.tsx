@@ -19,6 +19,18 @@ async function apiFetch(path: string, opts?: RequestInit) {
   return fetch(`${API_BASE}${path}`, { credentials: "include", ...opts });
 }
 
+// Safely parse a fetch response as JSON. Returns `fallback` if the body is
+// empty, non-JSON, or the request failed (e.g. during API server restarts).
+async function safeJson<T = unknown>(r: Response, fallback: T): Promise<T> {
+  try {
+    const text = await r.text();
+    if (!text) return fallback;
+    return JSON.parse(text) as T;
+  } catch {
+    return fallback;
+  }
+}
+
 type Tab = "dashboard" | "campaigns" | "sequences" | "automation" | "templates" | "tags" | "subscribers" | "smtp" | "lists" | "logs";
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
@@ -1256,10 +1268,10 @@ function AutomationTab({ initialFunnelId = null }: { initialFunnelId?: number | 
   const loadAll = useCallback(async () => {
     setLoading(true);
     const [f, l, t, tp] = await Promise.all([
-      apiFetch("/api/admin/crm/funnels").then(r => r.json()),
-      apiFetch("/api/admin/crm/lists").then(r => r.json()),
-      apiFetch("/api/admin/crm/tags").then(r => r.json()),
-      apiFetch("/api/admin/crm/templates").then(r => r.json()),
+      apiFetch("/api/admin/crm/funnels").then(r => safeJson<any[]>(r, [])),
+      apiFetch("/api/admin/crm/lists").then(r => safeJson<any[]>(r, [])),
+      apiFetch("/api/admin/crm/tags").then(r => safeJson<any[]>(r, [])),
+      apiFetch("/api/admin/crm/templates").then(r => safeJson<any[]>(r, [])),
     ]);
     setFunnels(Array.isArray(f) ? f : []);
     setLists(Array.isArray(l) ? l : []);
