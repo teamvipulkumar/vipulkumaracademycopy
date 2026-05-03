@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
   ShieldCheck, CheckCircle2, Clock, Lock, Upload, X, FileImage,
-  AlertCircle, Loader2,
+  AlertCircle, Loader2, Eye, EyeOff, Edit2, Building2,
 } from "lucide-react";
 
 const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -40,41 +40,11 @@ async function fetchKyc(): Promise<KycData> {
   return res.json();
 }
 
-async function saveKyc(payload: Partial<KycData>): Promise<void> {
-  const res = await fetch(`${API_BASE}/api/creator/kyc`, {
-    method: "PATCH",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? "Save failed");
-  }
-}
-
 export default function CreatorKycPage() {
   const qc = useQueryClient();
-  const { toast } = useToast();
   const { data, isLoading } = useQuery({ queryKey: ["creator-kyc"], queryFn: fetchKyc });
-  const [bankForm, setBankForm] = useState<KycData["bank"] | null>(null);
 
-  useEffect(() => { if (data) setBankForm(data.bank); }, [data]);
-
-  const bankMut = useMutation({
-    mutationFn: (bank: KycData["bank"]) => saveKyc({ bank: bank as any }),
-    onSuccess: () => {
-      toast({ title: "Bank details saved" });
-      qc.invalidateQueries({ queryKey: ["creator-kyc"] });
-    },
-    onError: (e: Error) => toast({ title: "Save failed", description: e.message, variant: "destructive" }),
-  });
-
-  function setBank<K extends keyof KycData["bank"]>(field: K, value: KycData["bank"][K]) {
-    setBankForm(prev => prev ? { ...prev, [field]: value } : prev);
-  }
-
-  if (isLoading || !data || !bankForm) {
+  if (isLoading || !data) {
     return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
   }
 
@@ -97,41 +67,15 @@ export default function CreatorKycPage() {
         />
       </div>
 
-      {/* Bank Account — always editable */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Bank Account</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="holder">Account Holder Name</Label>
-            <Input id="holder" value={bankForm.accountHolderName ?? ""} onChange={e => setBank("accountHolderName", e.target.value)} />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="accno">Account Number</Label>
-              <Input id="accno" value={bankForm.accountNumber ?? ""} onChange={e => setBank("accountNumber", e.target.value)} />
-            </div>
-            <div>
-              <Label htmlFor="ifsc">IFSC Code</Label>
-              <Input id="ifsc" value={bankForm.ifscCode ?? ""} onChange={e => setBank("ifscCode", e.target.value.toUpperCase())} className="uppercase" />
-            </div>
-          </div>
-          <div>
-            <Label htmlFor="bank">Bank Name</Label>
-            <Input id="bank" value={bankForm.bankName ?? ""} onChange={e => setBank("bankName", e.target.value)} />
-          </div>
-          <div>
-            <Label htmlFor="upi">UPI ID (optional)</Label>
-            <Input id="upi" value={bankForm.upiId ?? ""} onChange={e => setBank("upiId", e.target.value)} placeholder="yourname@bankupi" />
-          </div>
-          <div className="flex justify-end pt-2">
-            <Button onClick={() => bankMut.mutate(bankForm!)} disabled={bankMut.isPending} data-testid="button-save-bank">
-              {bankMut.isPending ? "Saving…" : "Save Bank Details"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Bank Account — affiliate-style save-then-lock UI */}
+      <div>
+        <h2 className="text-base font-semibold text-foreground mb-1">Bank Account</h2>
+        <p className="text-xs text-muted-foreground mb-3">Add your bank details to receive payout transfers.</p>
+        <BankSection
+          bank={data.bank}
+          onSaved={() => qc.invalidateQueries({ queryKey: ["creator-kyc"] })}
+        />
+      </div>
     </div>
   );
 }
@@ -373,6 +317,200 @@ function SubmittedDetails({ kyc, label }: { kyc: KycData["kyc"]; label: string }
             <p className="text-[11px] text-muted-foreground">PAN Front Photo</p>
             <img src={kyc.panFrontUrl} alt="PAN" className="mt-1.5 w-full max-h-40 object-cover rounded-lg border border-border" />
           </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Bank section — mirrors affiliate BankTab UX (save-then-lock + masked acc#) ─── */
+function BankSection({ bank, onSaved }: { bank: KycData["bank"]; onSaved: () => void }) {
+  const { toast } = useToast();
+  const initial = {
+    accountHolderName: bank.accountHolderName ?? "",
+    accountNumber: bank.accountNumber ?? "",
+    ifscCode: bank.ifscCode ?? "",
+    bankName: bank.bankName ?? "",
+    upiId: bank.upiId ?? "",
+  };
+  const [form, setForm] = useState(initial);
+  const [showAcc, setShowAcc] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Treat the bank section as "saved" once the core 4 fields are present —
+  // matches affiliate's contract (`isSaved = !!bank`).
+  const isSaved = !!(bank.accountHolderName && bank.accountNumber && bank.ifscCode && bank.bankName);
+  const [editing, setEditing] = useState(!isSaved);
+  const locked = isSaved && !editing;
+
+  // Re-sync local state whenever the server snapshot changes.
+  useEffect(() => {
+    setForm({
+      accountHolderName: bank.accountHolderName ?? "",
+      accountNumber: bank.accountNumber ?? "",
+      ifscCode: bank.ifscCode ?? "",
+      bankName: bank.bankName ?? "",
+      upiId: bank.upiId ?? "",
+    });
+    setEditing(!isSaved);
+    setShowAcc(false);
+  }, [bank.accountHolderName, bank.accountNumber, bank.ifscCode, bank.bankName, bank.upiId, isSaved]);
+
+  const maskedAcc = form.accountNumber.length > 4
+    ? `${"•".repeat(Math.max(8, form.accountNumber.length - 4))}${form.accountNumber.slice(-4)}`
+    : "••••••••";
+
+  const save = async () => {
+    if (!form.accountHolderName || !form.accountNumber || !form.ifscCode || !form.bankName) {
+      toast({ title: "Account holder, number, IFSC, and bank name are required", variant: "destructive" });
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/creator/kyc`, {
+        method: "PATCH", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bank: form }),
+      });
+      if (!res.ok) {
+        const b = await res.json().catch(() => ({}));
+        throw new Error(b.error ?? "Failed");
+      }
+      toast({ title: "Bank details saved!" });
+      setEditing(false);
+      setShowAcc(false);
+      onSaved();
+    } catch (e: any) {
+      toast({ title: "Failed to save bank details", description: e.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const cancelEdit = () => {
+    setForm({
+      accountHolderName: bank.accountHolderName ?? "",
+      accountNumber: bank.accountNumber ?? "",
+      ifscCode: bank.ifscCode ?? "",
+      bankName: bank.bankName ?? "",
+      upiId: bank.upiId ?? "",
+    });
+    setShowAcc(false);
+    setEditing(false);
+  };
+
+  return (
+    <div className="max-w-lg">
+      <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-foreground">Bank Account Details</h3>
+          {locked && (
+            <Badge className="text-[10px] text-green-400 border-green-400/30 bg-green-400/10 gap-1">
+              <Lock className="w-3 h-3" />Saved
+            </Badge>
+          )}
+        </div>
+
+        <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
+          <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <Lock className="w-3 h-3 text-primary" />Bank details are encrypted and only used for processing payouts.
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Account Holder Name</Label>
+            <Input
+              value={form.accountHolderName}
+              onChange={e => setForm(f => ({ ...f, accountHolderName: e.target.value }))}
+              placeholder="As per bank records"
+              className="bg-background border-border disabled:opacity-100 disabled:cursor-not-allowed"
+              readOnly={locked} disabled={locked}
+              data-testid="input-bank-holder"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Account Number</Label>
+            <div className="relative">
+              <Input
+                type={locked ? "text" : (showAcc ? "text" : "password")}
+                value={locked ? maskedAcc : form.accountNumber}
+                onChange={e => setForm(f => ({ ...f, accountNumber: e.target.value }))}
+                placeholder="Enter account number"
+                className="bg-background border-border pr-9 font-mono disabled:opacity-100 disabled:cursor-not-allowed"
+                readOnly={locked} disabled={locked}
+                data-testid="input-bank-account"
+              />
+              {!locked && (
+                <button
+                  type="button"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                  onClick={() => setShowAcc(v => !v)}
+                >
+                  {showAcc ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">IFSC Code</Label>
+              <Input
+                value={form.ifscCode}
+                onChange={e => setForm(f => ({ ...f, ifscCode: e.target.value.toUpperCase() }))}
+                placeholder="e.g. HDFC0001234"
+                className="bg-background border-border font-mono uppercase disabled:opacity-100 disabled:cursor-not-allowed"
+                readOnly={locked} disabled={locked}
+                data-testid="input-bank-ifsc"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Bank Name</Label>
+              <Input
+                value={form.bankName}
+                onChange={e => setForm(f => ({ ...f, bankName: e.target.value }))}
+                placeholder="e.g. HDFC Bank"
+                className="bg-background border-border disabled:opacity-100 disabled:cursor-not-allowed"
+                readOnly={locked} disabled={locked}
+                data-testid="input-bank-name"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">UPI ID <span className="text-muted-foreground/60">(optional)</span></Label>
+            <Input
+              value={form.upiId}
+              onChange={e => setForm(f => ({ ...f, upiId: e.target.value }))}
+              placeholder="yourname@bankupi"
+              className="bg-background border-border disabled:opacity-100 disabled:cursor-not-allowed"
+              readOnly={locked} disabled={locked}
+              data-testid="input-bank-upi"
+            />
+          </div>
+        </div>
+
+        {locked ? (
+          <Button onClick={() => setEditing(true)} variant="outline" className="w-full gap-2" data-testid="button-edit-bank">
+            <Edit2 className="w-4 h-4" />Edit Bank Details
+          </Button>
+        ) : isSaved ? (
+          <div className="flex gap-2">
+            <Button onClick={cancelEdit} disabled={saving} variant="outline" className="flex-1 gap-2">
+              Cancel
+            </Button>
+            <Button onClick={save} disabled={saving} className="flex-1 bg-primary gap-2" data-testid="button-update-bank">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Building2 className="w-4 h-4" />}
+              {saving ? "Saving…" : "Update"}
+            </Button>
+          </div>
+        ) : (
+          <Button onClick={save} disabled={saving} className="w-full bg-primary gap-2" data-testid="button-save-bank">
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Building2 className="w-4 h-4" />}
+            {saving ? "Saving…" : "Save Bank Details"}
+          </Button>
         )}
       </div>
     </div>
