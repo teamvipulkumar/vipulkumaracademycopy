@@ -232,7 +232,7 @@ function TabBtn({
 
 function SaleStatusPill({ status }: { status: string }) {
   const map: Record<string, { cls: string; label: string }> = {
-    earned:    { cls: "bg-amber-500/10 text-amber-400 border-amber-500/30", label: "Pending" },
+    earned:    { cls: "bg-green-500/10 text-green-400 border-green-500/30", label: "Earned" },
     paid:      { cls: "bg-green-500/10 text-green-400 border-green-500/30", label: "Paid" },
     cancelled: { cls: "bg-red-500/10   text-red-400   border-red-500/30",   label: "Cancelled" },
   };
