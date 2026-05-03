@@ -50,7 +50,7 @@ export default function CreatorKycPage() {
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-3xl mx-auto space-y-6">
+    <div className="p-4 md:p-8 max-w-2xl mx-auto space-y-6">
       {/* Page header */}
       <div className="space-y-1">
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">KYC &amp; Bank Details</h1>
