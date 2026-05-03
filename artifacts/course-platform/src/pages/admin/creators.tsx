@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -146,7 +146,7 @@ export default function AdminCreatorsPage() {
 
       {/* ── Tab content ── */}
       {tab === "all" && <AllCreatorsTab creators={creators} />}
-      {tab === "kyc" && <KycReviewTab creators={creators?.filter(c => c.kycStatus === "pending") ?? []} />}
+      {tab === "kyc" && <KycReviewTab creators={creators ?? []} />}
       {tab === "payouts" && <PayoutsTab />}
     </div>
   );
@@ -390,62 +390,131 @@ function AllCreatorsTab({ creators }: { creators: Creator[] | undefined }) {
 }
 
 /* ═══════════════════════════════════════════════════════════
- * TAB 2 — KYC Review (pending KYC creators with inline review modal)
+ * TAB 2 — KYC Review (sub-tabs: Pending / Approved / Rejected)
  * ═══════════════════════════════════════════════════════════ */
 function KycReviewTab({ creators }: { creators: Creator[] }) {
   const [reviewId, setReviewId] = useState<number | null>(null);
+  const [sub, setSub] = useState<"pending" | "approved" | "rejected">("pending");
   const base = useAdminBase();
 
-  if (creators.length === 0) {
-    return (
-      <div className="bg-card border border-border rounded-xl py-12 text-center">
-        <ShieldCheck className="w-10 h-10 text-green-400 mx-auto mb-2" />
-        <p className="text-sm font-medium">All caught up!</p>
-        <p className="text-xs text-muted-foreground">No KYC submissions are pending review.</p>
-      </div>
-    );
-  }
+  const buckets = useMemo(() => ({
+    pending: creators.filter(c => c.kycStatus === "pending"),
+    approved: creators.filter(c => c.kycStatus === "approved"),
+    rejected: creators.filter(c => c.kycStatus === "rejected"),
+  }), [creators]);
+
+  const list = buckets[sub];
+
+  /* Visual config per status */
+  const styleMap = {
+    pending: {
+      ring: "bg-amber-400/10 border-amber-400/20 text-amber-400",
+      badge: "secondary" as const,
+      label: "Pending",
+      emptyIcon: ShieldAlert,
+      emptyColor: "text-amber-400",
+      emptyTitle: "All caught up!",
+      emptyDesc: "No KYC submissions are pending review.",
+      hint: "awaiting review",
+      btnLabel: "Review KYC",
+    },
+    approved: {
+      ring: "bg-green-400/10 border-green-400/20 text-green-400",
+      badge: "default" as const,
+      label: "Approved",
+      emptyIcon: ShieldCheck,
+      emptyColor: "text-muted-foreground",
+      emptyTitle: "No approved KYCs yet",
+      emptyDesc: "Once you approve a creator's KYC, they'll show up here.",
+      hint: "approved",
+      btnLabel: "View / Re-review",
+    },
+    rejected: {
+      ring: "bg-red-400/10 border-red-400/20 text-red-400",
+      badge: "destructive" as const,
+      label: "Rejected",
+      emptyIcon: ShieldCheck,
+      emptyColor: "text-muted-foreground",
+      emptyTitle: "No rejected KYCs",
+      emptyDesc: "Rejected KYC submissions will appear here.",
+      hint: "rejected",
+      btnLabel: "View / Re-review",
+    },
+  };
+  const cfg = styleMap[sub];
+  const EmptyIcon = cfg.emptyIcon;
 
   return (
-    <div className="space-y-3">
-      <p className="text-xs text-muted-foreground">
-        {creators.length} creator{creators.length === 1 ? "" : "s"} with KYC awaiting review.
-        Click <b>Review KYC</b> to view the PAN photo and approve / reject inline.
-      </p>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {creators.map(c => (
-          <div key={c.id} className="bg-card border border-border rounded-xl p-4 flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <div className="w-8 h-8 rounded-full bg-amber-400/10 border border-amber-400/20 flex items-center justify-center text-amber-400 text-xs font-semibold">
-                  {c.name.slice(0, 1).toUpperCase()}
-                </div>
-                <div className="min-w-0">
-                  <div className="font-medium truncate">{c.name}</div>
-                  <div className="text-xs text-muted-foreground truncate">{c.email}</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 mt-2">
-                <Badge variant="secondary" className="text-[10px]">Pending</Badge>
-                <span className="text-[11px] text-muted-foreground">
-                  Joined {new Date(c.createdAt).toLocaleDateString("en-IN")}
-                </span>
-              </div>
-            </div>
-            <div className="flex flex-col gap-1.5 shrink-0">
-              <Button size="sm" onClick={() => setReviewId(c.id)} className="h-8">
-                <Eye className="w-3.5 h-3.5 mr-1.5" /> Review KYC
-              </Button>
-              <Link href={`${base}/creators/${c.id}`}>
-                <Button size="sm" variant="ghost" className="h-7 text-[11px] w-full">
-                  Open profile
-                </Button>
-              </Link>
-            </div>
-          </div>
+    <div className="space-y-4">
+      {/* Sub-tabs: Pending / Approved / Rejected */}
+      <div className="flex flex-wrap items-center gap-1 rounded-md border border-border p-0.5 w-fit">
+        {(["pending", "approved", "rejected"] as const).map(s => (
+          <button
+            key={s}
+            onClick={() => setSub(s)}
+            className={`px-3 py-1.5 text-xs rounded capitalize transition-colors flex items-center gap-1.5 ${
+              sub === s ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+            }`}
+          >
+            {s} KYC
+            <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold ${
+              sub === s ? "bg-primary-foreground/20" : "bg-muted"
+            }`}>
+              {buckets[s].length}
+            </span>
+          </button>
         ))}
       </div>
+
+      {list.length === 0 ? (
+        <div className="bg-card border border-border rounded-xl py-12 text-center">
+          <EmptyIcon className={`w-10 h-10 mx-auto mb-2 ${cfg.emptyColor}`} />
+          <p className="text-sm font-medium">{cfg.emptyTitle}</p>
+          <p className="text-xs text-muted-foreground">{cfg.emptyDesc}</p>
+        </div>
+      ) : (
+        <>
+          <p className="text-xs text-muted-foreground">
+            {list.length} creator{list.length === 1 ? "" : "s"} {cfg.hint}.
+            {sub === "pending" && <> Click <b>Review KYC</b> to view the PAN photo and approve / reject inline.</>}
+            {sub === "rejected" && <> Creator can resubmit; you can re-review here.</>}
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {list.map(c => (
+              <div key={c.id} className="bg-card border border-border rounded-xl p-4 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className={`w-8 h-8 rounded-full border flex items-center justify-center text-xs font-semibold ${cfg.ring}`}>
+                      {c.name.slice(0, 1).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-medium truncate">{c.name}</div>
+                      <div className="text-xs text-muted-foreground truncate">{c.email}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    <Badge variant={cfg.badge} className="text-[10px]">{cfg.label}</Badge>
+                    <span className="text-[11px] text-muted-foreground">
+                      Joined {new Date(c.createdAt).toLocaleDateString("en-IN")}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1.5 shrink-0">
+                  <Button size="sm" onClick={() => setReviewId(c.id)} className="h-8" variant={sub === "pending" ? "default" : "outline"}>
+                    <Eye className="w-3.5 h-3.5 mr-1.5" /> {cfg.btnLabel}
+                  </Button>
+                  <Link href={`${base}/creators/${c.id}`}>
+                    <Button size="sm" variant="ghost" className="h-7 text-[11px] w-full">
+                      Open profile
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       {reviewId !== null && (
         <KycReviewDialog id={reviewId} onClose={() => setReviewId(null)} />
@@ -465,6 +534,18 @@ function KycReviewDialog({ id, onClose }: { id: number; onClose: () => void }) {
     queryKey: ["admin-creator-detail", id],
     queryFn: () => apiFetch(`/api/admin/creators/${id}`),
   });
+
+  /* Pre-fill status & note once detail loads (so re-review of approved/rejected
+     creators starts with their existing decision, not a blank approval). */
+  const [prefilled, setPrefilled] = useState(false);
+  useEffect(() => {
+    if (data && !prefilled) {
+      const cur = data.creator.kyc.status;
+      if (cur === "approved" || cur === "rejected") setStatus(cur);
+      if (data.creator.kyc.adminNote) setNote(data.creator.kyc.adminNote);
+      setPrefilled(true);
+    }
+  }, [data, prefilled]);
 
   const patchMut = useMutation({
     mutationFn: () =>
