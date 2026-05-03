@@ -169,8 +169,8 @@ function KycSection({ kyc, onSaved }: { kyc: KycData["kyc"]; onSaved: () => void
     } finally { setSaving(false); }
   };
 
-  /* ── "Pending" state — under review ── */
-  if (kyc.status === "pending") {
+  /* ── "Pending" state — under review (only when creator has actually submitted docs) ── */
+  if (kyc.status === "pending" && kyc.submitted) {
     return (
       <div className="w-full flex flex-col">
         <div className="flex-1 bg-card border border-border rounded-2xl p-6 text-center space-y-4">
