@@ -695,7 +695,8 @@ function KycReviewDialog({ id, onClose }: { id: number; onClose: () => void }) {
               </div>
               <div>
                 <Label>
-                  Admin Note {status === "rejected" && <span className="text-destructive">*</span>}
+                  {status === "rejected" ? "Reject Reason" : "Admin Note"}
+                  {status === "rejected" && <span className="text-destructive ml-0.5">*</span>}
                   <span className="text-xs text-muted-foreground font-normal ml-1">
                     {status === "rejected"
                       ? "(required, ≥5 chars — visible to creator)"
