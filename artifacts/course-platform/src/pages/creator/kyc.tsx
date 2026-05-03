@@ -205,7 +205,7 @@ function KycSection({ kyc, onSaved }: { kyc: KycData["kyc"]; onSaved: () => void
             <h3 className="text-base font-semibold text-foreground">KYC Verified</h3>
             <p className="text-sm text-muted-foreground mt-1">Your identity has been successfully verified. You're fully activated as a creator.</p>
           </div>
-          <SubmittedDetails kyc={kyc} label="Verified Details" approved />
+          <SubmittedDetails kyc={kyc} label="Verified Details" />
         </div>
       </div>
     );
@@ -318,7 +318,7 @@ function KycSection({ kyc, onSaved }: { kyc: KycData["kyc"]; onSaved: () => void
 }
 
 /* ─── Submitted/Verified details card (shared by pending + approved states) ─── */
-function SubmittedDetails({ kyc, label, approved = false }: { kyc: KycData["kyc"]; label: string; approved?: boolean }) {
+function SubmittedDetails({ kyc, label }: { kyc: KycData["kyc"]; label: string }) {
   return (
     <div className="text-left space-y-2 pt-1">
       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</p>
@@ -336,14 +336,8 @@ function SubmittedDetails({ kyc, label, approved = false }: { kyc: KycData["kyc"
         {kyc.panFrontUrl && (
           <div>
             <p className="text-[11px] text-muted-foreground">PAN Front Photo</p>
-            <div className={`mt-1.5 mx-auto w-full max-w-[340px] aspect-[1.586/1] rounded-lg overflow-hidden border ${approved ? "border-green-400/40" : "border-border"} bg-gradient-to-br from-muted/40 to-muted/10 relative shadow-sm`}>
+            <div className="mt-1.5 mx-auto w-full max-w-[340px] aspect-[1.586/1] rounded-lg overflow-hidden border border-border bg-gradient-to-br from-muted/40 to-muted/10 relative shadow-sm">
               <img src={kyc.panFrontUrl} alt="PAN" className="absolute inset-0 w-full h-full object-cover" />
-              {approved && (
-                <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/90 text-white text-[10px] font-semibold shadow-md backdrop-blur-sm">
-                  <CheckCircle2 className="w-3 h-3" />
-                  Verified
-                </div>
-              )}
             </div>
           </div>
         )}
