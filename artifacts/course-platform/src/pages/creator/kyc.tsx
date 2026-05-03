@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import {
   ShieldCheck, CheckCircle2, Clock, Lock, Upload, X, FileImage,
-  AlertCircle, Loader2, Eye, EyeOff, Edit2, Building2,
+  AlertCircle, Loader2, Eye, EyeOff, Edit2, Building2, Landmark,
 } from "lucide-react";
 
 const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -49,47 +50,50 @@ export default function CreatorKycPage() {
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-8">
+    <div className="p-4 md:p-8 max-w-3xl mx-auto space-y-6">
       {/* Page header */}
       <div className="space-y-1">
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">KYC &amp; Bank Details</h1>
         <p className="text-sm text-muted-foreground">
           Submit your PAN details for verification and add your bank account to receive payouts.
-          Once submitted, your KYC fields are locked until admin reviews them.
         </p>
       </div>
 
-      {/* Two-column layout: KYC on the left, Bank on the right (stacked on mobile).
-          Both columns stretch to equal height so the cards align side-by-side. */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-stretch">
-        {/* ── KYC column ── */}
-        <section className="flex flex-col gap-3">
+      {/* Tabs: KYC and Bank Account in separate tabs */}
+      <Tabs defaultValue="kyc" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 max-w-md">
+          <TabsTrigger value="kyc" className="gap-2">
+            <ShieldCheck className="w-4 h-4" />
+            KYC Verification
+          </TabsTrigger>
+          <TabsTrigger value="bank" className="gap-2">
+            <Landmark className="w-4 h-4" />
+            Bank Account
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="kyc" className="mt-6 space-y-3">
           <header className="space-y-0.5">
             <h2 className="text-base font-semibold text-foreground">KYC Verification</h2>
             <p className="text-xs text-muted-foreground">Submit identity documents to enable payouts.</p>
           </header>
-          <div className="flex-1 flex">
-            <KycSection
-              kyc={data.kyc}
-              onSaved={() => qc.invalidateQueries({ queryKey: ["creator-kyc"] })}
-            />
-          </div>
-        </section>
+          <KycSection
+            kyc={data.kyc}
+            onSaved={() => qc.invalidateQueries({ queryKey: ["creator-kyc"] })}
+          />
+        </TabsContent>
 
-        {/* ── Bank column ── */}
-        <section className="flex flex-col gap-3">
+        <TabsContent value="bank" className="mt-6 space-y-3">
           <header className="space-y-0.5">
             <h2 className="text-base font-semibold text-foreground">Bank Account</h2>
             <p className="text-xs text-muted-foreground">Add your bank details to receive payout transfers.</p>
           </header>
-          <div className="flex-1 flex">
-            <BankSection
-              bank={data.bank}
-              onSaved={() => qc.invalidateQueries({ queryKey: ["creator-kyc"] })}
-            />
-          </div>
-        </section>
-      </div>
+          <BankSection
+            bank={data.bank}
+            onSaved={() => qc.invalidateQueries({ queryKey: ["creator-kyc"] })}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
