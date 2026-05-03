@@ -173,8 +173,8 @@ export default function CreatorDashboardPage() {
                     <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="creatorEarnBar" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%"   stopColor="#60a5fa" stopOpacity={1} />
-                    <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.85} />
+                    <stop offset="0%"   stopColor="#4169E1" stopOpacity={1} />
+                    <stop offset="100%" stopColor="#1e3a8a" stopOpacity={0.9} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
@@ -207,7 +207,7 @@ export default function CreatorDashboardPage() {
                   wrapperStyle={{ fontSize: 11, paddingTop: 4 }}
                 />
                 <Area type="monotone" dataKey="amount" name="Trend" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#creatorEarn)" />
-                <Bar dataKey="amount" name="Earned" fill="url(#creatorEarnBar)" radius={[3, 3, 0, 0]} maxBarSize={14} />
+                <Bar dataKey="amount" name="Earned" fill="url(#creatorEarnBar)" radius={[3, 3, 0, 0]} maxBarSize={22} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
