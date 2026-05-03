@@ -383,7 +383,14 @@ adminCreatorsRouter.get("/", requirePermission("creators"), async (_req, res): P
     kycStatus: creatorsTable.kycStatus,
     status: creatorsTable.status,
     createdAt: creatorsTable.createdAt,
-  }).from(creatorsTable).orderBy(desc(creatorsTable.createdAt));
+    panName: creatorsTable.panName,
+    panNumber: creatorsTable.panNumber,
+    panFrontUrl: creatorsTable.panFrontUrl,
+    kycReviewedAt: creatorsTable.kycReviewedAt,
+    phone: usersTable.phone,
+  }).from(creatorsTable)
+    .leftJoin(usersTable, eq(creatorsTable.userId, usersTable.id))
+    .orderBy(desc(creatorsTable.createdAt));
 
   // Enrich: course count + lifetime earnings + pending balance per creator
   const enriched = await Promise.all(rows.map(async (c) => {

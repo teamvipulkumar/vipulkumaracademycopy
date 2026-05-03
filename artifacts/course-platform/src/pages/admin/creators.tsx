@@ -30,6 +30,11 @@ interface Creator {
   totalEarnings: number;
   pendingAmount: number;
   courseCount: number;
+  panName: string | null;
+  panNumber: string | null;
+  panFrontUrl: string | null;
+  kycReviewedAt: string | null;
+  phone: string | null;
 }
 
 interface Payout {
@@ -390,131 +395,160 @@ function AllCreatorsTab({ creators }: { creators: Creator[] | undefined }) {
 }
 
 /* ═══════════════════════════════════════════════════════════
- * TAB 2 — KYC Review (sub-tabs: Pending / Approved / Rejected)
+ * TAB 2 — KYC Review (affiliate-style table with All/Pending/Approved/Rejected pills)
  * ═══════════════════════════════════════════════════════════ */
 function KycReviewTab({ creators }: { creators: Creator[] }) {
   const [reviewId, setReviewId] = useState<number | null>(null);
-  const [sub, setSub] = useState<"pending" | "approved" | "rejected">("pending");
-  const base = useAdminBase();
+  const [sub, setSub] = useState<"all" | "pending" | "approved" | "rejected">("all");
+  const [search, setSearch] = useState("");
+
+  /* Only show creators who have actually submitted KYC (kycStatus !== null) */
+  const submitted = useMemo(
+    () => creators.filter(c => c.kycStatus !== null),
+    [creators],
+  );
 
   const buckets = useMemo(() => ({
-    pending: creators.filter(c => c.kycStatus === "pending"),
-    approved: creators.filter(c => c.kycStatus === "approved"),
-    rejected: creators.filter(c => c.kycStatus === "rejected"),
-  }), [creators]);
+    all: submitted,
+    pending: submitted.filter(c => c.kycStatus === "pending"),
+    approved: submitted.filter(c => c.kycStatus === "approved"),
+    rejected: submitted.filter(c => c.kycStatus === "rejected"),
+  }), [submitted]);
 
-  const list = buckets[sub];
+  const filtered = useMemo(() => {
+    const list = buckets[sub];
+    const s = search.trim().toLowerCase();
+    if (!s) return list;
+    return list.filter(c =>
+      c.name.toLowerCase().includes(s) ||
+      c.email.toLowerCase().includes(s) ||
+      (c.panName ?? "").toLowerCase().includes(s) ||
+      (c.panNumber ?? "").toLowerCase().includes(s) ||
+      (c.phone ?? "").toLowerCase().includes(s)
+    );
+  }, [buckets, sub, search]);
 
-  /* Visual config per status */
-  const styleMap = {
-    pending: {
-      ring: "bg-amber-400/10 border-amber-400/20 text-amber-400",
-      badge: "secondary" as const,
-      label: "Pending",
-      emptyIcon: ShieldAlert,
-      emptyColor: "text-amber-400",
-      emptyTitle: "All caught up!",
-      emptyDesc: "No KYC submissions are pending review.",
-      hint: "awaiting review",
-      btnLabel: "Review KYC",
-    },
-    approved: {
-      ring: "bg-green-400/10 border-green-400/20 text-green-400",
-      badge: "default" as const,
-      label: "Approved",
-      emptyIcon: ShieldCheck,
-      emptyColor: "text-muted-foreground",
-      emptyTitle: "No approved KYCs yet",
-      emptyDesc: "Once you approve a creator's KYC, they'll show up here.",
-      hint: "approved",
-      btnLabel: "View / Re-review",
-    },
-    rejected: {
-      ring: "bg-red-400/10 border-red-400/20 text-red-400",
-      badge: "destructive" as const,
-      label: "Rejected",
-      emptyIcon: ShieldCheck,
-      emptyColor: "text-muted-foreground",
-      emptyTitle: "No rejected KYCs",
-      emptyDesc: "Rejected KYC submissions will appear here.",
-      hint: "rejected",
-      btnLabel: "View / Re-review",
-    },
+  const statusBadge = (s: string | null) => {
+    if (s === "approved") return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-400/15 text-green-400 border border-green-400/30">Approved</span>;
+    if (s === "rejected") return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-400/15 text-red-400 border border-red-400/30">Rejected</span>;
+    if (s === "pending") return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-400/15 text-amber-400 border border-amber-400/30">Pending</span>;
+    return <span className="text-xs text-muted-foreground">—</span>;
   };
-  const cfg = styleMap[sub];
-  const EmptyIcon = cfg.emptyIcon;
 
   return (
     <div className="space-y-4">
-      {/* Sub-tabs: Pending / Approved / Rejected */}
-      <div className="flex flex-wrap items-center gap-1 rounded-md border border-border p-0.5 w-fit">
-        {(["pending", "approved", "rejected"] as const).map(s => (
+      {/* Search bar (full width) */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search by name, email, phone or PAN number…"
+          className="pl-9"
+        />
+      </div>
+
+      {/* Status pills: All / Pending / Approved / Rejected (with counts) */}
+      <div className="flex flex-wrap items-center gap-2">
+        {([
+          { key: "all", label: "All" },
+          { key: "pending", label: "Pending" },
+          { key: "approved", label: "Approved" },
+          { key: "rejected", label: "Rejected" },
+        ] as const).map(({ key, label }) => (
           <button
-            key={s}
-            onClick={() => setSub(s)}
-            className={`px-3 py-1.5 text-xs rounded capitalize transition-colors flex items-center gap-1.5 ${
-              sub === s ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+            key={key}
+            onClick={() => setSub(key)}
+            className={`px-3 py-1.5 text-xs rounded-full transition-colors ${
+              sub === key
+                ? "bg-primary text-primary-foreground font-medium"
+                : "bg-muted/50 text-muted-foreground hover:bg-muted"
             }`}
           >
-            {s} KYC
-            <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold ${
-              sub === s ? "bg-primary-foreground/20" : "bg-muted"
-            }`}>
-              {buckets[s].length}
-            </span>
+            {label} ({buckets[key].length})
           </button>
         ))}
       </div>
 
-      {list.length === 0 ? (
-        <div className="bg-card border border-border rounded-xl py-12 text-center">
-          <EmptyIcon className={`w-10 h-10 mx-auto mb-2 ${cfg.emptyColor}`} />
-          <p className="text-sm font-medium">{cfg.emptyTitle}</p>
-          <p className="text-xs text-muted-foreground">{cfg.emptyDesc}</p>
-        </div>
-      ) : (
-        <>
-          <p className="text-xs text-muted-foreground">
-            {list.length} creator{list.length === 1 ? "" : "s"} {cfg.hint}.
-            {sub === "pending" && <> Click <b>Review KYC</b> to view the PAN photo and approve / reject inline.</>}
-            {sub === "rejected" && <> Creator can resubmit; you can re-review here.</>}
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {list.map(c => (
-              <div key={c.id} className="bg-card border border-border rounded-xl p-4 flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className={`w-8 h-8 rounded-full border flex items-center justify-center text-xs font-semibold ${cfg.ring}`}>
-                      {c.name.slice(0, 1).toUpperCase()}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="font-medium truncate">{c.name}</div>
-                      <div className="text-xs text-muted-foreground truncate">{c.email}</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 mt-2 flex-wrap">
-                    <Badge variant={cfg.badge} className="text-[10px]">{cfg.label}</Badge>
-                    <span className="text-[11px] text-muted-foreground">
-                      Joined {new Date(c.createdAt).toLocaleDateString("en-IN")}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-1.5 shrink-0">
-                  <Button size="sm" onClick={() => setReviewId(c.id)} className="h-8" variant={sub === "pending" ? "default" : "outline"}>
-                    <Eye className="w-3.5 h-3.5 mr-1.5" /> {cfg.btnLabel}
-                  </Button>
-                  <Link href={`${base}/creators/${c.id}`}>
-                    <Button size="sm" variant="ghost" className="h-7 text-[11px] w-full">
-                      Open profile
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            ))}
+      {/* Table card */}
+      <div className="bg-card border border-border rounded-xl overflow-hidden">
+        {filtered.length === 0 ? (
+          <div className="py-12 text-center">
+            <ShieldCheck className="w-10 h-10 text-muted-foreground mx-auto mb-2" />
+            <p className="text-sm font-medium">
+              {submitted.length === 0
+                ? "No KYC submissions yet"
+                : search
+                  ? "No matches"
+                  : `No ${sub === "all" ? "" : sub} KYC entries`}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {submitted.length === 0
+                ? "Creators will appear here once they submit their KYC."
+                : search
+                  ? "Try adjusting your search."
+                  : "Switch tabs to see other statuses."}
+            </p>
           </div>
-        </>
-      )}
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/30">
+                <tr className="border-b border-border text-left text-xs text-muted-foreground uppercase tracking-wide">
+                  <th className="py-3 px-4">Creator</th>
+                  <th className="py-3 px-4">Name as Per PAN</th>
+                  <th className="py-3 px-4">PAN Number</th>
+                  <th className="py-3 px-4">PAN Photo</th>
+                  <th className="py-3 px-4">Date</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(c => {
+                  const dateStr = (c.kycReviewedAt ?? c.createdAt);
+                  return (
+                    <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/20">
+                      <td className="py-3 px-4">
+                        <div className="font-medium">{c.name}</div>
+                        <div className="text-xs text-muted-foreground">{c.email}</div>
+                        {c.phone && <div className="text-xs text-muted-foreground">{c.phone}</div>}
+                      </td>
+                      <td className="py-3 px-4 font-medium">{c.panName ?? "—"}</td>
+                      <td className="py-3 px-4 font-mono text-xs">{c.panNumber ?? "—"}</td>
+                      <td className="py-3 px-4">
+                        {c.panFrontUrl ? (
+                          <a
+                            href={c.panFrontUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-block w-12 h-8 rounded border border-border overflow-hidden hover:opacity-80 bg-muted"
+                            title="Click to open full size"
+                          >
+                            <img src={c.panFrontUrl} alt="PAN" className="w-full h-full object-cover" />
+                          </a>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-xs whitespace-nowrap">
+                        {new Date(dateStr).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                      </td>
+                      <td className="py-3 px-4">{statusBadge(c.kycStatus)}</td>
+                      <td className="py-3 px-4 text-right">
+                        <Button size="sm" variant="outline" className="h-7" onClick={() => setReviewId(c.id)}>
+                          <Eye className="w-3.5 h-3.5 mr-1.5" />
+                          {c.kycStatus === "pending" ? "Review" : "View"}
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       {reviewId !== null && (
         <KycReviewDialog id={reviewId} onClose={() => setReviewId(null)} />
