@@ -1410,6 +1410,206 @@ const DEFAULT_TEMPLATES = [
       <p style="margin:8px 0 0;font-size:13px;color:#6b7280;"><strong style="color:#374151;">The VKA Creator Team</strong></p>
     `),
   },
+  {
+    name: "Affiliate KYC Submitted",
+    type: "affiliate_kyc_submitted" as const,
+    subject: "📄 We've received your affiliate KYC submission",
+    htmlBody: emailWrap(`
+      <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:24px;">
+        <tr><td align="center" style="background:#ecfeff;border-radius:12px;padding:24px 20px;">
+          <p style="margin:0 0 6px;font-size:48px;line-height:1;">📄</p>
+          <h1 style="margin:8px 0 4px;font-size:22px;font-weight:700;color:#0e7490;font-family:Arial,Helvetica,sans-serif;">KYC Received</h1>
+          <p style="margin:6px 0 0;font-size:13px;color:#0e7490;font-family:Arial,Helvetica,sans-serif;">Our team will verify your documents shortly</p>
+        </td></tr>
+      </table>
+      <p style="margin:0 0 14px;font-size:15px;color:#374151;line-height:1.7;">Hi <strong>{{name}}</strong>,</p>
+      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">Thank you for submitting your <strong>affiliate KYC</strong>. We've safely received your documents and our verification team will review them within the next 24–48 hours.</p>
+      <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:22px;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;font-size:14px;font-family:Arial,Helvetica,sans-serif;">
+        <tr style="background:#f9fafb;">
+          <td style="padding:11px 16px;color:#6b7280;border-bottom:1px solid #e5e7eb;width:42%;">Submitted By</td>
+          <td style="padding:11px 16px;color:#111827;font-weight:600;text-align:right;border-bottom:1px solid #e5e7eb;">{{name}}</td>
+        </tr>
+        <tr>
+          <td style="padding:11px 16px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Account Email</td>
+          <td style="padding:11px 16px;color:#374151;text-align:right;border-bottom:1px solid #e5e7eb;">{{email}}</td>
+        </tr>
+        <tr style="background:#f9fafb;">
+          <td style="padding:11px 16px;color:#6b7280;border-bottom:1px solid #e5e7eb;">PAN Number</td>
+          <td style="padding:11px 16px;color:#374151;font-weight:600;text-align:right;font-family:'Courier New',Courier,monospace;letter-spacing:0.5px;border-bottom:1px solid #e5e7eb;">{{pan_number}}</td>
+        </tr>
+        <tr>
+          <td style="padding:11px 16px;color:#6b7280;">Status</td>
+          <td style="padding:11px 16px;color:#0e7490;font-weight:700;text-align:right;">Under Review</td>
+        </tr>
+      </table>
+      <p style="margin:0 0 14px;font-size:15px;color:#374151;line-height:1.7;"><strong>What happens next?</strong></p>
+      <ul style="margin:0 0 22px;padding-left:20px;color:#374151;font-size:14px;line-height:2.1;">
+        <li>Our team manually verifies every KYC submission to keep the platform safe</li>
+        <li>You'll receive an email as soon as a decision has been made</li>
+        <li>Once approved, your commission payouts will be processed automatically</li>
+      </ul>
+      <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:22px;">
+        <tr><td style="background:#ecfeff;border:1px solid #a5f3fc;border-radius:10px;padding:14px 16px;">
+          <p style="margin:0;font-size:13px;color:#155e75;font-family:Arial,Helvetica,sans-serif;line-height:1.6;">💡 <strong>Tip:</strong> While you wait, make sure your <strong>bank details</strong> are also saved in the dashboard so payouts can be sent the moment your KYC is approved.</p>
+        </td></tr>
+      </table>
+      <table cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
+        <tr><td style="background:#0891b2;border-radius:8px;padding:13px 30px;">
+          <a href="{{site_url}}/affiliate" style="color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;font-family:Arial,Helvetica,sans-serif;">Open Affiliate Dashboard &rarr;</a>
+        </td></tr>
+      </table>
+      <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0 16px;" />
+      <p style="margin:0;font-size:13px;color:#6b7280;">Questions? Email <a href="mailto:support@vipulkumaracademy.com" style="color:#2563eb;text-decoration:none;">support@vipulkumaracademy.com</a> or WhatsApp: <a href="https://wa.me/15557485582" style="color:#2563eb;text-decoration:none;">+15557485582</a></p>
+    `),
+  },
+  {
+    name: "Affiliate KYC Approved",
+    type: "affiliate_kyc_approved" as const,
+    subject: "✅ Your affiliate KYC has been approved!",
+    htmlBody: emailWrap(`
+      <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:24px;">
+        <tr><td align="center" style="background:#f0fdf4;border-radius:12px;padding:26px 20px;">
+          <p style="margin:0 0 6px;font-size:48px;line-height:1;">✅</p>
+          <h1 style="margin:8px 0 4px;font-size:22px;font-weight:700;color:#15803d;font-family:Arial,Helvetica,sans-serif;">KYC Approved</h1>
+          <p style="margin:6px 0 0;font-size:13px;color:#15803d;font-family:Arial,Helvetica,sans-serif;">You're now fully verified — payouts are unlocked</p>
+        </td></tr>
+      </table>
+      <p style="margin:0 0 14px;font-size:15px;color:#374151;line-height:1.7;">Hi <strong>{{name}}</strong>,</p>
+      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">Great news! 🎉 Your KYC documents have been <strong style="color:#15803d;">verified and approved</strong>. Your affiliate account is now fully active and eligible for commission payouts.</p>
+      <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:22px;border:1px solid #bbf7d0;border-radius:10px;overflow:hidden;font-size:14px;font-family:Arial,Helvetica,sans-serif;">
+        <tr style="background:#f0fdf4;">
+          <td style="padding:11px 16px;color:#15803d;font-weight:600;border-bottom:1px solid #bbf7d0;width:42%;">✅ KYC Status</td>
+          <td style="padding:11px 16px;color:#15803d;font-weight:700;text-align:right;border-bottom:1px solid #bbf7d0;">Verified</td>
+        </tr>
+        <tr>
+          <td style="padding:11px 16px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Affiliate Email</td>
+          <td style="padding:11px 16px;color:#374151;font-weight:600;text-align:right;border-bottom:1px solid #e5e7eb;">{{email}}</td>
+        </tr>
+        <tr style="background:#f9fafb;">
+          <td style="padding:11px 16px;color:#6b7280;border-bottom:1px solid #e5e7eb;">PAN Number</td>
+          <td style="padding:11px 16px;color:#374151;font-weight:600;text-align:right;font-family:'Courier New',Courier,monospace;letter-spacing:0.5px;border-bottom:1px solid #e5e7eb;">{{pan_number}}</td>
+        </tr>
+        <tr>
+          <td style="padding:11px 16px;color:#6b7280;">Reviewed On</td>
+          <td style="padding:11px 16px;color:#374151;text-align:right;">{{reviewed_at}}</td>
+        </tr>
+      </table>
+      <p style="margin:0 0 14px;font-size:15px;color:#374151;line-height:1.7;"><strong>What this means for you:</strong></p>
+      <ul style="margin:0 0 22px;padding-left:20px;color:#374151;font-size:14px;line-height:2.1;">
+        <li>All future commissions will be paid out to your registered bank account</li>
+        <li>Past unpaid earnings will be included in your next scheduled payout</li>
+        <li>You're now eligible for promotional features and affiliate spotlights</li>
+      </ul>
+      <table cellpadding="0" cellspacing="0" style="margin:0 0 16px;">
+        <tr><td style="background:#16a34a;border-radius:8px;padding:13px 30px;">
+          <a href="{{site_url}}/affiliate" style="color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;font-family:Arial,Helvetica,sans-serif;">Go to Affiliate Dashboard &rarr;</a>
+        </td></tr>
+      </table>
+      <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:22px;">
+        <tr><td style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:14px 16px;">
+          <p style="margin:0;font-size:13px;color:#92400e;font-family:Arial,Helvetica,sans-serif;line-height:1.6;">🚀 <strong>Time to promote!</strong> Now that you're verified, share your affiliate link aggressively — every click can convert into commission in your bank.</p>
+        </td></tr>
+      </table>
+      <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0 16px;" />
+      <p style="margin:0;font-size:14px;color:#6b7280;">Welcome to the verified affiliates club! 🎊<br><strong style="color:#374151;">The VKA Affiliate Team</strong></p>
+      <p style="margin:8px 0 0;font-size:13px;color:#6b7280;">Questions? Email <a href="mailto:support@vipulkumaracademy.com" style="color:#2563eb;text-decoration:none;">support@vipulkumaracademy.com</a> or WhatsApp: <a href="https://wa.me/15557485582" style="color:#2563eb;text-decoration:none;">+15557485582</a></p>
+    `),
+  },
+  {
+    name: "Affiliate KYC Rejected",
+    type: "affiliate_kyc_rejected" as const,
+    subject: "Action needed — Update on your affiliate KYC",
+    htmlBody: emailWrap(`
+      <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:24px;">
+        <tr><td align="center" style="background:#fef2f2;border-radius:12px;padding:24px 20px;">
+          <p style="margin:0 0 6px;font-size:48px;line-height:1;">⚠️</p>
+          <h1 style="margin:8px 0 4px;font-size:22px;font-weight:700;color:#b91c1c;font-family:Arial,Helvetica,sans-serif;">KYC Needs Attention</h1>
+          <p style="margin:6px 0 0;font-size:13px;color:#b91c1c;font-family:Arial,Helvetica,sans-serif;">Please review and resubmit your documents</p>
+        </td></tr>
+      </table>
+      <p style="margin:0 0 14px;font-size:15px;color:#374151;line-height:1.7;">Hi <strong>{{name}}</strong>,</p>
+      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">Thank you for submitting your affiliate KYC. Unfortunately, we were <strong style="color:#b91c1c;">unable to verify</strong> your documents this time. Please review the reason below and resubmit so we can get you fully activated.</p>
+      <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:22px;">
+        <tr><td style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:16px;">
+          <p style="margin:0 0 6px;font-size:12px;color:#991b1b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;font-family:Arial,Helvetica,sans-serif;">Reason from our review team</p>
+          <p style="margin:0;font-size:14px;color:#7f1d1d;line-height:1.6;font-family:Arial,Helvetica,sans-serif;">{{rejection_reason}}</p>
+        </td></tr>
+      </table>
+      <p style="margin:0 0 14px;font-size:15px;color:#374151;line-height:1.7;"><strong>How to fix it — common checklist:</strong></p>
+      <ul style="margin:0 0 22px;padding-left:20px;color:#374151;font-size:14px;line-height:2.1;">
+        <li>Make sure both ID and address proof images are <strong>clear, in colour, and not blurry</strong></li>
+        <li>The <strong>name on documents must match</strong> the name on your account</li>
+        <li>The <strong>PAN number</strong> and other details must be fully visible — no part should be cropped</li>
+        <li>Use <strong>original documents</strong>, not screenshots of screenshots</li>
+      </ul>
+      <p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.7;">Once you fix the issue, you can <strong>resubmit your KYC</strong> right from your affiliate dashboard — there's no waiting period.</p>
+      <table cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+        <tr><td style="background:#dc2626;border-radius:8px;padding:13px 30px;">
+          <a href="{{site_url}}/affiliate" style="color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;font-family:Arial,Helvetica,sans-serif;">Resubmit KYC Now &rarr;</a>
+        </td></tr>
+      </table>
+      <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:22px;">
+        <tr><td style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:14px 16px;">
+          <p style="margin:0;font-size:13px;color:#9a3412;font-family:Arial,Helvetica,sans-serif;line-height:1.6;">⚠️ <strong>Note:</strong> Until your KYC is approved, payouts cannot be processed. Your commissions continue to accumulate safely and will be paid once you're verified.</p>
+        </td></tr>
+      </table>
+      <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0 16px;" />
+      <p style="margin:0;font-size:13px;color:#6b7280;">Need help? We're here for you — email <a href="mailto:support@vipulkumaracademy.com" style="color:#2563eb;text-decoration:none;">support@vipulkumaracademy.com</a> or WhatsApp: <a href="https://wa.me/15557485582" style="color:#2563eb;text-decoration:none;">+15557485582</a></p>
+      <p style="margin:8px 0 0;font-size:13px;color:#6b7280;"><strong style="color:#374151;">The VKA Affiliate Team</strong></p>
+    `),
+  },
+  {
+    name: "Affiliate Payout Sent",
+    type: "affiliate_payout_paid" as const,
+    subject: "✅ Your affiliate payout of ₹{{payout_amount}} has been sent",
+    htmlBody: emailWrap(`
+      <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:24px;">
+        <tr><td align="center" style="background:#f7fee7;border-radius:12px;padding:26px 20px;">
+          <p style="margin:0 0 6px;font-size:48px;line-height:1;">💸</p>
+          <h1 style="margin:8px 0 4px;font-size:22px;font-weight:700;color:#4d7c0f;font-family:Arial,Helvetica,sans-serif;">Payout Sent</h1>
+          <p style="margin:6px 0 0;font-size:13px;color:#4d7c0f;font-family:Arial,Helvetica,sans-serif;">Your earnings are on their way to your bank</p>
+        </td></tr>
+      </table>
+      <p style="margin:0 0 14px;font-size:15px;color:#374151;line-height:1.7;">Hi <strong>{{name}}</strong>,</p>
+      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">Great news! We've processed your affiliate commission payout. Here's a summary of the transaction:</p>
+      <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:22px;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;font-size:14px;font-family:Arial,Helvetica,sans-serif;">
+        <tr style="background:#f7fee7;">
+          <td style="padding:13px 16px;color:#4d7c0f;font-weight:700;font-size:15px;border-bottom:1px solid #d9f99d;width:42%;">Amount Paid</td>
+          <td style="padding:13px 16px;color:#4d7c0f;font-weight:700;text-align:right;font-size:20px;border-bottom:1px solid #d9f99d;">&#8377;{{payout_amount}}</td>
+        </tr>
+        <tr>
+          <td style="padding:11px 16px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Payment Method</td>
+          <td style="padding:11px 16px;color:#374151;font-weight:600;text-align:right;text-transform:capitalize;border-bottom:1px solid #e5e7eb;">{{payment_method}}</td>
+        </tr>
+        <tr style="background:#f9fafb;">
+          <td style="padding:11px 16px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Sent To</td>
+          <td style="padding:11px 16px;color:#374151;text-align:right;border-bottom:1px solid #e5e7eb;">{{payment_details}}</td>
+        </tr>
+        <tr>
+          <td style="padding:11px 16px;color:#6b7280;">Paid On</td>
+          <td style="padding:11px 16px;color:#374151;text-align:right;">{{paid_at}}</td>
+        </tr>
+      </table>
+      <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:22px;">
+        <tr><td style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:14px 16px;">
+          <p style="margin:0;font-size:13px;color:#075985;font-family:Arial,Helvetica,sans-serif;line-height:1.6;">⏱️ Bank transfers usually reflect in your account within <strong>1–3 business days</strong>. If you don't see it after 3 working days, just reply to this email.</p>
+        </td></tr>
+      </table>
+      <table cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+        <tr><td style="background:#65a30d;border-radius:8px;padding:13px 30px;">
+          <a href="{{site_url}}/affiliate" style="color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;font-family:Arial,Helvetica,sans-serif;">View Payout History &rarr;</a>
+        </td></tr>
+      </table>
+      <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:22px;">
+        <tr><td style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:14px 16px;">
+          <p style="margin:0;font-size:13px;color:#92400e;font-family:Arial,Helvetica,sans-serif;line-height:1.6;">🚀 <strong>Keep going!</strong> Continue sharing your affiliate link to earn even more in the next payout cycle.</p>
+        </td></tr>
+      </table>
+      <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0 16px;" />
+      <p style="margin:0;font-size:14px;color:#6b7280;">Thank you for being a VKA Affiliate! 🙌<br><strong style="color:#374151;">The VKA Affiliate Team</strong></p>
+      <p style="margin:8px 0 0;font-size:13px;color:#6b7280;">Questions? Email <a href="mailto:support@vipulkumaracademy.com" style="color:#2563eb;text-decoration:none;">support@vipulkumaracademy.com</a> or WhatsApp: <a href="https://wa.me/15557485582" style="color:#2563eb;text-decoration:none;">+15557485582</a></p>
+    `),
+  },
 ];
 
 router.post("/templates/seed-defaults", requireAdmin, async (_req, res): Promise<void> => {

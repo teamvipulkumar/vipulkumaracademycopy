@@ -146,7 +146,8 @@ async function runMigrations() {
             )
             AND (
               pg_get_constraintdef(oid) !~* '\\mstaff_welcome\\M' OR
-              pg_get_constraintdef(oid) !~* '\\mcreator_kyc_submitted\\M'
+              pg_get_constraintdef(oid) !~* '\\mcreator_kyc_submitted\\M' OR
+              pg_get_constraintdef(oid) !~* '\\maffiliate_kyc_submitted\\M'
             )
         LOOP
           EXECUTE format('ALTER TABLE %s DROP CONSTRAINT IF EXISTS %I', c.tbl, c.conname);
