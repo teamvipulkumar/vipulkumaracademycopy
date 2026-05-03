@@ -12,6 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import {
   UserPlus, ChevronRight, ShieldOff, ShieldCheck, Sparkles, Search,
   Users, ShieldAlert, Wallet, CheckCircle2, PlayCircle, Eye, Loader2,
+  Copy, Check,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminBase } from "@/lib/auth-context";
@@ -93,6 +94,38 @@ function statusVariant(s: string): "default" | "secondary" | "destructive" | "ou
   if (s === "paid" || s === "active" || s === "approved") return "default";
   if (s === "failed" || s === "cancelled" || s === "rejected" || s === "revoked") return "destructive";
   return "secondary";
+}
+
+/* ─────────────── CopyField — label + value with copy button ─────────────── */
+function CopyField({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
+  const onCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      toast({ title: `${label} copied`, description: value });
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast({ title: "Copy failed", variant: "destructive" });
+    }
+  };
+  return (
+    <div className="flex items-center justify-between gap-2 py-1 border-b border-border/50 last:border-0">
+      <div className="min-w-0 flex-1">
+        <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+        <div className={`text-xs font-medium text-foreground truncate ${mono ? "font-mono" : ""}`}>{value}</div>
+      </div>
+      <button
+        type="button"
+        onClick={onCopy}
+        className="flex-shrink-0 w-7 h-7 rounded-md hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+        title={`Copy ${label}`}
+      >
+        {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+      </button>
+    </div>
+  );
 }
 
 /* ─────────────── Main page ─────────────── */
@@ -865,21 +898,12 @@ function PayoutsTab() {
                               <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-2">
                                 Send Payment To
                               </div>
-                              <div className="space-y-1 text-xs">
-                                {hasBank ? (
-                                  <>
-                                    <div><span className="text-muted-foreground">Account Holder:</span> <span className="font-medium">{p.accountHolderName ?? p.creatorName}</span></div>
-                                    <div><span className="text-muted-foreground">Account No:</span> <span className="font-mono font-medium">{p.accountNumber}</span></div>
-                                    <div><span className="text-muted-foreground">IFSC:</span> <span className="font-mono font-medium">{p.ifscCode}</span></div>
-                                    {p.bankName && <div><span className="text-muted-foreground">Bank:</span> <span className="font-medium">{p.bankName}</span></div>}
-                                    {hasUpi && <div><span className="text-muted-foreground">UPI:</span> <span className="font-mono font-medium">{p.upiId}</span></div>}
-                                  </>
-                                ) : (
-                                  <>
-                                    <div><span className="text-muted-foreground">Account Holder:</span> <span className="font-medium">{p.accountHolderName ?? p.creatorName}</span></div>
-                                    <div><span className="text-muted-foreground">UPI:</span> <span className="font-mono font-medium">{p.upiId}</span></div>
-                                  </>
-                                )}
+                              <div className="space-y-0">
+                                <CopyField label="Account Holder" value={p.accountHolderName ?? p.creatorName} />
+                                {hasBank && <CopyField label="Account No" value={p.accountNumber!} mono />}
+                                {hasBank && <CopyField label="IFSC" value={p.ifscCode!} mono />}
+                                {hasBank && p.bankName && <CopyField label="Bank" value={p.bankName} />}
+                                {hasUpi && <CopyField label="UPI" value={p.upiId!} mono />}
                               </div>
                             </PopoverContent>
                           </Popover>
@@ -913,23 +937,18 @@ function PayoutsTab() {
             <DialogTitle>Update Payout · {markDialog?.creatorName}</DialogTitle>
           </DialogHeader>
           {markDialog && (
-            <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs space-y-1">
-              <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold">Send Payment To</div>
-              {markDialog.accountNumber && markDialog.ifscCode ? (
-                <div className="space-y-0.5 mt-1">
-                  <div><span className="text-muted-foreground">Account Holder:</span> <span className="font-medium">{markDialog.accountHolderName ?? markDialog.creatorName}</span></div>
-                  <div><span className="text-muted-foreground">Account No:</span> <span className="font-mono font-medium">{markDialog.accountNumber}</span></div>
-                  <div><span className="text-muted-foreground">IFSC:</span> <span className="font-mono font-medium">{markDialog.ifscCode}</span></div>
-                  {markDialog.bankName && <div><span className="text-muted-foreground">Bank:</span> <span className="font-medium">{markDialog.bankName}</span></div>}
-                  {markDialog.upiId && <div><span className="text-muted-foreground">UPI:</span> <span className="font-mono font-medium">{markDialog.upiId}</span></div>}
-                </div>
-              ) : markDialog.upiId ? (
-                <div className="space-y-0.5 mt-1">
-                  <div><span className="text-muted-foreground">Account Holder:</span> <span className="font-medium">{markDialog.accountHolderName ?? markDialog.creatorName}</span></div>
-                  <div><span className="text-muted-foreground">UPI:</span> <span className="font-mono font-medium">{markDialog.upiId}</span></div>
+            <div className="rounded-lg border border-border bg-muted/30 p-3">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-1">Send Payment To</div>
+              {markDialog.accountNumber || markDialog.upiId ? (
+                <div className="space-y-0">
+                  <CopyField label="Account Holder" value={markDialog.accountHolderName ?? markDialog.creatorName} />
+                  {markDialog.accountNumber && <CopyField label="Account No" value={markDialog.accountNumber} mono />}
+                  {markDialog.ifscCode && <CopyField label="IFSC" value={markDialog.ifscCode} mono />}
+                  {markDialog.bankName && <CopyField label="Bank" value={markDialog.bankName} />}
+                  {markDialog.upiId && <CopyField label="UPI" value={markDialog.upiId} mono />}
                 </div>
               ) : (
-                <div className="text-amber-400 mt-1">⚠ Creator has not added bank or UPI details yet.</div>
+                <div className="text-amber-400 text-xs mt-1">⚠ Creator has not added bank or UPI details yet.</div>
               )}
             </div>
           )}
