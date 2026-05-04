@@ -44,7 +44,7 @@ export function EmailVerificationBanner() {
             <button
               onClick={resend}
               disabled={sending}
-              className="flex items-center gap-1.5 text-xs font-semibold text-amber-900 bg-amber-400 hover:bg-amber-300 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-60"
+              className="flex items-center gap-1.5 text-xs font-semibold text-amber-900 bg-amber-400 hover:bg-amber-300 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-60 cursor-pointer"
             >
               {sending ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
               {sending ? "Sending…" : "Resend Email"}
@@ -52,7 +52,7 @@ export function EmailVerificationBanner() {
           )}
           <button
             onClick={() => setDismissed(true)}
-            className="text-amber-400/60 hover:text-amber-300 transition-colors p-0.5 rounded"
+            className="text-amber-400/60 hover:text-amber-300 transition-colors p-0.5 rounded cursor-pointer"
             aria-label="Dismiss"
           >
             <X className="w-3.5 h-3.5" />
