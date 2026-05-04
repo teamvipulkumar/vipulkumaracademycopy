@@ -58,6 +58,9 @@ router.get("/users", requireAdmin, async (req, res): Promise<void> => {
   let query = db.select({
     id: usersTable.id, email: usersTable.email, name: usersTable.name,
     role: derivedRole.as("role"),
+    baseRole: usersTable.role,
+    isStaff: sql<boolean>`COALESCE(${adminStaffTable.status} = 'active', false)`.as("is_staff"),
+    isCreator: sql<boolean>`COALESCE(${creatorsTable.status} = 'active', false)`.as("is_creator"),
     avatarUrl: usersTable.avatarUrl, referralCode: usersTable.referralCode,
     isBanned: usersTable.isBanned, createdAt: usersTable.createdAt,
     phone: (usersTable as any).phone,
@@ -68,7 +71,7 @@ router.get("/users", requireAdmin, async (req, res): Promise<void> => {
     .$dynamic();
   if (conditions.length > 0) query = query.where(and(...conditions));
 
-  const [users, totalResult] = await Promise.all([
+  const [rawUsers, totalResult] = await Promise.all([
     query.orderBy(desc(usersTable.createdAt)).limit(parseInt(limit)).offset(parseInt(offset)),
     db.select({ count: count() })
       .from(usersTable)
@@ -76,6 +79,12 @@ router.get("/users", requireAdmin, async (req, res): Promise<void> => {
       .leftJoin(creatorsTable, eq(creatorsTable.userId, usersTable.id))
       .where(conditions.length > 0 ? and(...conditions) : undefined),
   ]);
+  const users = rawUsers.map(u => {
+    const roles: string[] = [u.baseRole];
+    if (u.isStaff) roles.push("staff");
+    if (u.isCreator) roles.push("creator");
+    return { id: u.id, email: u.email, name: u.name, role: u.role, roles, avatarUrl: u.avatarUrl, referralCode: u.referralCode, isBanned: u.isBanned, createdAt: u.createdAt, phone: u.phone };
+  });
   res.json({ users, total: totalResult[0]?.count ?? 0, limit: parseInt(limit), offset: parseInt(offset) });
 });
 
@@ -148,9 +157,12 @@ router.get("/users/:userId", requireAdmin, async (req, res): Promise<void> => {
       ELSE ${usersTable.role}
     END
   `;
-  const [user] = await db.select({
+  const [rawUser] = await db.select({
     id: usersTable.id, email: usersTable.email, name: usersTable.name,
     role: derivedRole.as("role"),
+    baseRole: usersTable.role,
+    isStaff: sql<boolean>`COALESCE(${adminStaffTable.status} = 'active', false)`.as("is_staff"),
+    isCreator: sql<boolean>`COALESCE(${creatorsTable.status} = 'active', false)`.as("is_creator"),
     avatarUrl: usersTable.avatarUrl, referralCode: usersTable.referralCode,
     isBanned: usersTable.isBanned, createdAt: usersTable.createdAt,
     phone: (usersTable as any).phone,
@@ -160,7 +172,11 @@ router.get("/users/:userId", requireAdmin, async (req, res): Promise<void> => {
     .leftJoin(creatorsTable, eq(creatorsTable.userId, usersTable.id))
     .where(eq(usersTable.id, userId))
     .limit(1);
-  if (!user) { res.status(404).json({ error: "User not found" }); return; }
+  if (!rawUser) { res.status(404).json({ error: "User not found" }); return; }
+  const userRoles: string[] = [rawUser.baseRole];
+  if (rawUser.isStaff) userRoles.push("staff");
+  if (rawUser.isCreator) userRoles.push("creator");
+  const user = { id: rawUser.id, email: rawUser.email, name: rawUser.name, role: rawUser.role, roles: userRoles, avatarUrl: rawUser.avatarUrl, referralCode: rawUser.referralCode, isBanned: rawUser.isBanned, createdAt: rawUser.createdAt, phone: rawUser.phone };
 
   const [spentResult] = await db.select({ total: sum(paymentsTable.amount) }).from(paymentsTable).where(and(eq(paymentsTable.userId, userId), eq(paymentsTable.status, "completed")));
   const referrals = await db.select().from(referralsTable).where(eq(referralsTable.referrerId, userId));
@@ -173,7 +189,6 @@ router.get("/users/:userId", requireAdmin, async (req, res): Promise<void> => {
     .where(eq(enrollmentsTable.userId, userId))
     .orderBy(desc(enrollmentsTable.enrolledAt));
 
-  // Purchased bundles/packages
   const bundlePayments = await db
     .select({
       bundleId: bundlesTable.id,
@@ -215,26 +230,71 @@ router.post("/users", requireAdmin, async (req, res): Promise<void> => {
 
 router.put("/users/:userId", requireAdmin, async (req, res): Promise<void> => {
   const userId = parseInt(req.params.userId);
-  const { name, email, role, isBanned, password, phone } = req.body;
+  const authReq = req as AuthedRequest;
+  const { name, email, role, isBanned, password, phone, grantCreator, revokeCreator } = req.body;
   const updates: Record<string, unknown> = {};
   if (name !== undefined) updates.name = name;
   if (email !== undefined) updates.email = email.toLowerCase();
-  // "staff" and "creator" are derived roles (admin_staff / creators tables),
-  // not values in the users.role enum. Skip them silently so editing a staff
-  // or creator user without changing their role doesn't crash with a Postgres
-  // enum error. Their underlying users.role (student/affiliate/admin) is
-  // preserved.
   if (role !== undefined && role !== "staff" && role !== "creator") updates.role = role;
   if (isBanned !== undefined) updates.isBanned = isBanned;
   if (password !== undefined && password.length > 0) updates.password = await bcrypt.hash(password, 10);
   if (phone !== undefined) updates.phone = phone.trim() || null;
-  const [updated] = await db.update(usersTable).set(updates).where(eq(usersTable.id, userId)).returning({
-    id: usersTable.id, email: usersTable.email, name: usersTable.name,
-    role: usersTable.role, avatarUrl: usersTable.avatarUrl, referralCode: usersTable.referralCode,
-    isBanned: usersTable.isBanned, createdAt: usersTable.createdAt,
+
+  const [userRow] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+  if (!userRow) { res.status(404).json({ error: "User not found" }); return; }
+
+  await db.transaction(async (tx) => {
+    if (Object.keys(updates).length > 0) {
+      await tx.update(usersTable).set(updates).where(eq(usersTable.id, userId));
+    }
+    if (grantCreator) {
+      const [existing] = await tx.select().from(creatorsTable).where(eq(creatorsTable.userId, userId)).limit(1);
+      if (existing) {
+        if (existing.status !== "active") {
+          await tx.update(creatorsTable).set({ status: "active" }).where(eq(creatorsTable.id, existing.id));
+        }
+      } else {
+        await tx.insert(creatorsTable).values({
+          userId,
+          name: name ?? userRow.name,
+          email: (email ?? userRow.email).toLowerCase(),
+          invitedBy: authReq.user.userId,
+          status: "active",
+          kycStatus: "pending",
+        });
+      }
+    }
+    if (revokeCreator) {
+      await tx.update(creatorsTable).set({ status: "revoked" }).where(eq(creatorsTable.userId, userId));
+    }
   });
-  if (!updated) { res.status(404).json({ error: "User not found" }); return; }
-  res.json(updated);
+
+  const derivedRole = sql<string>`
+    CASE
+      WHEN ${adminStaffTable.status} = 'active' THEN 'staff'
+      WHEN ${usersTable.role} <> 'admin' AND ${creatorsTable.status} = 'active' THEN 'creator'
+      ELSE ${usersTable.role}
+    END
+  `;
+  const [final] = await db.select({
+    id: usersTable.id, email: usersTable.email, name: usersTable.name,
+    role: derivedRole.as("role"),
+    baseRole: usersTable.role,
+    isStaff: sql<boolean>`COALESCE(${adminStaffTable.status} = 'active', false)`.as("is_staff"),
+    isCreator: sql<boolean>`COALESCE(${creatorsTable.status} = 'active', false)`.as("is_creator"),
+    avatarUrl: usersTable.avatarUrl, referralCode: usersTable.referralCode,
+    isBanned: usersTable.isBanned, createdAt: usersTable.createdAt,
+    phone: (usersTable as any).phone,
+  })
+    .from(usersTable)
+    .leftJoin(adminStaffTable, eq(adminStaffTable.userId, usersTable.id))
+    .leftJoin(creatorsTable, eq(creatorsTable.userId, usersTable.id))
+    .where(eq(usersTable.id, userId))
+    .limit(1);
+  const roles: string[] = [final.baseRole];
+  if (final.isStaff) roles.push("staff");
+  if (final.isCreator) roles.push("creator");
+  res.json({ id: final.id, email: final.email, name: final.name, role: final.role, roles, avatarUrl: final.avatarUrl, referralCode: final.referralCode, isBanned: final.isBanned, createdAt: final.createdAt, phone: final.phone });
 });
 
 // ── Bulk delete users ─────────────────────────────────────────────────────────

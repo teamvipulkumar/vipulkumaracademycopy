@@ -25,6 +25,7 @@ const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 type User = {
   id: number; name: string; email: string; role: string;
+  roles?: string[];
   isBanned: boolean; createdAt: string; avatarUrl?: string | null; referralCode?: string | null;
   phone?: string | null;
 };
@@ -451,26 +452,41 @@ function AddUserDialog({ open, onClose, onSuccess }: { open: boolean; onClose: (
 
 // ── Edit User Dialog ──────────────────────────────────────────────────────────
 function EditUserDialog({ user, onClose, onSuccess }: { user: User; onClose: () => void; onSuccess: () => void }) {
-  const [form, setForm] = useState({ name: user.name, email: user.email, role: user.role, password: "", phone: user.phone ?? "" });
+  const baseRole = (() => {
+    const r = user.roles ?? [user.role];
+    if (r.includes("admin")) return "admin";
+    if (r.includes("affiliate")) return "affiliate";
+    return "student";
+  })();
+  const [form, setForm] = useState({
+    name: user.name, email: user.email, role: baseRole, password: "", phone: user.phone ?? "",
+    isCreator: user.roles?.includes("creator") ?? user.role === "creator",
+  });
   const updateUser = useAdminUpdateUser();
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+
+  const wasCreator = user.roles?.includes("creator") ?? user.role === "creator";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
+      const body: Record<string, unknown> = {
+        name: form.name,
+        email: form.email,
+        role: form.role,
+        phone: form.phone,
+      };
+      if (form.password) body.password = form.password;
+      if (form.isCreator && !wasCreator) body.grantCreator = true;
+      if (!form.isCreator && wasCreator) body.revokeCreator = true;
+
       const res = await fetch(`${API_BASE}/api/admin/users/${user.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          role: form.role,
-          phone: form.phone,
-          ...(form.password ? { password: form.password } : {}),
-        }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to update user");
@@ -501,16 +517,52 @@ function EditUserDialog({ user, onClose, onSuccess }: { user: User; onClose: () 
             <Input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} required className="bg-card border-border" />
           </div>
           <div className="space-y-1.5">
-            <Label>Role</Label>
+            <Label>Primary Role</Label>
             <Select value={form.role} onValueChange={v => setForm(p => ({ ...p, role: v }))}>
               <SelectTrigger className="bg-card border-border"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="student">Student</SelectItem>
                 <SelectItem value="affiliate">Affiliate</SelectItem>
-                <SelectItem value="staff">Staff</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
               </SelectContent>
             </Select>
+            <p className="text-[11px] text-muted-foreground">Base account type. Staff role is managed from the Staff section.</p>
+          </div>
+          <div className="space-y-2">
+            <Label>Additional Roles</Label>
+            <div className="space-y-2">
+              <label className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card/50 hover:bg-card/80 transition-colors cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.isCreator}
+                  onChange={e => setForm(p => ({ ...p, isCreator: e.target.checked }))}
+                  className="w-4 h-4 rounded border-border accent-emerald-500"
+                />
+                <div className="flex items-center gap-2 flex-1">
+                  <Sparkles className="w-4 h-4 text-emerald-400" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Creator Access</p>
+                    <p className="text-[11px] text-muted-foreground">Can create courses, earn commissions, and access the creator dashboard</p>
+                  </div>
+                </div>
+                {form.isCreator && <Badge className="text-[10px] text-emerald-400 border-emerald-400/30 bg-emerald-400/10">Active</Badge>}
+              </label>
+              {(user.roles?.includes("staff") ?? user.role === "staff") && (
+                <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card/50 opacity-60">
+                  <div className="w-4 h-4 rounded border-border bg-amber-500/20 flex items-center justify-center">
+                    <CheckCircle2 className="w-3 h-3 text-amber-400" />
+                  </div>
+                  <div className="flex items-center gap-2 flex-1">
+                    <ShieldCheck className="w-4 h-4 text-amber-400" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Staff Access</p>
+                      <p className="text-[11px] text-muted-foreground">Managed from Admin → Staff section</p>
+                    </div>
+                  </div>
+                  <Badge className="text-[10px] text-amber-400 border-amber-400/30 bg-amber-400/10">Active</Badge>
+                </div>
+              )}
+            </div>
           </div>
           <div className="space-y-1.5">
             <Label>Mobile Number</Label>
@@ -565,9 +617,11 @@ export function ViewProfileDialog({ userId, onClose }: { userId: number; onClose
                 {(user as { phone?: string | null }).phone && (
                   <p className="text-sm text-muted-foreground flex items-center gap-1.5"><Phone className="w-3.5 h-3.5" />{(user as { phone?: string | null }).phone}</p>
                 )}
-                <div className="flex items-center gap-2 mt-1.5">
-                  <Badge className={`text-xs ${roleColors[user.role] ?? ""}`}>{user.role}</Badge>
-                  <Badge className={`text-xs ${user.isBanned ? "text-red-400 border-red-400/30 bg-red-400/10" : "text-green-400 border-green-400/30 bg-green-400/10"}`}>
+                <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                  {((user as any).roles && (user as any).roles.length > 0 ? (user as any).roles : [user.role]).map((r: string) => (
+                    <Badge key={r} className={`text-[10px] ${roleColors[r] ?? ""}`}>{r}</Badge>
+                  ))}
+                  <Badge className={`text-[10px] ${user.isBanned ? "text-red-400 border-red-400/30 bg-red-400/10" : "text-green-400 border-green-400/30 bg-green-400/10"}`}>
                     {user.isBanned ? "Banned" : "Active"}
                   </Badge>
                 </div>
@@ -1109,9 +1163,16 @@ export default function AdminUsersPage() {
                     </td>
                     {/* Role */}
                     <td className="px-4 py-3">
-                      <Badge className={`text-xs gap-1 ${roleColors[u.role] ?? ""}`}>
-                        <RoleIcon className="w-3 h-3" />{u.role}
-                      </Badge>
+                      <div className="flex flex-wrap gap-1">
+                        {(u.roles && u.roles.length > 0 ? u.roles : [u.role]).map(r => {
+                          const RI = roleIcons[r] ?? GraduationCap;
+                          return (
+                            <Badge key={r} className={`text-[10px] gap-1 ${roleColors[r] ?? ""}`}>
+                              <RI className="w-3 h-3" />{r}
+                            </Badge>
+                          );
+                        })}
+                      </div>
                     </td>
                     {/* Status */}
                     <td className="px-4 py-3">
