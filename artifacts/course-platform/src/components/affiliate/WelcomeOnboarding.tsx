@@ -181,8 +181,14 @@ export default function WelcomeOnboarding({
   }, [onComplete, onTourEnd, skipWelcomeModal]);
 
   const startTour = useCallback(() => {
+    // Fire parent's onTourStart FIRST (which usually navigates to the earnings
+    // tab + flips a tourActive flag). Then defer setPhase("tour") to the next
+    // frame so the parent has a chance to commit its tab navigation to the DOM
+    // before TourOverlay queries for tour targets like [data-tour="earnings-stats"].
     onTourStart?.();
-    setPhase("tour");
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => setPhase("tour"));
+    });
   }, [onTourStart]);
 
   if (phase === "done") return null;
@@ -364,6 +370,7 @@ function TourOverlay({
     let cancelled = false;
 
     const updatePosition = () => {
+      if (cancelled) return;
       const el = document.querySelector(step.selector) as HTMLElement | null;
       if (!el) {
         setRect(null);
@@ -395,12 +402,15 @@ function TourOverlay({
     window.addEventListener("resize", onResize);
     window.addEventListener("scroll", onScroll, true);
 
-    // Re-check position after a delay (for any layout shifts / mobile sidebar etc)
-    const t = setTimeout(updatePosition, 350);
+    // Multiple staggered retries — the first tour step often fires immediately
+    // after a tab navigation and the target element may not be in the DOM yet.
+    // Retrying at progressive delays catches slow renders / layout shifts /
+    // mobile sidebar slide-overs without relying on any single timing.
+    const timers = [120, 350, 700, 1200, 2000].map(d => setTimeout(updatePosition, d));
 
     return () => {
       cancelled = true;
-      clearTimeout(t);
+      timers.forEach(clearTimeout);
       window.removeEventListener("resize", onResize);
       window.removeEventListener("scroll", onScroll, true);
     };
