@@ -135,7 +135,7 @@ export default function AdminCreatorDetailPage() {
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
       {/* Back Button */}
       <Link href={`${base}/creators`}>
-        <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground -ml-2">
+        <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground -ml-2 cursor-pointer">
           <ArrowLeft className="w-4 h-4" /> Back to Creators
         </Button>
       </Link>
@@ -240,7 +240,7 @@ export default function AdminCreatorDetailPage() {
                 {c.kyc.panFrontUrl && (
                   <div className="space-y-1.5">
                     <p className="text-[11px] text-muted-foreground uppercase tracking-wide">PAN Card Image</p>
-                    <a href={c.kyc.panFrontUrl} target="_blank" rel="noreferrer" className="group relative inline-block rounded-lg overflow-hidden border hover:border-primary/50 transition-colors">
+                    <a href={c.kyc.panFrontUrl} target="_blank" rel="noreferrer" className="group relative inline-block rounded-lg overflow-hidden border hover:border-primary/50 transition-colors cursor-pointer">
                       <img src={c.kyc.panFrontUrl} alt="PAN card front" className="max-h-48 max-w-full object-contain bg-muted" />
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
                         <ExternalLink className="w-5 h-5 text-white drop-shadow-lg" />
@@ -259,8 +259,8 @@ export default function AdminCreatorDetailPage() {
                 {(c.kyc.idProofUrl || c.kyc.addressProofUrl) && (
                   <div className="text-xs text-muted-foreground border-t pt-3 flex items-center gap-3">
                     <span className="font-medium">Legacy docs:</span>
-                    {c.kyc.idProofUrl && <a href={c.kyc.idProofUrl} target="_blank" rel="noreferrer" className="text-primary underline hover:no-underline">ID Proof</a>}
-                    {c.kyc.addressProofUrl && <a href={c.kyc.addressProofUrl} target="_blank" rel="noreferrer" className="text-primary underline hover:no-underline">Address Proof</a>}
+                    {c.kyc.idProofUrl && <a href={c.kyc.idProofUrl} target="_blank" rel="noreferrer" className="text-primary underline hover:no-underline cursor-pointer">ID Proof</a>}
+                    {c.kyc.addressProofUrl && <a href={c.kyc.addressProofUrl} target="_blank" rel="noreferrer" className="text-primary underline hover:no-underline cursor-pointer">Address Proof</a>}
                   </div>
                 )}
 
@@ -276,7 +276,7 @@ export default function AdminCreatorDetailPage() {
                     <div>
                       <Label className="text-xs">Update Status</Label>
                       <Select value={kycStatus || "pending"} onValueChange={setKycStatus}>
-                        <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="mt-1 cursor-pointer"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="pending">Pending Review</SelectItem>
                           <SelectItem value="approved">Approved</SelectItem>
@@ -305,7 +305,7 @@ export default function AdminCreatorDetailPage() {
                   </div>
                   <Button
                     size="sm"
-                    className="w-full"
+                    className="w-full cursor-pointer"
                     onClick={() => {
                       if (kycStatus === "rejected" && kycNote.trim().length < 5) {
                         toast({ title: "Reason required", description: "Add a rejection reason of at least 5 characters.", variant: "destructive" });
@@ -383,7 +383,7 @@ export default function AdminCreatorDetailPage() {
                     </thead>
                     <tbody>
                       {data.courses.map(co => (
-                        <tr key={co.id} className="border-b last:border-0 hover:bg-muted/20 transition-colors">
+                        <tr key={co.id} className="border-b last:border-0 hover:bg-muted/20 transition-colors cursor-pointer">
                           <td className="py-3 px-4 font-medium">{co.title}</td>
                           <td className="py-3 px-4 text-right text-muted-foreground">{fmt(co.price)}</td>
                           <td className="py-3 px-4 text-right">
@@ -433,7 +433,7 @@ export default function AdminCreatorDetailPage() {
                     </thead>
                     <tbody>
                       {data.commissions.slice(0, 100).map(co => (
-                        <tr key={co.id} className="border-b last:border-0 hover:bg-muted/20 transition-colors">
+                        <tr key={co.id} className="border-b last:border-0 hover:bg-muted/20 transition-colors cursor-pointer">
                           <td className="py-3 px-4 text-xs text-muted-foreground">{new Date(co.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</td>
                           <td className="py-3 px-4 font-medium">{co.courseTitle ?? co.bundleName ?? "—"}</td>
                           <td className="py-3 px-4 text-right text-muted-foreground">{fmt(co.saleAmount)}</td>
@@ -476,7 +476,7 @@ export default function AdminCreatorDetailPage() {
                     </thead>
                     <tbody>
                       {data.payouts.map(p => (
-                        <tr key={p.id} className="border-b last:border-0 hover:bg-muted/20 transition-colors">
+                        <tr key={p.id} className="border-b last:border-0 hover:bg-muted/20 transition-colors cursor-pointer">
                           <td className="py-3 px-4 text-xs text-muted-foreground">{new Date(p.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</td>
                           <td className="py-3 px-4 text-right font-semibold">{fmt(p.amount)}</td>
                           <td className="py-3 px-4 text-center">
@@ -512,6 +512,7 @@ export default function AdminCreatorDetailPage() {
               />
               <Button
                 size="sm"
+                className="cursor-pointer"
                 onClick={() => patchMut.mutate({ notes })}
                 disabled={patchMut.isPending}
               >
