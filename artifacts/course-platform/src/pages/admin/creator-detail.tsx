@@ -204,11 +204,11 @@ export default function AdminCreatorDetailPage() {
       {/* Tabs */}
       <Tabs defaultValue="kyc" className="space-y-4">
         <TabsList className="w-full justify-start overflow-x-auto">
-          <TabsTrigger value="kyc" className="gap-1.5"><FileCheck className="w-3.5 h-3.5" />KYC & Bank</TabsTrigger>
-          <TabsTrigger value="courses" className="gap-1.5"><BookOpen className="w-3.5 h-3.5" />Courses <span className="text-[10px] ml-0.5 opacity-60">({data.courses.length})</span></TabsTrigger>
-          <TabsTrigger value="commissions" className="gap-1.5"><IndianRupee className="w-3.5 h-3.5" />Commissions <span className="text-[10px] ml-0.5 opacity-60">({data.commissions.length})</span></TabsTrigger>
-          <TabsTrigger value="payouts" className="gap-1.5"><Banknote className="w-3.5 h-3.5" />Payouts <span className="text-[10px] ml-0.5 opacity-60">({data.payouts.length})</span></TabsTrigger>
-          <TabsTrigger value="notes" className="gap-1.5"><StickyNote className="w-3.5 h-3.5" />Notes</TabsTrigger>
+          <TabsTrigger value="kyc" className="gap-1.5 cursor-pointer"><FileCheck className="w-3.5 h-3.5" />KYC & Bank</TabsTrigger>
+          <TabsTrigger value="courses" className="gap-1.5 cursor-pointer"><BookOpen className="w-3.5 h-3.5" />Courses <span className="text-[10px] ml-0.5 opacity-60">({data.courses.length})</span></TabsTrigger>
+          <TabsTrigger value="commissions" className="gap-1.5 cursor-pointer"><IndianRupee className="w-3.5 h-3.5" />Commissions <span className="text-[10px] ml-0.5 opacity-60">({data.commissions.length})</span></TabsTrigger>
+          <TabsTrigger value="payouts" className="gap-1.5 cursor-pointer"><Banknote className="w-3.5 h-3.5" />Payouts <span className="text-[10px] ml-0.5 opacity-60">({data.payouts.length})</span></TabsTrigger>
+          <TabsTrigger value="notes" className="gap-1.5 cursor-pointer"><StickyNote className="w-3.5 h-3.5" />Notes</TabsTrigger>
         </TabsList>
 
         {/* KYC & Bank Tab */}
