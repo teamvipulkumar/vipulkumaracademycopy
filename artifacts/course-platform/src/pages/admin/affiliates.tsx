@@ -2422,9 +2422,9 @@ export default function AdminAffiliatesPage() {
         </p>
       </div>
 
-      {/* Tab bar — horizontally scrollable on mobile, normal on desktop */}
-      <div className="bg-card border border-border rounded-xl p-1 mb-6 overflow-x-auto scrollbar-thin">
-        <div className="flex items-center gap-1 min-w-max sm:min-w-0 sm:flex-wrap">
+      {/* Tab bar — wraps on all screen sizes */}
+      <div className="bg-card border border-border rounded-xl p-1 mb-6">
+        <div className="flex items-center gap-1 flex-wrap">
           {TABS.map(t => (
             <button
               key={t.id}
