@@ -224,7 +224,7 @@ export default function AdminFacebookPixelPage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 max-w-3xl mx-auto">
+    <div className="p-6 max-w-3xl">
       {/* Header */}
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
@@ -253,7 +253,7 @@ export default function AdminFacebookPixelPage() {
           (legacy state, env config, or someone using SQL). The transient input
           in the bottom card does NOT trigger this. */}
       {capiStatus?.test_mode && (
-        <div className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 flex flex-wrap items-start gap-3">
+        <div className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 flex items-start gap-3">
           <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
           <div className="text-xs flex-1">
             <p className="font-semibold text-amber-500 mb-0.5">Test mode is active</p>
@@ -273,10 +273,10 @@ export default function AdminFacebookPixelPage() {
       )}
 
       <Card className={`bg-card border-border transition-colors ${editing ? "ring-1 ring-primary/40" : ""}`}>
-        <CardContent className="p-4 sm:p-6 space-y-6 sm:space-y-7">
+        <CardContent className="p-6 space-y-7">
 
           {/* Lock / edit mode indicator */}
-          <div className={`flex flex-wrap items-center justify-between gap-2 sm:gap-3 -mx-4 sm:-mx-6 -mt-4 sm:-mt-6 px-4 sm:px-6 py-3 border-b border-border ${editing ? "bg-primary/5" : "bg-muted/30"}`}>
+          <div className={`flex items-center justify-between gap-3 -mx-6 -mt-6 px-6 py-3 border-b border-border ${editing ? "bg-primary/5" : "bg-muted/30"}`}>
             <div className="flex items-center gap-2 text-xs">
               {editing ? (
                 <>
@@ -394,7 +394,7 @@ export default function AdminFacebookPixelPage() {
           </div>
 
           {/* Footer actions — change based on lock state */}
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3 pt-2">
+          <div className="flex items-center gap-3 pt-2">
             {editing ? (
               <>
                 <Button type="button" onClick={handleSave} disabled={saving} className="flex-1">
@@ -438,7 +438,7 @@ export default function AdminFacebookPixelPage() {
           Independent of the main config card — admin can type any TEST code
           and fire a one-shot test event WITHOUT saving it to the database. */}
       <Card className="bg-card border-border mt-5">
-        <CardContent className="p-4 sm:p-6 space-y-4">
+        <CardContent className="p-6 space-y-4">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-base font-semibold flex items-center gap-2">
