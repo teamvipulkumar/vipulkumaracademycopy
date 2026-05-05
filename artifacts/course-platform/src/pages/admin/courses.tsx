@@ -152,21 +152,21 @@ export default function AdminCoursesPage() {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       {/* Header with tabs */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Courses & Bundles</h1>
-          <div className="flex gap-1 mt-3">
+      <div className="mb-5 sm:mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold">Courses & Bundles</h1>
+          <div className="flex gap-1 mt-3 -mx-1 px-1 overflow-x-auto scrollbar-thin sm:overflow-visible">
             <button
               onClick={() => setActiveTab("courses")}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer ${activeTab === "courses" ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground hover:bg-card"}`}
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer whitespace-nowrap ${activeTab === "courses" ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground hover:bg-card"}`}
             >
               <BookOpen className="w-3.5 h-3.5" />Courses ({courses?.length ?? 0})
             </button>
             <button
               onClick={() => setActiveTab("bundles")}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer ${activeTab === "bundles" ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground hover:bg-card"}`}
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer whitespace-nowrap ${activeTab === "bundles" ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground hover:bg-card"}`}
             >
               <Package className="w-3.5 h-3.5" />Packages ({bundles?.length ?? 0})
             </button>
@@ -174,11 +174,11 @@ export default function AdminCoursesPage() {
         </div>
 
         {activeTab === "courses" ? (
-          <Link href={`${adminBase}/courses/new`}>
-            <Button size="sm"><Plus className="w-4 h-4 mr-2" />New Course</Button>
+          <Link href={`${adminBase}/courses/new`} className="sm:w-auto">
+            <Button size="sm" className="w-full sm:w-auto"><Plus className="w-4 h-4 mr-2" />New Course</Button>
           </Link>
         ) : (
-          <Button size="sm" onClick={openCreateBundle}><Plus className="w-4 h-4 mr-2" />New Package</Button>
+          <Button size="sm" onClick={openCreateBundle} className="w-full sm:w-auto"><Plus className="w-4 h-4 mr-2" />New Package</Button>
         )}
       </div>
 
@@ -189,61 +189,137 @@ export default function AdminCoursesPage() {
         ) : !courses || courses.length === 0 ? (
           <div className="text-center py-16 text-muted-foreground">No courses yet. Create your first one!</div>
         ) : (
-          <div className="border border-border rounded-xl overflow-x-auto scrollbar-thin">
-            <table className="w-full min-w-[1200px]">
-              <thead className="bg-card border-b border-border">
-                <tr>{["", "Title", "Category", "Level", "Price", "Compare At", "Duration", "Status", "On Website", "Students", "Actions"].map((h, i) => <th key={i} className="text-left text-xs font-medium text-muted-foreground px-4 py-3 whitespace-nowrap">{h}</th>)}</tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {courses.map(c => {
-                  const showOnWebsite = (c as unknown as { showOnWebsite: boolean }).showOnWebsite !== false;
-                  return (
-                  <tr key={c.id} className="hover:bg-card/50 transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="w-20 h-12 rounded-md overflow-hidden bg-gradient-to-br from-primary/20 to-blue-900/30 flex-shrink-0 flex items-center justify-center">
+          <>
+            {/* Desktop / tablet table — unchanged from original */}
+            <div className="hidden md:block border border-border rounded-xl overflow-x-auto scrollbar-thin">
+              <table className="w-full min-w-[1200px]">
+                <thead className="bg-card border-b border-border">
+                  <tr>{["", "Title", "Category", "Level", "Price", "Compare At", "Duration", "Status", "On Website", "Students", "Actions"].map((h, i) => <th key={i} className="text-left text-xs font-medium text-muted-foreground px-4 py-3 whitespace-nowrap">{h}</th>)}</tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {courses.map(c => {
+                    const showOnWebsite = (c as unknown as { showOnWebsite: boolean }).showOnWebsite !== false;
+                    return (
+                    <tr key={c.id} className="hover:bg-card/50 transition-colors">
+                      <td className="px-4 py-3">
+                        <div className="w-20 h-12 rounded-md overflow-hidden bg-gradient-to-br from-primary/20 to-blue-900/30 flex-shrink-0 flex items-center justify-center">
+                          {c.thumbnailUrl ? (
+                            <img src={c.thumbnailUrl} alt={c.title} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-lg font-black text-primary/30 select-none">{c.category?.charAt(0) ?? "?"}</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 font-medium text-sm max-w-xs"><p className="truncate">{c.title}</p></td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">{c.category}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground capitalize whitespace-nowrap">{c.level}</td>
+                      <td className="px-4 py-3 text-sm font-bold whitespace-nowrap">₹{c.price}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground line-through whitespace-nowrap">{(c as unknown as { compareAtPrice?: number }).compareAtPrice ? `₹${(c as unknown as { compareAtPrice: number }).compareAtPrice}` : "—"}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">{c.durationMinutes ? `${(c.durationMinutes / 60 % 1 === 0 ? c.durationMinutes / 60 : (c.durationMinutes / 60).toFixed(1))} hr` : "—"}</td>
+                      <td className="px-4 py-3">
+                        <Badge className={`text-xs cursor-pointer select-none ${c.status === "published" ? "text-green-400 border-green-400/30 bg-green-400/10" : "text-yellow-400 border-yellow-400/30 bg-yellow-400/10"}`} onClick={() => handleToggleStatus(c.id, c.status)} title="Click to toggle">{c.status}</Badge>
+                      </td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => handleToggleWebsite(c.id, showOnWebsite)}
+                          title={showOnWebsite ? "Visible on website – click to hide" : "Hidden from website – click to show"}
+                          className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${showOnWebsite ? "bg-blue-400/10 border-blue-400/30 text-blue-400 hover:bg-blue-400/20" : "bg-muted/30 border-border text-muted-foreground hover:bg-muted/50"}`}
+                        >
+                          {showOnWebsite ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                          {showOnWebsite ? "Visible" : "Hidden"}
+                        </button>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">{c.enrollmentCount}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <div className="flex items-center gap-1">
+                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" asChild>
+                            <Link href={`${adminBase}/courses/${c.id}/edit`}><Pencil className="w-3.5 h-3.5" /></Link>
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-400 hover:text-red-300" onClick={() => handleDelete(c.id)}>
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile card list — only renders below md (≤767px) */}
+            <div className="md:hidden space-y-3">
+              {courses.map(c => {
+                const showOnWebsite = (c as unknown as { showOnWebsite: boolean }).showOnWebsite !== false;
+                const compareAt = (c as unknown as { compareAtPrice?: number }).compareAtPrice;
+                return (
+                  <div key={c.id} className="bg-card border border-border rounded-xl p-3.5 space-y-3">
+                    {/* Top row: thumbnail + title/category */}
+                    <div className="flex gap-3">
+                      <div className="w-20 h-14 rounded-md overflow-hidden bg-gradient-to-br from-primary/20 to-blue-900/30 flex-shrink-0 flex items-center justify-center">
                         {c.thumbnailUrl ? (
                           <img src={c.thumbnailUrl} alt={c.title} className="w-full h-full object-cover" />
                         ) : (
                           <span className="text-lg font-black text-primary/30 select-none">{c.category?.charAt(0) ?? "?"}</span>
                         )}
                       </div>
-                    </td>
-                    <td className="px-4 py-3 font-medium text-sm max-w-xs"><p className="truncate">{c.title}</p></td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">{c.category}</td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground capitalize whitespace-nowrap">{c.level}</td>
-                    <td className="px-4 py-3 text-sm font-bold whitespace-nowrap">₹{c.price}</td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground line-through whitespace-nowrap">{(c as unknown as { compareAtPrice?: number }).compareAtPrice ? `₹${(c as unknown as { compareAtPrice: number }).compareAtPrice}` : "—"}</td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">{c.durationMinutes ? `${(c.durationMinutes / 60 % 1 === 0 ? c.durationMinutes / 60 : (c.durationMinutes / 60).toFixed(1))} hr` : "—"}</td>
-                    <td className="px-4 py-3">
-                      <Badge className={`text-xs cursor-pointer select-none ${c.status === "published" ? "text-green-400 border-green-400/30 bg-green-400/10" : "text-yellow-400 border-yellow-400/30 bg-yellow-400/10"}`} onClick={() => handleToggleStatus(c.id, c.status)} title="Click to toggle">{c.status}</Badge>
-                    </td>
-                    <td className="px-4 py-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm leading-snug line-clamp-2">{c.title}</p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5 capitalize">
+                          {c.category} · {c.level}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Stats grid */}
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs border-y border-border py-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Price</span>
+                        <span className="font-bold text-foreground">₹{c.price}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Compare At</span>
+                        <span className="text-muted-foreground line-through">{compareAt ? `₹${compareAt}` : "—"}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Duration</span>
+                        <span>{c.durationMinutes ? `${(c.durationMinutes / 60 % 1 === 0 ? c.durationMinutes / 60 : (c.durationMinutes / 60).toFixed(1))} hr` : "—"}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Students</span>
+                        <span>{c.enrollmentCount}</span>
+                      </div>
+                    </div>
+
+                    {/* Actions row */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge
+                        className={`text-[11px] cursor-pointer select-none ${c.status === "published" ? "text-green-400 border-green-400/30 bg-green-400/10" : "text-yellow-400 border-yellow-400/30 bg-yellow-400/10"}`}
+                        onClick={() => handleToggleStatus(c.id, c.status)}
+                      >
+                        {c.status}
+                      </Badge>
                       <button
                         onClick={() => handleToggleWebsite(c.id, showOnWebsite)}
-                        title={showOnWebsite ? "Visible on website – click to hide" : "Hidden from website – click to show"}
-                        className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${showOnWebsite ? "bg-blue-400/10 border-blue-400/30 text-blue-400 hover:bg-blue-400/20" : "bg-muted/30 border-border text-muted-foreground hover:bg-muted/50"}`}
+                        className={`flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${showOnWebsite ? "bg-blue-400/10 border-blue-400/30 text-blue-400" : "bg-muted/30 border-border text-muted-foreground"}`}
                       >
                         {showOnWebsite ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
                         {showOnWebsite ? "Visible" : "Hidden"}
                       </button>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">{c.enrollmentCount}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <div className="flex items-center gap-1">
-                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0" asChild>
-                          <Link href={`${adminBase}/courses/${c.id}/edit`}><Pencil className="w-3.5 h-3.5" /></Link>
+                      <div className="ml-auto flex items-center gap-1">
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0" asChild>
+                          <Link href={`${adminBase}/courses/${c.id}/edit`}><Pencil className="w-4 h-4" /></Link>
                         </Button>
-                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-400 hover:text-red-300" onClick={() => handleDelete(c.id)}>
-                          <Trash2 className="w-3.5 h-3.5" />
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-400 hover:text-red-300" onClick={() => handleDelete(c.id)}>
+                          <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
-                    </td>
-                  </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )
       )}
 
@@ -257,51 +333,111 @@ export default function AdminCoursesPage() {
             <p>No packages yet. Create your first package!</p>
           </div>
         ) : (
-          <div className="border border-border rounded-xl overflow-x-auto scrollbar-thin">
-            <table className="w-full min-w-[900px]">
-              <thead className="bg-card border-b border-border">
-                <tr>{["", "Package Name", "Courses", "Package Price", "Compare At", "Status", "Actions"].map((h, i) => <th key={i} className="text-left text-xs font-medium text-muted-foreground px-4 py-3 whitespace-nowrap">{h}</th>)}</tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {bundles.map(b => (
-                  <tr key={b.id} className="hover:bg-card/50 transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="w-20 h-12 rounded-md overflow-hidden bg-gradient-to-br from-primary/20 to-blue-900/30 flex-shrink-0 flex items-center justify-center">
-                        {b.thumbnailUrl ? (
-                          <img src={b.thumbnailUrl} alt={b.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <span className="text-lg font-black text-primary/30 select-none">B</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-sm">{b.name}</p>
-                      {b.description && <p className="text-xs text-muted-foreground truncate max-w-xs mt-0.5">{b.description}</p>}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">
-                      <div className="flex flex-wrap gap-1 max-w-xs">
-                        {b.courses.slice(0, 3).map(c => <span key={c.id} className="text-xs bg-primary/10 text-primary border border-primary/20 rounded px-1.5 py-0.5 truncate max-w-[120px]">{c.title}</span>)}
-                        {b.courses.length > 3 && <span className="text-xs text-muted-foreground">+{b.courses.length - 3} more</span>}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-sm font-bold text-primary whitespace-nowrap">₹{b.price}</td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground line-through whitespace-nowrap">{b.compareAtPrice ? `₹${b.compareAtPrice}` : "—"}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <Badge className={`text-xs ${b.isActive ? "text-green-400 border-green-400/30 bg-green-400/10" : "text-yellow-400 border-yellow-400/30 bg-yellow-400/10"}`}>
-                        {b.isActive ? "active" : "inactive"}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <div className="flex items-center gap-1">
-                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => openEditBundle(b)}><Pencil className="w-3.5 h-3.5" /></Button>
-                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-400 hover:text-red-300" onClick={() => handleDeleteBundle(b.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            {/* Desktop / tablet table — unchanged from original */}
+            <div className="hidden md:block border border-border rounded-xl overflow-x-auto scrollbar-thin">
+              <table className="w-full min-w-[900px]">
+                <thead className="bg-card border-b border-border">
+                  <tr>{["", "Package Name", "Courses", "Package Price", "Compare At", "Status", "Actions"].map((h, i) => <th key={i} className="text-left text-xs font-medium text-muted-foreground px-4 py-3 whitespace-nowrap">{h}</th>)}</tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {bundles.map(b => (
+                    <tr key={b.id} className="hover:bg-card/50 transition-colors">
+                      <td className="px-4 py-3">
+                        <div className="w-20 h-12 rounded-md overflow-hidden bg-gradient-to-br from-primary/20 to-blue-900/30 flex-shrink-0 flex items-center justify-center">
+                          {b.thumbnailUrl ? (
+                            <img src={b.thumbnailUrl} alt={b.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-lg font-black text-primary/30 select-none">B</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="font-medium text-sm">{b.name}</p>
+                        {b.description && <p className="text-xs text-muted-foreground truncate max-w-xs mt-0.5">{b.description}</p>}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">
+                        <div className="flex flex-wrap gap-1 max-w-xs">
+                          {b.courses.slice(0, 3).map(c => <span key={c.id} className="text-xs bg-primary/10 text-primary border border-primary/20 rounded px-1.5 py-0.5 truncate max-w-[120px]">{c.title}</span>)}
+                          {b.courses.length > 3 && <span className="text-xs text-muted-foreground">+{b.courses.length - 3} more</span>}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm font-bold text-primary whitespace-nowrap">₹{b.price}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground line-through whitespace-nowrap">{b.compareAtPrice ? `₹${b.compareAtPrice}` : "—"}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <Badge className={`text-xs ${b.isActive ? "text-green-400 border-green-400/30 bg-green-400/10" : "text-yellow-400 border-yellow-400/30 bg-yellow-400/10"}`}>
+                          {b.isActive ? "active" : "inactive"}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <div className="flex items-center gap-1">
+                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => openEditBundle(b)}><Pencil className="w-3.5 h-3.5" /></Button>
+                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-400 hover:text-red-300" onClick={() => handleDeleteBundle(b.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile card list — only renders below md (≤767px) */}
+            <div className="md:hidden space-y-3">
+              {bundles.map(b => (
+                <div key={b.id} className="bg-card border border-border rounded-xl p-3.5 space-y-3">
+                  {/* Top row: thumbnail + name */}
+                  <div className="flex gap-3">
+                    <div className="w-20 h-14 rounded-md overflow-hidden bg-gradient-to-br from-primary/20 to-blue-900/30 flex-shrink-0 flex items-center justify-center">
+                      {b.thumbnailUrl ? (
+                        <img src={b.thumbnailUrl} alt={b.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-lg font-black text-primary/30 select-none">B</span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm leading-snug line-clamp-2">{b.name}</p>
+                      {b.description && <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5">{b.description}</p>}
+                    </div>
+                  </div>
+
+                  {/* Courses chips */}
+                  {b.courses.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {b.courses.slice(0, 3).map(c => (
+                        <span key={c.id} className="text-[10px] bg-primary/10 text-primary border border-primary/20 rounded px-1.5 py-0.5 truncate max-w-[140px]">{c.title}</span>
+                      ))}
+                      {b.courses.length > 3 && (
+                        <span className="text-[10px] text-muted-foreground self-center">+{b.courses.length - 3} more</span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Price + status row */}
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs border-y border-border py-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Price</span>
+                      <span className="font-bold text-primary">₹{b.price}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Compare At</span>
+                      <span className="text-muted-foreground line-through">{b.compareAtPrice ? `₹${b.compareAtPrice}` : "—"}</span>
+                    </div>
+                  </div>
+
+                  {/* Actions row */}
+                  <div className="flex items-center gap-2">
+                    <Badge className={`text-[11px] ${b.isActive ? "text-green-400 border-green-400/30 bg-green-400/10" : "text-yellow-400 border-yellow-400/30 bg-yellow-400/10"}`}>
+                      {b.isActive ? "active" : "inactive"}
+                    </Badge>
+                    <div className="ml-auto flex items-center gap-1">
+                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => openEditBundle(b)}><Pencil className="w-4 h-4" /></Button>
+                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-400 hover:text-red-300" onClick={() => handleDeleteBundle(b.id)}><Trash2 className="w-4 h-4" /></Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )
       )}
 
@@ -322,7 +458,7 @@ export default function AdminCoursesPage() {
               <label className="text-sm font-medium mb-1.5 block">Description</label>
               <textarea placeholder="What makes this bundle special?" value={bundleForm.description} onChange={e => setBundleForm(f => ({ ...f, description: e.target.value }))} className="w-full p-3 rounded-md bg-background border border-border text-sm resize-none h-20 focus:outline-none focus:ring-2 focus:ring-ring" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="text-sm font-medium mb-1.5 block">Package Price (₹) *</label>
                 <Input placeholder="e.g. 799" type="number" min="0" value={bundleForm.price} onChange={e => setBundleForm(f => ({ ...f, price: e.target.value }))} className="bg-background" />
