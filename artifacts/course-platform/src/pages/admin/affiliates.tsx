@@ -510,10 +510,10 @@ function ApplicationsTab() {
     <div className="space-y-4">
       <div className="grid grid-cols-4 gap-3">
         {[
-          { key: "all", label: "Total", color: "text-foreground" },
           { key: "pending", label: "Pending", color: "text-amber-400" },
           { key: "approved", label: "Approved", color: "text-green-400" },
           { key: "rejected", label: "Rejected", color: "text-red-400" },
+          { key: "all", label: "Total", color: "text-foreground" },
         ].map(s => (
           <div key={s.key} className="bg-card border border-border rounded-xl p-4 text-center cursor-pointer hover:border-primary/40 transition-colors"
             onClick={() => setFilter(s.key as typeof filter)}>
