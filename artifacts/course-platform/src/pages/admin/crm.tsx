@@ -824,8 +824,8 @@ function BackupSmtpAccounts({ onPrimaryChanged }: { onPrimaryChanged?: () => voi
             </div>
             <Switch checked={form.isActive} onCheckedChange={v => set("isActive", v)} />
           </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 p-3 bg-background rounded-lg border border-border">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <div className="flex items-center justify-between sm:justify-start gap-1.5 p-3 bg-background rounded-lg border border-border">
               <span className="text-sm font-medium">SSL/TLS</span>
               <Switch checked={form.secure} onCheckedChange={v => set("secure", v)} />
             </div>
@@ -860,30 +860,32 @@ function BackupSmtpAccounts({ onPrimaryChanged }: { onPrimaryChanged?: () => voi
           </div>
           {accounts.map(acc => (
             <div key={acc.id} className={`bg-card border rounded-xl p-4 transition-colors ${acc.isActive ? "border-border" : "border-dashed border-border opacity-60"}`}>
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 mt-0.5">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${acc.isActive ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                    {acc.priority}
+              <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+                <div className="flex items-start gap-3 flex-1 min-w-0">
+                  <div className="flex-shrink-0 mt-0.5">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${acc.isActive ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                      {acc.priority}
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-semibold text-sm">{acc.name}</p>
+                      {acc.isActive ? (
+                        <Badge variant="outline" className="text-[10px] text-green-400 border-green-400/30 bg-green-400/5">Active</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] text-muted-foreground">Disabled</Badge>
+                      )}
+                      {acc.lastError && (
+                        <Badge variant="outline" className="text-[10px] text-red-400 border-red-400/30 bg-red-400/5 max-w-[180px] truncate" title={acc.lastError}>Last error</Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5 break-all">{acc.host}:{acc.port} · {acc.username}</p>
+                    <p className="text-xs text-muted-foreground break-all">From: {acc.fromName} &lt;{acc.fromEmail}&gt;</p>
+                    {acc.lastError && <p className="text-[11px] text-red-400 mt-1 line-clamp-1" title={acc.lastError}>⚠ {acc.lastError}</p>}
+                    {acc.lastTestedAt && !acc.lastError && <p className="text-[11px] text-green-400 mt-0.5">✓ Last tested: {new Date(acc.lastTestedAt).toLocaleString()}</p>}
                   </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-semibold text-sm">{acc.name}</p>
-                    {acc.isActive ? (
-                      <Badge variant="outline" className="text-[10px] text-green-400 border-green-400/30 bg-green-400/5">Active</Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-[10px] text-muted-foreground">Disabled</Badge>
-                    )}
-                    {acc.lastError && (
-                      <Badge variant="outline" className="text-[10px] text-red-400 border-red-400/30 bg-red-400/5 max-w-[180px] truncate" title={acc.lastError}>Last error</Badge>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">{acc.host}:{acc.port} · {acc.username}</p>
-                  <p className="text-xs text-muted-foreground">From: {acc.fromName} &lt;{acc.fromEmail}&gt;</p>
-                  {acc.lastError && <p className="text-[11px] text-red-400 mt-1 line-clamp-1" title={acc.lastError}>⚠ {acc.lastError}</p>}
-                  {acc.lastTestedAt && !acc.lastError && <p className="text-[11px] text-green-400 mt-0.5">✓ Last tested: {new Date(acc.lastTestedAt).toLocaleString()}</p>}
-                </div>
-                <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap justify-end">
+                <div className="flex items-center gap-1.5 sm:flex-shrink-0 flex-wrap justify-end">
                   <Button size="sm" variant="outline" className="h-8 px-2.5 text-xs gap-1 cursor-pointer border-primary/30 text-primary hover:bg-primary/10" disabled={promotingId === acc.id} onClick={() => promoteAccount(acc)} title="Make this the primary SMTP">
                     {promotingId === acc.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <ArrowRight className="w-3 h-3" />}Set Primary
                   </Button>
