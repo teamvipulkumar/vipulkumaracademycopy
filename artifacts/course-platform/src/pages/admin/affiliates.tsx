@@ -12,7 +12,8 @@ import {
   Search, Eye, MessageSquare, ShieldCheck,
   Ban, RotateCcw, Percent, Loader2, Plus, Trash2, Download,
   Settings, FileText, CreditCard, BadgeIndianRupee, BarChart3,
-  Shield, Image, Edit2, Save, X, Calendar, ChevronDown, ChevronUp
+  Shield, Image, Edit2, Save, X, Calendar, ChevronDown, ChevronUp,
+  TrendingUp
 } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "";
@@ -2399,7 +2400,7 @@ function CommissionGroupsTab() {
 const TABS = [
   { id: "overview",      label: "Overview",      icon: <BarChart3 className="w-3.5 h-3.5" /> },
   { id: "applications",  label: "Applications",  icon: <FileText className="w-3.5 h-3.5" /> },
-  { id: "sales",         label: "Sales",          icon: <BadgeIndianRupee className="w-3.5 h-3.5" /> },
+  { id: "sales",         label: "Sales",         icon: <TrendingUp className="w-3.5 h-3.5" /> },
   { id: "payouts",       label: "Payouts",        icon: <CreditCard className="w-3.5 h-3.5" /> },
   { id: "kyc",          label: "KYC",            icon: <Shield className="w-3.5 h-3.5" /> },
   { id: "creatives",     label: "Creatives",      icon: <Image className="w-3.5 h-3.5" /> },
