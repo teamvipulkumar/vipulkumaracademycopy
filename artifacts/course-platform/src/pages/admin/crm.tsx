@@ -2651,7 +2651,7 @@ function EmailLogsTab() {
       </div>
 
       {/* ── Auto-Delete Logs Setting ── */}
-      <div className="bg-card border border-border rounded-2xl px-5 py-4 flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-card border border-border rounded-2xl px-4 sm:px-5 py-4 flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-3 min-w-0">
           <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 border ${retentionEditing ? "bg-red-500/10 border-red-500/20" : "bg-emerald-500/10 border-emerald-500/20"}`}>
             <Trash2 className={`w-4 h-4 ${retentionEditing ? "text-red-400" : "text-emerald-400"}`} />
@@ -2665,7 +2665,7 @@ function EmailLogsTab() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 sm:flex-shrink-0 flex-wrap">
           {retentionEditing ? (
             <>
               <select
@@ -2707,12 +2707,12 @@ function EmailLogsTab() {
       <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
         <div className="flex flex-wrap items-center gap-3">
           {/* Status pills */}
-          <div className="flex items-center gap-1 bg-background border border-border rounded-xl p-1">
+          <div className="flex items-center gap-1 bg-background border border-border rounded-xl p-1 overflow-x-auto scrollbar-hide max-w-full">
             {(["all", "sent", "failed"] as const).map(s => (
               <button
                 key={s}
                 onClick={() => handleStatusChange(s)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer capitalize ${
+                className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer capitalize whitespace-nowrap ${
                   statusFilter === s
                     ? s === "failed"
                       ? "bg-red-500/15 text-red-400 border border-red-500/20"
@@ -2728,13 +2728,13 @@ function EmailLogsTab() {
           </div>
 
           {/* Date range */}
-          <div className="flex items-center gap-2 flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-1 min-w-full sm:min-w-0">
             <Calendar className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
             <Input
               type="date"
               value={startDate}
               onChange={e => setStartDate(e.target.value)}
-              className="h-8 text-xs w-36 bg-background"
+              className="h-8 text-xs flex-1 sm:flex-none sm:w-36 min-w-0 bg-background"
               placeholder="Start date"
             />
             <span className="text-xs text-muted-foreground flex-shrink-0">to</span>
@@ -2742,27 +2742,27 @@ function EmailLogsTab() {
               type="date"
               value={endDate}
               onChange={e => setEndDate(e.target.value)}
-              className="h-8 text-xs w-36 bg-background"
+              className="h-8 text-xs flex-1 sm:flex-none sm:w-36 min-w-0 bg-background"
               placeholder="End date"
             />
-            <Button size="sm" variant="outline" className="h-8 px-3 text-xs cursor-pointer" onClick={applyDateFilter}>
-              <Filter className="w-3 h-3 mr-1" />Filter
+            <Button size="sm" variant="outline" className="h-8 px-2 sm:px-3 text-xs cursor-pointer flex-shrink-0" onClick={applyDateFilter}>
+              <Filter className="w-3 h-3 sm:mr-1" /><span className="hidden sm:inline">Filter</span>
             </Button>
           </div>
 
           {/* Search */}
-          <div className="flex items-center gap-1.5">
-            <div className="relative">
+          <div className="flex items-center gap-1.5 w-full sm:w-auto">
+            <div className="relative flex-1 sm:flex-none">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
               <Input
                 placeholder="Subject or recipient…"
                 value={searchInput}
                 onChange={e => setSearchInput(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && handleSearch()}
-                className="pl-8 h-8 text-xs w-52 bg-background"
+                className="pl-8 h-8 text-xs w-full sm:w-52 bg-background"
               />
             </div>
-            <Button size="sm" variant="outline" className="h-8 w-8 p-0 cursor-pointer" onClick={handleSearch}>
+            <Button size="sm" variant="outline" className="h-8 w-8 p-0 cursor-pointer flex-shrink-0" onClick={handleSearch}>
               <Search className="w-3.5 h-3.5" />
             </Button>
           </div>
@@ -2771,9 +2771,9 @@ function EmailLogsTab() {
 
       {/* ── Bulk action bar ── */}
       {selectedIds.size > 0 && (
-        <div className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-primary/10 border border-primary/20">
+        <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 rounded-xl bg-primary/10 border border-primary/20">
           <span className="text-xs font-medium text-primary">{selectedIds.size} selected</span>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={bulkResend}
               disabled={bulkResending || bulkDeleting}
@@ -2989,7 +2989,7 @@ function EmailLogsTab() {
         <DialogContent className="max-w-4xl w-full flex flex-col p-0 gap-0 overflow-hidden max-h-[92vh] [&>button:last-of-type]:hidden" aria-describedby={undefined}>
 
           {/* Dialog header */}
-          <DialogHeader className="flex-shrink-0 px-6 py-4 border-b border-border bg-card">
+          <DialogHeader className="flex-shrink-0 px-4 sm:px-6 py-3 sm:py-4 border-b border-border bg-card">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 border ${
@@ -3040,7 +3040,7 @@ function EmailLogsTab() {
               <div className="divide-y divide-border">
 
                 {/* ── Status + Date row ── */}
-                <div className="px-6 py-4 flex items-center justify-between gap-4 flex-wrap">
+                <div className="px-4 sm:px-6 py-4 flex items-center justify-between gap-4 flex-wrap">
                   <div className="flex items-center gap-3">
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status</span>
                     {detailLog.status === "failed" ? (
@@ -3060,7 +3060,7 @@ function EmailLogsTab() {
                 </div>
 
                 {/* ── From / To ── */}
-                <div className="px-6 py-4 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                <div className="px-4 sm:px-6 py-4 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   <div>
                     <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">From</p>
                     <p className="text-sm text-foreground font-medium break-all">
@@ -3074,7 +3074,7 @@ function EmailLogsTab() {
                 </div>
 
                 {/* ── Subject / Type / Event ── */}
-                <div className="px-6 py-4 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                <div className="px-4 sm:px-6 py-4 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   <div>
                     <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Subject</p>
                     <p className="text-sm text-foreground font-medium">{detailLog.subject || "(no subject)"}</p>
@@ -3089,7 +3089,7 @@ function EmailLogsTab() {
 
                 {/* Automation event / campaign name if applicable */}
                 {(detailLog.automationEvent || detailData?.campaignName) && (
-                  <div className="px-6 py-4">
+                  <div className="px-4 sm:px-6 py-4">
                     <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
                       {detailLog.automationEvent ? "Automation Event" : "Campaign"}
                     </p>
@@ -3105,7 +3105,7 @@ function EmailLogsTab() {
                 <div>
                   <button
                     onClick={() => setBodyExpanded(e => !e)}
-                    className="w-full px-6 py-3.5 flex items-center justify-between text-left hover:bg-white/[0.02] transition-colors cursor-pointer"
+                    className="w-full px-4 sm:px-6 py-3.5 flex items-center justify-between text-left hover:bg-white/[0.02] transition-colors cursor-pointer"
                   >
                     <div className="flex items-center gap-2">
                       <Mail className="w-4 h-4 text-muted-foreground" />
@@ -3157,7 +3157,7 @@ function EmailLogsTab() {
                 </div>
 
                 {/* ── Server Response / Fail Reason ── */}
-                <div className="px-6 py-4">
+                <div className="px-4 sm:px-6 py-4">
                   <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Server Response</p>
                   <div className={`rounded-xl p-4 font-mono text-xs leading-relaxed ${
                     detailLog.status === "failed"
