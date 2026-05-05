@@ -263,7 +263,12 @@ function InvoicePrintModal({ invoice, settings, onClose, autoPrint }: {
                 <div style={{ fontSize: 18, fontWeight: 700 }}>{settings?.companyName || "Your Company"}</div>
                 {settings?.gstin && <div style={{ fontSize: 11, color: "#93c5fd", marginTop: 2 }}>GSTIN: {settings.gstin}</div>}
                 <div style={{ fontSize: 11, color: "#93c5fd", marginTop: 1 }}>
-                  {[settings?.addressLine1, settings?.city, settings?.state].filter(Boolean).join(", ")}
+                  {[
+                    settings?.addressLine1,
+                    settings?.addressLine2,
+                    [settings?.city, settings?.pincode].filter(Boolean).join(" - "),
+                    settings?.state,
+                  ].filter(Boolean).join(", ")}
                 </div>
                 {(settings?.email || settings?.phone) && (
                   <div style={{ fontSize: 11, color: "#93c5fd", marginTop: 1 }}>
@@ -713,7 +718,12 @@ export default function AdminGstInvoicingPage() {
     const monthLabel = invMonth ? months.find(m => m.value === invMonth)?.label ?? "" : "All Months";
     const filterLabel = `${monthLabel} ${invYear}`.trim();
     const companyInitials = (settings.companyName || "VK").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
-    const companyAddrLine = [settings.addressLine1, settings.city, settings.state].filter(Boolean).join(", ");
+    const companyAddrLine = [
+      settings.addressLine1,
+      settings.addressLine2,
+      [settings.city, settings.pincode].filter(Boolean).join(" - "),
+      settings.state,
+    ].filter(Boolean).join(", ");
 
     const pages = invoices.map((inv, idx) => {
       const base = parseFloat(inv.baseAmount);
