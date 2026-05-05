@@ -177,7 +177,7 @@ export default function AdminCreatorsPage() {
       </div>
 
       {/* ── Tab bar (affiliate-style icon pill nav inside a card) ── */}
-      <div className="bg-card border border-border rounded-xl p-1.5 flex items-center gap-1 overflow-x-auto">
+      <div className="bg-card border border-border rounded-xl p-1.5 flex items-center gap-1 overflow-x-auto scrollbar-hide">
         <TabBtn active={tab === "all"} onClick={() => setTab("all")} icon={Users}>
           All Creators {stats.total > 0 && <span className="opacity-80">({stats.total})</span>}
         </TabBtn>
@@ -345,7 +345,7 @@ function AllCreatorsTab({ creators }: { creators: Creator[] | undefined }) {
             {creators.length === 0 ? "No creators yet. Click 'Add Creator' to mark an existing user." : "No creators match your filter."}
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto scrollbar-hide">
             <table className="w-full text-sm">
               <thead className="bg-muted/30">
                 <tr className="border-b border-border text-left text-xs text-muted-foreground uppercase tracking-wide">
@@ -550,7 +550,7 @@ function KycReviewTab({ creators }: { creators: Creator[] }) {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto scrollbar-hide">
             <table className="w-full text-sm">
               <thead className="bg-muted/30">
                 <tr className="border-b border-border text-left text-xs text-muted-foreground uppercase tracking-wide">
@@ -863,7 +863,7 @@ function PayoutsTab() {
         ) : !payouts || payouts.length === 0 ? (
           <div className="py-10 text-center text-sm text-muted-foreground">No payouts in this tab.</div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto scrollbar-hide">
             <table className="w-full text-sm">
               <thead className="bg-muted/30">
                 <tr className="border-b border-border text-left text-xs text-muted-foreground uppercase tracking-wide">
