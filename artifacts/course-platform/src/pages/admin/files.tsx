@@ -200,7 +200,7 @@ export default function AdminFilesPage() {
                   className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 cursor-pointer flex-shrink-0 whitespace-nowrap ${typeFilter === tab.key ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground"}`}
                 >
                   {tab.label}
-                  <span className={`text-xs ${typeFilter === tab.key ? "text-white/70" : "text-muted-foreground"}`}>
+                  <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-full ${typeFilter === tab.key ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"}`}>
                     {counts[tab.key]}
                   </span>
                 </button>
