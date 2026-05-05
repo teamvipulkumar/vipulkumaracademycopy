@@ -14,6 +14,7 @@ export interface CreateCourseBody {
   description: string;
   thumbnailUrl?: string | null;
   price: number;
+  compareAtPrice?: number | null;
   category: string;
   level: CreateCourseBodyLevel;
   status?: CreateCourseBodyStatus;

@@ -25,6 +25,7 @@ export default function CourseDetailPage() {
   const validateCoupon = useValidateCoupon();
 
   const price = parseFloat(String(course?.price ?? 0));
+  const compareAtPrice = course?.compareAtPrice ? parseFloat(String(course.compareAtPrice)) : null;
   const discountedPrice = appliedCoupon
     ? appliedCoupon.type === "percentage"
       ? price - (price * appliedCoupon.discount / 100)
@@ -86,7 +87,12 @@ export default function CourseDetailPage() {
             </div>
           </div>
         ) : (
-          <div className="text-3xl font-bold mb-4">₹{price.toFixed(2)}</div>
+          <div className="mb-4 flex items-baseline gap-3">
+            <span className="text-3xl font-bold">₹{price.toFixed(2)}</span>
+            {compareAtPrice && compareAtPrice > price && (
+              <span className="text-base text-muted-foreground line-through">₹{compareAtPrice.toFixed(2)}</span>
+            )}
+          </div>
         )}
 
         {course.isEnrolled ? (

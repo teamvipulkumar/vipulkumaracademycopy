@@ -1287,6 +1287,9 @@ components:
           nullable: true
         price:
           type: number
+        compareAtPrice:
+          type: number
+          nullable: true
         category:
           type: string
         level:
@@ -1351,6 +1354,9 @@ components:
           nullable: true
         price:
           type: number
+        compareAtPrice:
+          type: number
+          nullable: true
         category:
           type: string
         level:
@@ -1377,6 +1383,9 @@ components:
           nullable: true
         price:
           type: number
+        compareAtPrice:
+          type: number
+          nullable: true
         category:
           type: string
         level:

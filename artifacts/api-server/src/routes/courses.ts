@@ -31,6 +31,7 @@ router.get("/", async (req, res): Promise<void> => {
     return {
       ...c,
       price: parseFloat(c.price),
+      compareAtPrice: c.compareAtPrice ? parseFloat(c.compareAtPrice) : null,
       moduleCount: moduleResult[0]?.count ?? 0,
       lessonCount: lessonResult[0]?.count ?? 0,
       enrollmentCount: enrollResult[0]?.count ?? 0,
@@ -83,7 +84,7 @@ router.get("/:courseId", async (req, res): Promise<void> => {
   }));
 
   const [enrollResult] = await db.select({ count: count() }).from(enrollmentsTable).where(eq(enrollmentsTable.courseId, courseId));
-  res.json({ ...course, price: parseFloat(course.price), modules: modulesWithLessons, isEnrolled, moduleCount: modules.length, lessonCount: modulesWithLessons.reduce((a, m) => a + m.lessons.length, 0), enrollmentCount: enrollResult?.count ?? 0 });
+  res.json({ ...course, price: parseFloat(course.price), compareAtPrice: course.compareAtPrice ? parseFloat(course.compareAtPrice) : null, modules: modulesWithLessons, isEnrolled, moduleCount: modules.length, lessonCount: modulesWithLessons.reduce((a, m) => a + m.lessons.length, 0), enrollmentCount: enrollResult?.count ?? 0 });
 });
 
 router.put("/:courseId", requireAdmin, async (req, res): Promise<void> => {

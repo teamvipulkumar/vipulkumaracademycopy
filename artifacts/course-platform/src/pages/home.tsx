@@ -184,7 +184,12 @@ export default function Home() {
                         <h3 className="font-bold text-base leading-snug group-hover:text-primary transition-colors line-clamp-2 mb-2">{course.title}</h3>
                         <p className="text-xs text-muted-foreground line-clamp-2 flex-1 leading-relaxed">{course.description}</p>
                         <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/60">
-                          <span className="text-lg font-extrabold">₹{course.price}</span>
+                          <div>
+                            <span className="text-lg font-extrabold">₹{course.price}</span>
+                            {course.compareAtPrice && (
+                              <span className="text-xs text-muted-foreground line-through ml-2">₹{course.compareAtPrice}</span>
+                            )}
+                          </div>
                           <Button size="sm" className="h-8 px-4 text-xs font-semibold">Enroll Now</Button>
                         </div>
                       </div>

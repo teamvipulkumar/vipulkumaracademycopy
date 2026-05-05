@@ -98,7 +98,12 @@ export default function CoursesPage() {
                   </CardContent>
                   <CardFooter className="pt-0 px-4 pb-4">
                     <div className="flex items-center justify-between w-full">
-                      <span className="text-xl font-bold text-foreground">₹{course.price}</span>
+                      <div>
+                        <span className="text-xl font-bold text-foreground">₹{course.price}</span>
+                        {course.compareAtPrice && (
+                          <span className="text-xs text-muted-foreground line-through ml-2">₹{course.compareAtPrice}</span>
+                        )}
+                      </div>
                       <Button size="sm" className="text-xs h-8 px-4">View details</Button>
                     </div>
                   </CardFooter>

@@ -105,6 +105,7 @@ export interface Course {
   description: string;
   thumbnailUrl?: string | null;
   price: number;
+  compareAtPrice?: number | null;
   category: string;
   level: CourseLevel;
   status: CourseStatus;
@@ -192,6 +193,7 @@ export interface CreateCourseBody {
   description: string;
   thumbnailUrl?: string | null;
   price: number;
+  compareAtPrice?: number | null;
   category: string;
   level: CreateCourseBodyLevel;
   status?: CreateCourseBodyStatus;
@@ -228,6 +230,7 @@ export interface UpdateCourseBody {
   description?: string;
   thumbnailUrl?: string | null;
   price?: number;
+  compareAtPrice?: number | null;
   category?: string;
   level?: UpdateCourseBodyLevel;
   status?: UpdateCourseBodyStatus;
