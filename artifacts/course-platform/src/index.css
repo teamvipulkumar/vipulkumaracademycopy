@@ -596,3 +596,16 @@ html, body {
 .scrollbar-thin::-webkit-scrollbar-corner {
   background: transparent;
 }
+
+/* ──────────────────────────────────────────────────────────────────
+   Hide scrollbar entirely while still allowing scroll. Used for
+   mobile-only horizontally-scrollable tab strips so the chrome
+   stays clean while users can still swipe/drag through overflow.
+   ────────────────────────────────────────────────────────────── */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

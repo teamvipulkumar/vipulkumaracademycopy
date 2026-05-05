@@ -192,12 +192,12 @@ export default function AdminFilesPage() {
         <>
           {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-3 mb-6">
-            <div className="flex gap-1 p-1 bg-card border border-border rounded-lg">
+            <div className="flex gap-1 p-1 bg-card border border-border rounded-lg overflow-x-auto scrollbar-hide w-full sm:w-auto">
               {TYPE_TABS.map(tab => (
                 <button
                   key={tab.key}
                   onClick={() => setTypeFilter(tab.key as typeof typeFilter)}
-                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 cursor-pointer ${typeFilter === tab.key ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground"}`}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 cursor-pointer flex-shrink-0 whitespace-nowrap ${typeFilter === tab.key ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground"}`}
                 >
                   {tab.label}
                   <span className={`text-xs ${typeFilter === tab.key ? "text-white/70" : "text-muted-foreground"}`}>
