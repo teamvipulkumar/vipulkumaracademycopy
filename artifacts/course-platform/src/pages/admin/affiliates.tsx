@@ -529,7 +529,7 @@ function ApplicationsTab() {
           <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name or email…" className="pl-8 bg-card border-border h-8 text-sm" />
         </div>
         <div className="flex items-center gap-1 bg-card border border-border rounded-lg p-0.5">
-          {(["all", "pending", "approved", "rejected"] as const).map(f => (
+          {(["pending", "approved", "rejected", "all"] as const).map(f => (
             <button key={f} onClick={() => setFilter(f)}
               className={`px-3 py-1 rounded-md text-xs font-medium capitalize transition-colors cursor-pointer ${filter === f ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground"}`}>
               {f}
@@ -1173,7 +1173,7 @@ function KycTab() {
 
       <div className="flex items-center gap-3 flex-wrap">
         <div className="flex items-center gap-1 bg-card border border-border rounded-lg p-0.5">
-          {(["all", "pending", "approved", "rejected"] as const).map(f => (
+          {(["pending", "approved", "rejected", "all"] as const).map(f => (
             <button key={f} onClick={() => setFilter(f)}
               className={`px-3 py-1 rounded-md text-xs font-medium capitalize transition-colors cursor-pointer ${filter === f ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground"}`}>
               {f} {f !== "all" && `(${records.filter(r => r.status === f).length})`}
