@@ -137,7 +137,7 @@ function NavContent({ location, onNav }: { location: string; onNav?: () => void 
 
   return (
     <>
-      <nav className="flex-1 p-3 overflow-y-auto space-y-4">
+      <nav className="flex-1 p-3 overflow-y-auto scrollbar-thin space-y-4">
         {navGroups.map(group => {
           const visibleItems = group.items.filter(item => canSee(item.suffix));
           if (visibleItems.length === 0) return null;
