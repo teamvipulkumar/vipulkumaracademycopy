@@ -2411,7 +2411,7 @@ export default function AdminAffiliatesPage() {
   const [tab, setTab] = useState("overview");
 
   return (
-    <div className="p-4 md:p-6 max-w-6xl mx-auto">
+    <div className="p-4 md:p-6 max-w-6xl">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold flex items-center gap-2">
