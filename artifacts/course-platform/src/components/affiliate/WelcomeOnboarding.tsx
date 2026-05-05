@@ -185,39 +185,11 @@ export default function WelcomeOnboarding({
     // tab + flips a tourActive flag). Then defer setPhase("tour") to the next
     // frame so the parent has a chance to commit its tab navigation to the DOM
     // before TourOverlay queries for tour targets like [data-tour="earnings-stats"].
-    // eslint-disable-next-line no-console
-    console.log("[WelcomeOnboarding] startTour clicked — invoking onTourStart + scheduling phase=tour");
-    try {
-      onTourStart?.();
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error("[WelcomeOnboarding] onTourStart threw:", e);
-    }
-    // Use a microtask + double rAF so any wouter navigation / tab switch in the
-    // parent commits to the DOM before TourOverlay mounts and starts querying.
+    onTourStart?.();
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        // eslint-disable-next-line no-console
-        console.log("[WelcomeOnboarding] setPhase('tour') firing now");
-        setPhase("tour");
-      });
+      requestAnimationFrame(() => setPhase("tour"));
     });
-    // Safety net: if the rAF chain is ever throttled (e.g. tab in background)
-    // also fire on a 50ms timeout. setPhase is idempotent — calling twice with
-    // the same value is a no-op for React.
-    setTimeout(() => {
-      // eslint-disable-next-line no-console
-      console.log("[WelcomeOnboarding] setPhase('tour') safety-net timeout firing");
-      setPhase("tour");
-    }, 50);
   }, [onTourStart]);
-
-  // Trace mount + phase changes so we can confirm the tour overlay is actually
-  // being rendered when the user reports it isn't appearing.
-  useEffect(() => {
-    // eslint-disable-next-line no-console
-    console.log("[WelcomeOnboarding] phase changed →", phase);
-  }, [phase]);
 
   if (phase === "done") return null;
 
@@ -392,16 +364,6 @@ function TourOverlay({
   const step = TOUR_STEPS[stepIndex];
   const isLast = stepIndex === TOUR_STEPS.length - 1;
 
-  // Trace TourOverlay mount so we know if it's actually rendering.
-  useEffect(() => {
-    // eslint-disable-next-line no-console
-    console.log("[TourOverlay] mounted — first step:", TOUR_STEPS[0]?.selector);
-    return () => {
-      // eslint-disable-next-line no-console
-      console.log("[TourOverlay] unmounted");
-    };
-  }, []);
-
   // Locate target element + compute position
   useEffect(() => {
     if (!step) return;
@@ -411,14 +373,10 @@ function TourOverlay({
       if (cancelled) return;
       const el = document.querySelector(step.selector) as HTMLElement | null;
       if (!el) {
-        // eslint-disable-next-line no-console
-        console.log("[TourOverlay] step", stepIndex, "selector not found:", step.selector);
         setRect(null);
         setTooltipPos(null);
         return;
       }
-      // eslint-disable-next-line no-console
-      console.log("[TourOverlay] step", stepIndex, "selector FOUND:", step.selector);
       // Scroll into view
       el.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
 
