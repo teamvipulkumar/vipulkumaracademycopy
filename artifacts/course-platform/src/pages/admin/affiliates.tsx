@@ -250,85 +250,179 @@ function OverviewTab() {
           <p className="font-semibold">No approved affiliates yet</p>
         </div>
       ) : (
-        <div className="border border-border rounded-xl overflow-x-auto">
-          <table className="w-full min-w-[950px]">
-            <thead className="bg-card border-b border-border">
-              <tr>{["Affiliate", "Code", "Clicks", "Conv.", "Earned", "Pending", "KYC", "Group", "Status", "Actions"].map(h =>
-                <th key={h} className="text-left text-xs font-medium text-muted-foreground px-3 py-3">{h}</th>
-              )}</tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {filtered.map(a => (
-                <tr key={a.userId} className={`hover:bg-card/50 transition-colors ${a.isBlocked ? "opacity-60" : ""}`}>
-                  <td className="px-3 py-3">
-                    <p className="font-medium text-sm">{a.name}</p>
-                    <p className="text-xs text-muted-foreground">{a.email}</p>
-                  </td>
-                  <td className="px-3 py-3 font-mono text-xs text-primary">{a.referralCode ?? "—"}</td>
-                  <td className="px-3 py-3 text-sm">{a.totalClicks}</td>
-                  <td className="px-3 py-3 text-sm">{a.totalConversions}</td>
-                  <td className="px-3 py-3 text-sm font-semibold text-green-400">{fmt(a.totalEarnings)}</td>
-                  <td className="px-3 py-3 text-sm text-amber-400">{fmt(a.pendingPayout)}</td>
-                  <td className="px-3 py-3"><StatusBadge status={a.kycStatus} /></td>
-                  {/* Group */}
-                  <td className="px-3 py-3">
-                    {assigningGroup === a.applicationId ? (
-                      <div className="flex items-center gap-1">
-                        <select
-                          defaultValue={String(a.commissionGroupId ?? "")}
-                          onChange={e => {
-                            const val = e.target.value === "" ? null : parseInt(e.target.value);
-                            doAssignGroup(a.applicationId, val);
-                          }}
-                          className="h-6 text-xs bg-background border border-border rounded px-1 text-foreground"
-                        >
-                          <option value="">No group</option>
-                          {groups.map(g => (
-                            <option key={g.id} value={String(g.id)}>{g.name} ({g.commissionRate}%)</option>
-                          ))}
-                        </select>
-                        <button onClick={() => setAssigningGroup(null)} className="text-muted-foreground hover:text-foreground cursor-pointer"><X className="w-3 h-3" /></button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1">
-                        {a.commissionGroupId ? (
-                          <Badge className="text-[10px] bg-purple-500/10 text-purple-400 border-purple-500/20 gap-0.5">
-                            <Percent className="w-2.5 h-2.5" />{a.commissionGroupName} · {a.commissionGroupRate}%
-                          </Badge>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">None</span>
-                        )}
-                        <button onClick={() => setAssigningGroup(a.applicationId)} className="text-muted-foreground hover:text-primary cursor-pointer">
-                          <Edit2 className="w-3 h-3" />
-                        </button>
-                      </div>
+        <>
+          {/* Desktop / tablet table — unchanged from original */}
+          <div className="hidden md:block border border-border rounded-xl overflow-x-auto scrollbar-thin">
+            <table className="w-full min-w-[950px]">
+              <thead className="bg-card border-b border-border">
+                <tr>{["Affiliate", "Code", "Clicks", "Conv.", "Earned", "Pending", "KYC", "Group", "Status", "Actions"].map(h =>
+                  <th key={h} className="text-left text-xs font-medium text-muted-foreground px-3 py-3 whitespace-nowrap">{h}</th>
+                )}</tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filtered.map(a => (
+                  <tr key={a.userId} className={`hover:bg-card/50 transition-colors ${a.isBlocked ? "opacity-60" : ""}`}>
+                    <td className="px-3 py-3">
+                      <p className="font-medium text-sm">{a.name}</p>
+                      <p className="text-xs text-muted-foreground">{a.email}</p>
+                    </td>
+                    <td className="px-3 py-3 font-mono text-xs text-primary whitespace-nowrap">{a.referralCode ?? "—"}</td>
+                    <td className="px-3 py-3 text-sm whitespace-nowrap">{a.totalClicks}</td>
+                    <td className="px-3 py-3 text-sm whitespace-nowrap">{a.totalConversions}</td>
+                    <td className="px-3 py-3 text-sm font-semibold text-green-400 whitespace-nowrap">{fmt(a.totalEarnings)}</td>
+                    <td className="px-3 py-3 text-sm text-amber-400 whitespace-nowrap">{fmt(a.pendingPayout)}</td>
+                    <td className="px-3 py-3 whitespace-nowrap"><StatusBadge status={a.kycStatus} /></td>
+                    {/* Group */}
+                    <td className="px-3 py-3">
+                      {assigningGroup === a.applicationId ? (
+                        <div className="flex items-center gap-1">
+                          <select
+                            defaultValue={String(a.commissionGroupId ?? "")}
+                            onChange={e => {
+                              const val = e.target.value === "" ? null : parseInt(e.target.value);
+                              doAssignGroup(a.applicationId, val);
+                            }}
+                            className="h-6 text-xs bg-background border border-border rounded px-1 text-foreground"
+                          >
+                            <option value="">No group</option>
+                            {groups.map(g => (
+                              <option key={g.id} value={String(g.id)}>{g.name} ({g.commissionRate}%)</option>
+                            ))}
+                          </select>
+                          <button onClick={() => setAssigningGroup(null)} className="text-muted-foreground hover:text-foreground cursor-pointer"><X className="w-3 h-3" /></button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1">
+                          {a.commissionGroupId ? (
+                            <Badge className="text-[10px] bg-purple-500/10 text-purple-400 border-purple-500/20 gap-0.5">
+                              <Percent className="w-2.5 h-2.5" />{a.commissionGroupName} · {a.commissionGroupRate}%
+                            </Badge>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">None</span>
+                          )}
+                          <button onClick={() => setAssigningGroup(a.applicationId)} className="text-muted-foreground hover:text-primary cursor-pointer">
+                            <Edit2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                    {/* Status */}
+                    <td className="px-3 py-3 whitespace-nowrap">
+                      {a.isBlocked
+                        ? <Badge className="text-[10px] text-red-400 border-red-400/30 bg-red-400/10">Blocked</Badge>
+                        : <Badge className="text-[10px] text-green-400 border-green-400/30 bg-green-400/10">Active</Badge>
+                      }
+                    </td>
+                    {/* Actions */}
+                    <td className="px-3 py-3 whitespace-nowrap">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={!!actionLoading}
+                        onClick={() => doBlock(a.applicationId, !a.isBlocked)}
+                        className={`h-6 text-[10px] gap-1 ${a.isBlocked ? "border-green-500/30 text-green-400 hover:bg-green-500/10" : "border-red-500/30 text-red-400 hover:bg-red-500/10"}`}
+                      >
+                        {actionLoading === `block-${a.applicationId}` ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : a.isBlocked ? <RotateCcw className="w-2.5 h-2.5" /> : <Ban className="w-2.5 h-2.5" />}
+                        {a.isBlocked ? "Unblock" : "Block"}
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile card list — only renders below md */}
+          <div className="md:hidden space-y-3">
+            {filtered.map(a => (
+              <div key={a.userId} className={`bg-card border border-border rounded-xl p-3.5 space-y-3 ${a.isBlocked ? "opacity-60" : ""}`}>
+                {/* Top: name + status badges */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm leading-tight truncate">{a.name}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">{a.email}</p>
+                    {a.referralCode && (
+                      <p className="text-[11px] font-mono text-primary mt-0.5">{a.referralCode}</p>
                     )}
-                  </td>
-                  {/* Status */}
-                  <td className="px-3 py-3">
+                  </div>
+                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
                     {a.isBlocked
                       ? <Badge className="text-[10px] text-red-400 border-red-400/30 bg-red-400/10">Blocked</Badge>
                       : <Badge className="text-[10px] text-green-400 border-green-400/30 bg-green-400/10">Active</Badge>
                     }
-                  </td>
-                  {/* Actions */}
-                  <td className="px-3 py-3">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={!!actionLoading}
-                      onClick={() => doBlock(a.applicationId, !a.isBlocked)}
-                      className={`h-6 text-[10px] gap-1 ${a.isBlocked ? "border-green-500/30 text-green-400 hover:bg-green-500/10" : "border-red-500/30 text-red-400 hover:bg-red-500/10"}`}
+                    <StatusBadge status={a.kycStatus} />
+                  </div>
+                </div>
+
+                {/* Stats grid */}
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs border-y border-border py-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Clicks</span>
+                    <span className="font-medium">{a.totalClicks}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Conversions</span>
+                    <span className="font-medium">{a.totalConversions}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Earned</span>
+                    <span className="font-semibold text-green-400">{fmt(a.totalEarnings)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Pending</span>
+                    <span className="font-semibold text-amber-400">{fmt(a.pendingPayout)}</span>
+                  </div>
+                </div>
+
+                {/* Group + Actions row */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {assigningGroup === a.applicationId ? (
+                    <div className="flex items-center gap-1 flex-1 min-w-0">
+                      <select
+                        defaultValue={String(a.commissionGroupId ?? "")}
+                        onChange={e => {
+                          const val = e.target.value === "" ? null : parseInt(e.target.value);
+                          doAssignGroup(a.applicationId, val);
+                        }}
+                        className="h-7 text-xs bg-background border border-border rounded px-2 text-foreground flex-1 min-w-0"
+                      >
+                        <option value="">No group</option>
+                        {groups.map(g => (
+                          <option key={g.id} value={String(g.id)}>{g.name} ({g.commissionRate}%)</option>
+                        ))}
+                      </select>
+                      <button onClick={() => setAssigningGroup(null)} className="text-muted-foreground hover:text-foreground cursor-pointer p-1"><X className="w-3.5 h-3.5" /></button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setAssigningGroup(a.applicationId)}
+                      className="flex items-center gap-1.5 cursor-pointer hover:bg-background/50 rounded-md px-1.5 py-0.5 transition-colors"
                     >
-                      {actionLoading === `block-${a.applicationId}` ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : a.isBlocked ? <RotateCcw className="w-2.5 h-2.5" /> : <Ban className="w-2.5 h-2.5" />}
-                      {a.isBlocked ? "Unblock" : "Block"}
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                      {a.commissionGroupId ? (
+                        <Badge className="text-[10px] bg-purple-500/10 text-purple-400 border-purple-500/20 gap-0.5">
+                          <Percent className="w-2.5 h-2.5" />{a.commissionGroupName} · {a.commissionGroupRate}%
+                        </Badge>
+                      ) : (
+                        <span className="text-[11px] text-muted-foreground">No group</span>
+                      )}
+                      <Edit2 className="w-3 h-3 text-muted-foreground" />
+                    </button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={!!actionLoading}
+                    onClick={() => doBlock(a.applicationId, !a.isBlocked)}
+                    className={`ml-auto h-7 text-[11px] gap-1 ${a.isBlocked ? "border-green-500/30 text-green-400 hover:bg-green-500/10" : "border-red-500/30 text-red-400 hover:bg-red-500/10"}`}
+                  >
+                    {actionLoading === `block-${a.applicationId}` ? <Loader2 className="w-3 h-3 animate-spin" /> : a.isBlocked ? <RotateCcw className="w-3 h-3" /> : <Ban className="w-3 h-3" />}
+                    {a.isBlocked ? "Unblock" : "Block"}
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
@@ -385,13 +479,13 @@ function AppCard({ app, commissionGroups, onAction }: { app: Application; commis
   return (
     <>
     <div className="bg-card border border-border rounded-xl overflow-hidden">
-      <div className="p-4 flex items-center gap-3">
+      <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
         <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
           {app.fullName.charAt(0).toUpperCase()}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="font-semibold text-sm">{app.fullName}</p>
+            <p className="font-semibold text-sm truncate">{app.fullName}</p>
             <Badge className={`text-[10px] ${meta.cls}`}>{meta.label}</Badge>
             {purchases.length > 0 && (
               <Badge className="text-[10px] text-blue-400 border-blue-400/30 bg-blue-400/10 gap-1">
@@ -399,15 +493,16 @@ function AppCard({ app, commissionGroups, onAction }: { app: Application; commis
               </Badge>
             )}
           </div>
-          <p className="text-xs text-muted-foreground">{app.email} · Applied {fmtDate(app.createdAt)}</p>
+          <p className="text-xs text-muted-foreground truncate">{app.email} · Applied {fmtDate(app.createdAt)}</p>
         </div>
         <Button
           size="sm"
           variant="outline"
-          className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 cursor-pointer flex-shrink-0 h-7 px-2.5 text-xs"
+          className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 cursor-pointer flex-shrink-0 h-7 px-2 sm:px-2.5 text-xs"
           onClick={() => setShowProfile(true)}
+          title="View Profile"
         >
-          <Eye className="w-3 h-3" />View Profile
+          <Eye className="w-3 h-3" /><span className="hidden sm:inline">View Profile</span>
         </Button>
         <button onClick={() => setExpanded(e => !e)} className="text-muted-foreground hover:text-foreground flex-shrink-0 cursor-pointer">
           {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -508,33 +603,35 @@ function ApplicationsTab() {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { key: "pending", label: "Pending", color: "text-amber-400" },
           { key: "approved", label: "Approved", color: "text-green-400" },
           { key: "rejected", label: "Rejected", color: "text-red-400" },
           { key: "all", label: "Total", color: "text-foreground" },
         ].map(s => (
-          <div key={s.key} className="bg-card border border-border rounded-xl p-4 text-center cursor-pointer hover:border-primary/40 transition-colors"
+          <div key={s.key} className="bg-card border border-border rounded-xl p-3 sm:p-4 text-center cursor-pointer hover:border-primary/40 transition-colors"
             onClick={() => setFilter(s.key as typeof filter)}>
-            <p className={`text-2xl font-bold ${s.color}`}>{counts[s.key as keyof typeof counts]}</p>
+            <p className={`text-xl sm:text-2xl font-bold ${s.color}`}>{counts[s.key as keyof typeof counts]}</p>
             <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
           </div>
         ))}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 min-w-48">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2">
+        <div className="relative flex-1 sm:min-w-48">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
           <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name or email…" className="pl-8 bg-card border-border h-8 text-sm" />
         </div>
-        <div className="flex items-center gap-1 bg-card border border-border rounded-lg p-0.5">
-          {(["pending", "approved", "rejected", "all"] as const).map(f => (
-            <button key={f} onClick={() => setFilter(f)}
-              className={`px-3 py-1 rounded-md text-xs font-medium capitalize transition-colors cursor-pointer ${filter === f ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground"}`}>
-              {f}
-            </button>
-          ))}
+        <div className="overflow-x-auto scrollbar-thin -mx-1 px-1 sm:mx-0 sm:px-0 sm:overflow-visible">
+          <div className="flex items-center gap-1 bg-card border border-border rounded-lg p-0.5 w-max sm:w-auto">
+            {(["pending", "approved", "rejected", "all"] as const).map(f => (
+              <button key={f} onClick={() => setFilter(f)}
+                className={`px-3 py-1 rounded-md text-xs font-medium capitalize transition-colors cursor-pointer whitespace-nowrap ${filter === f ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground"}`}>
+                {f}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -1051,14 +1148,14 @@ function PayoutsTab() {
                 <p className="text-sm text-muted-foreground mt-1">Approved payouts will appear here.</p>
               </div>
             ) : (
-              <div className="bg-card border border-border rounded-xl overflow-hidden">
-                <table className="w-full text-xs">
+              <div className="bg-card border border-border rounded-xl overflow-x-auto scrollbar-thin">
+                <table className="w-full min-w-[600px] text-xs">
                   <thead>
                     <tr className="border-b border-border text-muted-foreground">
-                      <th className="px-4 py-2.5 text-left font-medium">Affiliate</th>
-                      <th className="px-4 py-2.5 text-left font-medium">Method</th>
-                      <th className="px-4 py-2.5 text-right font-medium">Amount</th>
-                      <th className="px-4 py-2.5 text-right font-medium">Processed</th>
+                      <th className="px-4 py-2.5 text-left font-medium whitespace-nowrap">Affiliate</th>
+                      <th className="px-4 py-2.5 text-left font-medium whitespace-nowrap">Method</th>
+                      <th className="px-4 py-2.5 text-right font-medium whitespace-nowrap">Amount</th>
+                      <th className="px-4 py-2.5 text-right font-medium whitespace-nowrap">Processed</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1068,9 +1165,9 @@ function PayoutsTab() {
                           <p className="font-medium text-foreground">{p.userName}</p>
                           <p className="text-muted-foreground">{p.userEmail}</p>
                         </td>
-                        <td className="px-4 py-3 text-muted-foreground capitalize">{p.paymentMethod.replace(/_/g, " ")}</td>
-                        <td className="px-4 py-3 text-right font-bold text-green-400">{fmt(p.amount)}</td>
-                        <td className="px-4 py-3 text-right text-muted-foreground">{p.processedAt ? fmtDate(p.processedAt) : "—"}</td>
+                        <td className="px-4 py-3 text-muted-foreground capitalize whitespace-nowrap">{p.paymentMethod.replace(/_/g, " ")}</td>
+                        <td className="px-4 py-3 text-right font-bold text-green-400 whitespace-nowrap">{fmt(p.amount)}</td>
+                        <td className="px-4 py-3 text-right text-muted-foreground whitespace-nowrap">{p.processedAt ? fmtDate(p.processedAt) : "—"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1196,93 +1293,186 @@ function KycTab() {
           <p className="font-semibold">No KYC submissions</p>
         </div>
       ) : (
-        <div className="border border-border rounded-xl overflow-hidden">
-          <table className="w-full min-w-[700px]">
-            <thead className="bg-card border-b border-border">
-              <tr>
-                {["Affiliate", "Name as Per PAN", "PAN Number", "PAN Photo", "Date", "Status", "Actions"].map(h => (
-                  <th key={h} className="text-left text-xs font-medium text-muted-foreground px-3 py-2.5">{h}</th>
+        <>
+          {/* Desktop / tablet table — unchanged from original */}
+          <div className="hidden md:block border border-border rounded-xl overflow-x-auto scrollbar-thin">
+            <table className="w-full min-w-[700px]">
+              <thead className="bg-card border-b border-border">
+                <tr>
+                  {["Affiliate", "Name as Per PAN", "PAN Number", "PAN Photo", "Date", "Status", "Actions"].map(h => (
+                    <th key={h} className="text-left text-xs font-medium text-muted-foreground px-3 py-2.5 whitespace-nowrap">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filtered.map(r => (
+                  <Fragment key={r.id}>
+                    <tr className="hover:bg-card/40 transition-colors">
+                      <td className="px-3 py-2.5">
+                        <p className="text-sm font-medium text-foreground leading-tight">{r.userName}</p>
+                        <p className="text-[11px] text-muted-foreground">{r.userEmail}</p>
+                        {r.userPhone && <p className="text-[11px] text-muted-foreground">{r.userPhone}</p>}
+                      </td>
+                      <td className="px-3 py-2.5 text-sm text-foreground max-w-[160px] truncate" title={r.idProofName ?? ""}>
+                        {r.idProofName ?? <span className="text-muted-foreground">—</span>}
+                      </td>
+                      <td className="px-3 py-2.5 text-sm font-mono text-foreground tracking-widest whitespace-nowrap">
+                        {r.panNumber ?? <span className="text-muted-foreground font-sans tracking-normal">—</span>}
+                      </td>
+                      <td className="px-3 py-2.5">
+                        {r.addressProofName ? (
+                          <div
+                            className="w-12 h-8 rounded overflow-hidden border border-border cursor-pointer group relative flex-shrink-0"
+                            onClick={() => setExpandedPhoto(r.addressProofName!)}
+                          >
+                            <img src={r.addressProofName} alt="PAN" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all" />
+                          </div>
+                        ) : <span className="text-muted-foreground text-xs">—</span>}
+                      </td>
+                      <td className="px-3 py-2.5 text-xs text-muted-foreground whitespace-nowrap">{fmtDate(r.submittedAt)}</td>
+                      <td className="px-3 py-2.5 whitespace-nowrap"><StatusBadge status={r.status} /></td>
+                      <td className="px-3 py-2.5">
+                        {r.status === "pending" ? (
+                          <div className="flex items-center gap-1.5">
+                            <Button onClick={() => doAction(r.userId, "approve")} disabled={!!actionLoading} size="sm"
+                              className="bg-green-500 hover:bg-green-600 text-white h-6 text-[10px] px-2 gap-1">
+                              {actionLoading === `approve-${r.userId}` ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <CheckCircle2 className="w-2.5 h-2.5" />}Approve
+                            </Button>
+                            <Button
+                              onClick={() => setRejectNote(n => ({ ...n, [r.userId]: n[r.userId] === undefined ? "" : undefined as any }))}
+                              size="sm" variant="outline"
+                              className="border-red-500/30 text-red-400 hover:bg-red-500/10 h-6 text-[10px] px-2 gap-1">
+                              <XCircle className="w-2.5 h-2.5" />Reject
+                            </Button>
+                          </div>
+                        ) : r.adminNote ? (
+                          <p className="text-[10px] text-muted-foreground max-w-[120px] truncate" title={r.adminNote}>{r.adminNote}</p>
+                        ) : null}
+                      </td>
+                    </tr>
+                    {/* Inline reject reason row */}
+                    {r.status === "pending" && rejectNote[r.userId] !== undefined && (
+                      <tr className="bg-red-500/5">
+                        <td colSpan={7} className="px-3 py-2">
+                          <div className="flex items-center gap-2">
+                            <Input
+                              placeholder="Enter rejection reason…"
+                              value={rejectNote[r.userId] ?? ""}
+                              onChange={e => setRejectNote(n => ({ ...n, [r.userId]: e.target.value }))}
+                              className="bg-background border-red-500/30 text-sm h-7 flex-1"
+                              autoFocus
+                            />
+                            <Button onClick={() => doAction(r.userId, "reject")} disabled={!!actionLoading} size="sm"
+                              className="bg-red-500 hover:bg-red-600 text-white h-7 text-xs px-3 gap-1 flex-shrink-0">
+                              {actionLoading === `reject-${r.userId}` ? <Loader2 className="w-3 h-3 animate-spin" /> : <XCircle className="w-3 h-3" />}Confirm Reject
+                            </Button>
+                            <button
+                              onClick={() => setRejectNote(n => { const c = { ...n }; delete c[r.userId]; return c; })}
+                              className="text-muted-foreground hover:text-foreground flex-shrink-0 cursor-pointer"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
                 ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {filtered.map(r => (
-                <Fragment key={r.id}>
-                  <tr className="hover:bg-card/40 transition-colors">
-                    <td className="px-3 py-2.5">
-                      <p className="text-sm font-medium text-foreground leading-tight">{r.userName}</p>
-                      <p className="text-[11px] text-muted-foreground">{r.userEmail}</p>
-                      {r.userPhone && <p className="text-[11px] text-muted-foreground">{r.userPhone}</p>}
-                    </td>
-                    <td className="px-3 py-2.5 text-sm text-foreground max-w-[160px] truncate" title={r.idProofName ?? ""}>
-                      {r.idProofName ?? <span className="text-muted-foreground">—</span>}
-                    </td>
-                    <td className="px-3 py-2.5 text-sm font-mono text-foreground tracking-widest whitespace-nowrap">
-                      {r.panNumber ?? <span className="text-muted-foreground font-sans tracking-normal">—</span>}
-                    </td>
-                    <td className="px-3 py-2.5">
-                      {r.addressProofName ? (
-                        <div
-                          className="w-12 h-8 rounded overflow-hidden border border-border cursor-pointer group relative flex-shrink-0"
-                          onClick={() => setExpandedPhoto(r.addressProofName!)}
-                        >
-                          <img src={r.addressProofName} alt="PAN" className="w-full h-full object-cover" />
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all" />
-                        </div>
-                      ) : <span className="text-muted-foreground text-xs">—</span>}
-                    </td>
-                    <td className="px-3 py-2.5 text-xs text-muted-foreground whitespace-nowrap">{fmtDate(r.submittedAt)}</td>
-                    <td className="px-3 py-2.5"><StatusBadge status={r.status} /></td>
-                    <td className="px-3 py-2.5">
-                      {r.status === "pending" ? (
-                        <div className="flex items-center gap-1.5">
-                          <Button onClick={() => doAction(r.userId, "approve")} disabled={!!actionLoading} size="sm"
-                            className="bg-green-500 hover:bg-green-600 text-white h-6 text-[10px] px-2 gap-1">
-                            {actionLoading === `approve-${r.userId}` ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <CheckCircle2 className="w-2.5 h-2.5" />}Approve
-                          </Button>
-                          <Button
-                            onClick={() => setRejectNote(n => ({ ...n, [r.userId]: n[r.userId] === undefined ? "" : undefined as any }))}
-                            size="sm" variant="outline"
-                            className="border-red-500/30 text-red-400 hover:bg-red-500/10 h-6 text-[10px] px-2 gap-1">
-                            <XCircle className="w-2.5 h-2.5" />Reject
-                          </Button>
-                        </div>
-                      ) : r.adminNote ? (
-                        <p className="text-[10px] text-muted-foreground max-w-[120px] truncate" title={r.adminNote}>{r.adminNote}</p>
-                      ) : null}
-                    </td>
-                  </tr>
-                  {/* Inline reject reason row */}
-                  {r.status === "pending" && rejectNote[r.userId] !== undefined && (
-                    <tr className="bg-red-500/5">
-                      <td colSpan={6} className="px-3 py-2">
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile card list — only renders below md */}
+          <div className="md:hidden space-y-3">
+            {filtered.map(r => (
+              <div key={r.id} className="bg-card border border-border rounded-xl p-3.5 space-y-3">
+                {/* Top: PAN photo + user info + status */}
+                <div className="flex gap-3">
+                  {r.addressProofName ? (
+                    <div
+                      className="w-16 h-12 rounded overflow-hidden border border-border cursor-pointer flex-shrink-0"
+                      onClick={() => setExpandedPhoto(r.addressProofName!)}
+                    >
+                      <img src={r.addressProofName} alt="PAN" className="w-full h-full object-cover" />
+                    </div>
+                  ) : (
+                    <div className="w-16 h-12 rounded border border-border flex-shrink-0 flex items-center justify-center bg-background">
+                      <span className="text-[10px] text-muted-foreground">No photo</span>
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-semibold text-sm leading-tight truncate">{r.userName}</p>
+                      <StatusBadge status={r.status} />
+                    </div>
+                    <p className="text-[11px] text-muted-foreground truncate">{r.userEmail}</p>
+                    {r.userPhone && <p className="text-[11px] text-muted-foreground">{r.userPhone}</p>}
+                  </div>
+                </div>
+
+                {/* PAN details grid */}
+                <div className="grid grid-cols-1 gap-1.5 text-xs border-y border-border py-2.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-muted-foreground flex-shrink-0">Name on PAN</span>
+                    <span className="text-right truncate" title={r.idProofName ?? ""}>{r.idProofName ?? "—"}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-muted-foreground flex-shrink-0">PAN Number</span>
+                    <span className="font-mono tracking-widest text-right">{r.panNumber ?? "—"}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-muted-foreground flex-shrink-0">Submitted</span>
+                    <span className="text-muted-foreground">{fmtDate(r.submittedAt)}</span>
+                  </div>
+                </div>
+
+                {/* Actions / admin note */}
+                {r.status === "pending" ? (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <Button onClick={() => doAction(r.userId, "approve")} disabled={!!actionLoading} size="sm"
+                        className="bg-green-500 hover:bg-green-600 text-white h-8 text-xs gap-1 flex-1">
+                        {actionLoading === `approve-${r.userId}` ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}Approve
+                      </Button>
+                      <Button
+                        onClick={() => setRejectNote(n => ({ ...n, [r.userId]: n[r.userId] === undefined ? "" : undefined as any }))}
+                        size="sm" variant="outline"
+                        className="border-red-500/30 text-red-400 hover:bg-red-500/10 h-8 text-xs gap-1 flex-1">
+                        <XCircle className="w-3 h-3" />Reject
+                      </Button>
+                    </div>
+                    {rejectNote[r.userId] !== undefined && (
+                      <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-2.5 space-y-2">
+                        <Input
+                          placeholder="Enter rejection reason…"
+                          value={rejectNote[r.userId] ?? ""}
+                          onChange={e => setRejectNote(n => ({ ...n, [r.userId]: e.target.value }))}
+                          className="bg-background border-red-500/30 text-sm h-8"
+                          autoFocus
+                        />
                         <div className="flex items-center gap-2">
-                          <Input
-                            placeholder="Enter rejection reason…"
-                            value={rejectNote[r.userId] ?? ""}
-                            onChange={e => setRejectNote(n => ({ ...n, [r.userId]: e.target.value }))}
-                            className="bg-background border-red-500/30 text-sm h-7 flex-1"
-                            autoFocus
-                          />
                           <Button onClick={() => doAction(r.userId, "reject")} disabled={!!actionLoading} size="sm"
-                            className="bg-red-500 hover:bg-red-600 text-white h-7 text-xs px-3 gap-1 flex-shrink-0">
+                            className="bg-red-500 hover:bg-red-600 text-white h-7 text-xs gap-1 flex-1">
                             {actionLoading === `reject-${r.userId}` ? <Loader2 className="w-3 h-3 animate-spin" /> : <XCircle className="w-3 h-3" />}Confirm Reject
                           </Button>
                           <button
                             onClick={() => setRejectNote(n => { const c = { ...n }; delete c[r.userId]; return c; })}
-                            className="text-muted-foreground hover:text-foreground flex-shrink-0 cursor-pointer"
+                            className="text-muted-foreground hover:text-foreground cursor-pointer p-1"
                           >
-                            <X className="w-3.5 h-3.5" />
+                            <X className="w-4 h-4" />
                           </button>
                         </div>
-                      </td>
-                    </tr>
-                  )}
-                </Fragment>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                      </div>
+                    )}
+                  </>
+                ) : r.adminNote ? (
+                  <p className="text-[11px] text-muted-foreground italic">Note: {r.adminNote}</p>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
@@ -1352,16 +1542,16 @@ function CreativesTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">Promotional materials available to affiliates for download.</p>
-        <Button onClick={openNew} size="sm" className="gap-1.5">
+        <Button onClick={openNew} size="sm" className="gap-1.5 w-full sm:w-auto">
           <Plus className="w-3.5 h-3.5" />Add Creative
         </Button>
       </div>
       {showForm && (
         <div className="bg-card border border-border rounded-xl p-4 space-y-3">
           <p className="font-semibold text-sm">{editingId ? "Edit Creative" : "New Creative"}</p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Title *</Label>
               <Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="e.g. Banner 728x90" className="bg-background border-border text-sm h-8" />
@@ -1421,35 +1611,66 @@ function CreativesTab() {
           <p className="text-sm text-muted-foreground">Add banners, images, and ad copy for your affiliates.</p>
         </div>
       ) : (
-        <div className="border border-border rounded-xl overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-card border-b border-border">
-              <tr>{["Title", "Type", "Content", "Added", ""].map(h =>
-                <th key={h} className="text-left text-xs font-medium text-muted-foreground px-3 py-3">{h}</th>
-              )}</tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {creatives.map(c => (
-                <tr key={c.id} className="hover:bg-card/50">
-                  <td className="px-3 py-3 font-medium text-sm">{c.title}</td>
-                  <td className="px-3 py-3"><Badge className="text-[10px] bg-primary/10 text-primary border-primary/20 capitalize">{c.type}</Badge></td>
-                  <td className="px-3 py-3 text-sm text-muted-foreground max-w-[200px] truncate">{c.content ?? c.url ?? "—"}</td>
-                  <td className="px-3 py-3 text-xs text-muted-foreground">{fmtDate(c.createdAt)}</td>
-                  <td className="px-3 py-3">
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => startEdit(c)} className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                      <button onClick={() => del(c.id)} className="text-muted-foreground hover:text-red-400 transition-colors cursor-pointer">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+        <>
+          {/* Desktop / tablet table */}
+          <div className="hidden md:block border border-border rounded-xl overflow-x-auto scrollbar-thin">
+            <table className="w-full min-w-[700px]">
+              <thead className="bg-card border-b border-border">
+                <tr>{["Title", "Type", "Content", "Added", ""].map(h =>
+                  <th key={h} className="text-left text-xs font-medium text-muted-foreground px-3 py-3 whitespace-nowrap">{h}</th>
+                )}</tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {creatives.map(c => (
+                  <tr key={c.id} className="hover:bg-card/50">
+                    <td className="px-3 py-3 font-medium text-sm">{c.title}</td>
+                    <td className="px-3 py-3 whitespace-nowrap"><Badge className="text-[10px] bg-primary/10 text-primary border-primary/20 capitalize">{c.type}</Badge></td>
+                    <td className="px-3 py-3 text-sm text-muted-foreground max-w-[200px] truncate">{c.content ?? c.url ?? "—"}</td>
+                    <td className="px-3 py-3 text-xs text-muted-foreground whitespace-nowrap">{fmtDate(c.createdAt)}</td>
+                    <td className="px-3 py-3 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => startEdit(c)} className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => del(c.id)} className="text-muted-foreground hover:text-red-400 transition-colors cursor-pointer">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile card list */}
+          <div className="md:hidden space-y-3">
+            {creatives.map(c => (
+              <div key={c.id} className="bg-card border border-border rounded-xl p-3.5 space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm leading-tight truncate">{c.title}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge className="text-[10px] bg-primary/10 text-primary border-primary/20 capitalize">{c.type}</Badge>
+                      <span className="text-[11px] text-muted-foreground">{fmtDate(c.createdAt)}</span>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <button onClick={() => startEdit(c)} className="text-muted-foreground hover:text-primary transition-colors cursor-pointer p-1.5 -m-1.5">
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => del(c.id)} className="text-muted-foreground hover:text-red-400 transition-colors cursor-pointer p-1.5 -m-1.5">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                {(c.content || c.url) && (
+                  <p className="text-xs text-muted-foreground line-clamp-2 break-all">{c.content ?? c.url}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
@@ -1656,18 +1877,18 @@ function SalesTab() {
           </div>
         ) : (
           <div className="rounded-xl border border-border overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+            <div className="overflow-x-auto scrollbar-thin">
+              <table className="w-full min-w-[1100px] text-sm">
                 <thead>
                   <tr className="bg-muted/40 border-b border-border">
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Order</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Date</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Buyer</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Course</th>
-                    <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Sale ₹</th>
-                    <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Commission</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Affiliate</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Gateway</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">Order</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">Date</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">Buyer</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">Course</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">Sale ₹</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">Commission</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">Affiliate</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">Gateway</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -1770,7 +1991,7 @@ function SettingsTab() {
       {/* Cookie & Payout */}
       <div className="bg-card border border-border rounded-xl p-5">
         <h3 className="font-semibold text-sm mb-4 flex items-center gap-2"><BadgeIndianRupee className="w-4 h-4 text-primary" />Tracking & Payouts</h3>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Cookie Duration (days)</Label>
             <Input
@@ -2016,80 +2237,157 @@ function CommissionGroupsTab() {
           <p className="text-xs text-muted-foreground mt-1">Create your first group above to start organising affiliates by commission tier.</p>
         </div>
       ) : (
-        <div className="border border-border rounded-xl overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-card border-b border-border">
-              <tr>
-                {["Group Name", "Rate", "Description", "Affiliates", "Actions"].map(h => (
-                  <th key={h} className="text-left text-xs font-medium text-muted-foreground px-4 py-3">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {groups.map(g => (
-                <tr key={g.id} className="hover:bg-card/50 transition-colors">
-                  {editingId === g.id ? (
-                    <>
-                      <td className="px-4 py-2">
-                        <Input value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
-                          className="h-7 text-xs bg-background border-border w-36" />
-                      </td>
-                      <td className="px-4 py-2">
-                        <div className="flex items-center gap-1">
-                          <Input type="number" min={0} max={100} value={editForm.commissionRate}
-                            onChange={e => setEditForm(f => ({ ...f, commissionRate: e.target.value }))}
-                            className="h-7 text-xs bg-background border-border w-16" />
-                          <span className="text-xs text-muted-foreground">%</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-2">
-                        <Input value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
-                          placeholder="Description" className="h-7 text-xs bg-background border-border w-48" />
-                      </td>
-                      <td className="px-4 py-2 text-xs text-muted-foreground">{g.affiliateCount}</td>
-                      <td className="px-4 py-2">
-                        <div className="flex items-center gap-2">
-                          <button onClick={() => saveEdit(g.id)} disabled={saving} className="text-green-400 hover:text-green-300 cursor-pointer">
-                            {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                          </button>
-                          <button onClick={() => setEditingId(null)} className="text-muted-foreground hover:text-foreground cursor-pointer"><X className="w-3.5 h-3.5" /></button>
-                        </div>
-                      </td>
-                    </>
-                  ) : (
-                    <>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-lg bg-purple-500/15 flex items-center justify-center flex-shrink-0">
-                            <Percent className="w-3.5 h-3.5 text-purple-400" />
-                          </div>
-                          <span className="font-medium text-sm">{g.name}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge className="text-[11px] bg-purple-500/10 text-purple-400 border-purple-500/20">{g.commissionRate}%</Badge>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">{g.description ?? <span className="italic">—</span>}</td>
-                      <td className="px-4 py-3 text-sm">{g.affiliateCount} affiliate{g.affiliateCount !== 1 ? "s" : ""}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <button onClick={() => { setEditingId(g.id); setEditForm({ name: g.name, description: g.description ?? "", commissionRate: String(g.commissionRate) }); }}
-                            className="text-muted-foreground hover:text-primary cursor-pointer">
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
-                          <button onClick={() => deleteGroup(g.id)} disabled={deleting === g.id}
-                            className="text-muted-foreground hover:text-red-400 cursor-pointer">
-                            {deleting === g.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                          </button>
-                        </div>
-                      </td>
-                    </>
-                  )}
+        <>
+          {/* Desktop / tablet table */}
+          <div className="hidden md:block border border-border rounded-xl overflow-x-auto scrollbar-thin">
+            <table className="w-full min-w-[700px] text-sm">
+              <thead className="bg-card border-b border-border">
+                <tr>
+                  {["Group Name", "Rate", "Description", "Affiliates", "Actions"].map(h => (
+                    <th key={h} className="text-left text-xs font-medium text-muted-foreground px-4 py-3 whitespace-nowrap">{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {groups.map(g => (
+                  <tr key={g.id} className="hover:bg-card/50 transition-colors">
+                    {editingId === g.id ? (
+                      <>
+                        <td className="px-4 py-2">
+                          <Input value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
+                            className="h-7 text-xs bg-background border-border w-36" />
+                        </td>
+                        <td className="px-4 py-2">
+                          <div className="flex items-center gap-1">
+                            <Input type="number" min={0} max={100} value={editForm.commissionRate}
+                              onChange={e => setEditForm(f => ({ ...f, commissionRate: e.target.value }))}
+                              className="h-7 text-xs bg-background border-border w-16" />
+                            <span className="text-xs text-muted-foreground">%</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-2">
+                          <Input value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+                            placeholder="Description" className="h-7 text-xs bg-background border-border w-48" />
+                        </td>
+                        <td className="px-4 py-2 text-xs text-muted-foreground">{g.affiliateCount}</td>
+                        <td className="px-4 py-2">
+                          <div className="flex items-center gap-2">
+                            <button onClick={() => saveEdit(g.id)} disabled={saving} className="text-green-400 hover:text-green-300 cursor-pointer">
+                              {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                            </button>
+                            <button onClick={() => setEditingId(null)} className="text-muted-foreground hover:text-foreground cursor-pointer"><X className="w-3.5 h-3.5" /></button>
+                          </div>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-lg bg-purple-500/15 flex items-center justify-center flex-shrink-0">
+                              <Percent className="w-3.5 h-3.5 text-purple-400" />
+                            </div>
+                            <span className="font-medium text-sm">{g.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge className="text-[11px] bg-purple-500/10 text-purple-400 border-purple-500/20">{g.commissionRate}%</Badge>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground">{g.description ?? <span className="italic">—</span>}</td>
+                        <td className="px-4 py-3 text-sm">{g.affiliateCount} affiliate{g.affiliateCount !== 1 ? "s" : ""}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <button onClick={() => { setEditingId(g.id); setEditForm({ name: g.name, description: g.description ?? "", commissionRate: String(g.commissionRate) }); }}
+                              className="text-muted-foreground hover:text-primary cursor-pointer">
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={() => deleteGroup(g.id)} disabled={deleting === g.id}
+                              className="text-muted-foreground hover:text-red-400 cursor-pointer">
+                              {deleting === g.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                            </button>
+                          </div>
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile card list */}
+          <div className="md:hidden space-y-3">
+            {groups.map(g => (
+              <div key={g.id} className="bg-card border border-border rounded-xl p-3.5 space-y-3">
+                {editingId === g.id ? (
+                  <div className="space-y-2.5">
+                    <div className="space-y-1">
+                      <Label className="text-[11px] text-muted-foreground">Group Name</Label>
+                      <Input value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
+                        className="h-8 text-sm bg-background border-border" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <div className="space-y-1">
+                        <Label className="text-[11px] text-muted-foreground">Rate (%)</Label>
+                        <Input type="number" min={0} max={100} value={editForm.commissionRate}
+                          onChange={e => setEditForm(f => ({ ...f, commissionRate: e.target.value }))}
+                          className="h-8 text-sm bg-background border-border" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[11px] text-muted-foreground">Affiliates</Label>
+                        <div className="h-8 flex items-center text-sm text-muted-foreground">{g.affiliateCount}</div>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[11px] text-muted-foreground">Description</Label>
+                      <Input value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+                        placeholder="Description" className="h-8 text-sm bg-background border-border" />
+                    </div>
+                    <div className="flex items-center gap-2 pt-1">
+                      <Button size="sm" onClick={() => saveEdit(g.id)} disabled={saving}
+                        className="h-8 text-xs gap-1 flex-1 bg-green-500 hover:bg-green-600 text-white">
+                        {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}Save
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setEditingId(null)}
+                        className="h-8 text-xs gap-1 flex-1">
+                        <X className="w-3 h-3" />Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-purple-500/15 flex items-center justify-center flex-shrink-0">
+                          <Percent className="w-4 h-4 text-purple-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm leading-tight truncate">{g.name}</p>
+                          <p className="text-[11px] text-muted-foreground">{g.affiliateCount} affiliate{g.affiliateCount !== 1 ? "s" : ""}</p>
+                        </div>
+                      </div>
+                      <Badge className="text-[11px] bg-purple-500/10 text-purple-400 border-purple-500/20 flex-shrink-0">{g.commissionRate}%</Badge>
+                    </div>
+                    {g.description && (
+                      <p className="text-xs text-muted-foreground line-clamp-2">{g.description}</p>
+                    )}
+                    <div className="flex items-center gap-2 pt-1 border-t border-border">
+                      <Button size="sm" variant="outline"
+                        onClick={() => { setEditingId(g.id); setEditForm({ name: g.name, description: g.description ?? "", commissionRate: String(g.commissionRate) }); }}
+                        className="h-7 text-[11px] gap-1 flex-1 mt-2">
+                        <Edit2 className="w-3 h-3" />Edit
+                      </Button>
+                      <Button size="sm" variant="outline"
+                        onClick={() => deleteGroup(g.id)} disabled={deleting === g.id}
+                        className="h-7 text-[11px] gap-1 flex-1 mt-2 border-red-500/30 text-red-400 hover:bg-red-500/10">
+                        {deleting === g.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}Delete
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
@@ -2124,19 +2422,21 @@ export default function AdminAffiliatesPage() {
         </p>
       </div>
 
-      {/* Tab bar */}
-      <div className="flex items-center gap-1 bg-card border border-border rounded-xl p-1 mb-6 flex-wrap">
-        {TABS.map(t => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
-              tab === t.id ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground hover:bg-background"
-            }`}
-          >
-            {t.icon}{t.label}
-          </button>
-        ))}
+      {/* Tab bar — horizontally scrollable on mobile, normal on desktop */}
+      <div className="bg-card border border-border rounded-xl p-1 mb-6 overflow-x-auto scrollbar-thin">
+        <div className="flex items-center gap-1 min-w-max sm:min-w-0 sm:flex-wrap">
+          {TABS.map(t => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${
+                tab === t.id ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground hover:bg-background"
+              }`}
+            >
+              {t.icon}{t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Content */}

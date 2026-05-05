@@ -35,7 +35,7 @@ The platform features a premium theme with `dark` and `light` options, defaultin
 ### Feature Specifications
 **Course Management**: Full CRUD operations for courses, modules, and lessons.
 **Enrollment & Progress**: Tracks student enrollment and lesson completion.
-**Affiliate Program**: Manages referrals, commissions, and payouts. Features an interactive dashboard tour and auto-derives share links from the request domain.
+**Affiliate Program**: Manages referrals, commissions, and payouts. Features an interactive dashboard tour and auto-derives share links from the request domain. The admin Affiliates page (8 sub-tabs: Overview, Applications, Payouts, KYC, Creatives, Sales, Settings, Commission Groups) is fully mobile responsive — desktop layout (≥md) is preserved exactly via `hidden md:block`, while smaller breakpoints render purpose-built `md:hidden` card lists for the data-heavy 10-column Affiliates table and 7-column KYC table. Smaller tables (Paid Payouts, Creatives, Commission Groups, Sales) use horizontal scroll with `overflow-x-auto scrollbar-thin` + `min-w-[…px]`. The top tab strip becomes a horizontal scroller on mobile (`overflow-x-auto`) instead of wrapping. Filter card grids switch from `grid-cols-4` to `grid-cols-2 sm:grid-cols-4`, and 2-column form grids drop to `grid-cols-1` on small screens.
 **Analytics**: Admin dashboard with revenue charts and user management.
 **Notification System**: In-app notifications for users.
 **Platform Settings**: Configuration for commission rates and payment gateways.
