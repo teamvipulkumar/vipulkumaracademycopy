@@ -302,6 +302,7 @@ export async function ensureUserForPayment(
         email,
         password: passwordHash,
         name,
+        phone: payment.billingMobile?.trim() || null,
         referralCode: nanoid(8).toUpperCase(),
         role: "student",
       }).returning();
@@ -529,6 +530,7 @@ router.post("/checkout/guest", async (req, res): Promise<void> => {
         email: email.toLowerCase().trim(),
         password: hashed,
         name: fullName.trim(),
+        phone: mobile?.trim() || null,
         referralCode,
         role: "student",
       }).returning();

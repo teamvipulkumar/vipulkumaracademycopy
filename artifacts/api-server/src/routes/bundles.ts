@@ -389,6 +389,7 @@ router.post("/checkout/guest", async (req, res): Promise<void> => {
       const hashed = await bcrypt.hash(tempPassword, 10);
       const [newUser] = await db.insert(usersTable).values({
         email: email.toLowerCase().trim(), password: hashed, name: fullName.trim(),
+        phone: mobile?.trim() || null,
         referralCode: nanoid(8).toUpperCase(), role: "student",
       }).returning();
       userId = newUser.id;
