@@ -1775,11 +1775,11 @@ function AutomationTab({ initialFunnelId = null }: { initialFunnelId?: number | 
       <Dialog open={showCreate} onOpenChange={open => { if (!open) { setShowCreate(false); setNewName(""); setNewTrigger("user_signup"); setNewTriggerCategory("all"); } }}>
         <DialogContent className="max-w-4xl w-full p-0 gap-0 overflow-hidden" aria-describedby={undefined}>
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-            <h2 className="text-lg font-bold text-foreground">Create an Automation Funnel</h2>
+          <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-border">
+            <h2 className="text-base sm:text-lg font-bold text-foreground">Create an Automation Funnel</h2>
           </div>
           {/* Internal Label */}
-          <div className="px-6 py-4 border-b border-border">
+          <div className="px-4 sm:px-6 py-4 border-b border-border">
             <Label className="text-sm font-medium mb-1.5 block">
               Internal Label <span className="text-xs font-normal text-muted-foreground">(optional)</span>
             </Label>
@@ -1841,7 +1841,7 @@ function AutomationTab({ initialFunnelId = null }: { initialFunnelId?: number | 
             </div>
           </div>
           {/* Footer */}
-          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border">
+          <div className="flex items-center justify-end gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 border-t border-border flex-wrap">
             <Button variant="outline" size="sm" onClick={() => { setShowCreate(false); setNewName(""); setNewTrigger("user_signup"); setNewTriggerCategory("all"); }}>Cancel</Button>
             <Button size="sm" onClick={createFunnel} disabled={saving}>
               {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
@@ -1895,7 +1895,7 @@ function AutomationTab({ initialFunnelId = null }: { initialFunnelId?: number | 
                     >
                       <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform ${f.isActive ? "translate-x-4" : "translate-x-0.5"}`} />
                     </button>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                       <button onClick={() => openFunnel(f)}
                         className="p-1.5 text-muted-foreground hover:text-foreground cursor-pointer rounded-md hover:bg-muted/50 transition-colors" title="Edit">
                         <Edit2 className="w-3.5 h-3.5" />
