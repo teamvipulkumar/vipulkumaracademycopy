@@ -252,7 +252,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
-      <main className="flex-1 overflow-y-auto min-w-0 md:pt-0 pt-14">
+      <main className="flex-1 overflow-y-auto min-w-0 md:pt-0 pt-14 [scrollbar-gutter:stable]">
         {children}
       </main>
     </div>
