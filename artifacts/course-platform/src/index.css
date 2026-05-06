@@ -609,3 +609,18 @@ html, body {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* ──────────────────────────────────────────────────────────────────
+   Prevent layout shift when Radix UI components (Select, Dialog,
+   Popover) lock body scroll. By default Radix adds padding-right to
+   compensate for the missing scrollbar, which causes a horizontal
+   shift on pages that don't have a vertical scrollbar.
+   ────────────────────────────────────────────────────────────── */
+html {
+  scrollbar-gutter: stable;
+}
+body[data-scroll-locked] {
+  margin-right: 0 !important;
+  padding-right: 0 !important;
+  overflow: hidden !important;
+}
