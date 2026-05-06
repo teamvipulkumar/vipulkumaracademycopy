@@ -12,38 +12,8 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import * as Accordion from "@radix-ui/react-accordion";
-import affiliateBanner from "@/assets/learn-affiliate.png";
-import ecommerceBanner from "@/assets/learn-ecommerce.png";
-import dropshippingBanner from "@/assets/learn-dropshipping.png";
 
 const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
-
-const TRACKS = [
-  {
-    image: affiliateBanner,
-    badge: "Track 01",
-    title: "Affiliate Marketing Mastery",
-    desc: "Learn to drive high-intent traffic, build trust-based recommendations, and earn commissions from partnerships that scale — without holding any inventory.",
-    points: ["Niche & offer selection", "SEO + paid funnel mix", "Email & content flywheels"],
-    icon: TrendingUp,
-  },
-  {
-    image: ecommerceBanner,
-    badge: "Track 02",
-    title: "E-commerce Store Building",
-    desc: "Build a branded online store from scratch — product research, store setup, conversion-optimized pages, and the systems behind every 6-figure brand.",
-    points: ["Shopify/WooCommerce setup", "Product page optimization", "Customer retention systems"],
-    icon: ShoppingCart,
-  },
-  {
-    image: dropshippingBanner,
-    badge: "Track 03",
-    title: "Dropshipping & Paid Ads",
-    desc: "Source winning products, work with reliable suppliers, and run profitable Meta + Google ad campaigns that scale predictably with proven creatives.",
-    points: ["Winning product research", "Supplier vetting playbook", "Ad creative + scaling framework"],
-    icon: Globe,
-  },
-];
 
 const STATS = [
   { label: "Active Students", value: "2,400+", icon: Users },
@@ -316,89 +286,6 @@ export default function Home() {
               </span>
             ))}
           </motion.div>
-        </div>
-      </section>
-
-      {/* ── LEARNING TRACKS (Visual Showcase) ──────────────────────────── */}
-      <section className="relative py-20 md:py-24 px-6 bg-gradient-to-b from-background via-card/15 to-background border-b border-border/60 overflow-hidden">
-        {/* Decorative blurred orbs */}
-        <div className="pointer-events-none absolute -top-20 -left-20 w-72 h-72 rounded-full bg-primary/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 -right-20 w-72 h-72 rounded-full bg-blue-500/10 blur-3xl" />
-
-        <div className="relative container mx-auto max-w-6xl">
-          <FadeUp className="text-center mb-14 max-w-2xl mx-auto">
-            <SectionLabel>Learning Tracks</SectionLabel>
-            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
-              Three Tracks. <span className="text-primary">Endless Possibilities.</span>
-            </h2>
-            <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
-              Pick the path that fits your goals — every track is built around real revenue
-              outcomes, not theory. Combine all three to build a complete digital business.
-            </p>
-          </FadeUp>
-
-          <StaggerGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
-            {TRACKS.map(t => (
-              <StaggerItem
-                key={t.title}
-                className="group relative flex flex-col rounded-2xl bg-card border border-border/70 overflow-hidden hover:border-primary/40 hover:-translate-y-1.5 transition-all duration-400 shadow-md hover:shadow-2xl hover:shadow-primary/10"
-              >
-                {/* Banner image */}
-                <div className="relative aspect-[4/3] overflow-hidden bg-card">
-                  <img
-                    src={t.image}
-                    alt={t.title}
-                    loading="lazy"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                  />
-                  {/* Gradient overlay for legibility */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
-                  {/* Badge */}
-                  <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-background/85 backdrop-blur-md border border-border/60 text-[10px] font-bold tracking-wider uppercase text-primary shadow-sm">
-                    <t.icon className="w-3 h-3" />
-                    {t.badge}
-                  </div>
-                </div>
-
-                {/* Content */}
-                <div className="flex flex-col flex-1 p-5 md:p-6">
-                  <h3 className="font-bold text-lg md:text-xl text-foreground mb-2 group-hover:text-primary transition-colors">
-                    {t.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                    {t.desc}
-                  </p>
-                  <ul className="space-y-2 mb-5 mt-auto">
-                    {t.points.map(point => (
-                      <li key={point} className="flex items-start gap-2 text-xs text-foreground/85">
-                        <CheckCircle className="w-3.5 h-3.5 text-primary flex-shrink-0 mt-0.5" />
-                        <span>{point}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-between h-9 px-3 text-xs font-semibold border border-border/50 hover:border-primary/40 hover:bg-primary/5 hover:text-primary group/btn"
-                    asChild
-                  >
-                    <Link href="/courses">
-                      Explore Track
-                      <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover/btn:translate-x-1" />
-                    </Link>
-                  </Button>
-                </div>
-              </StaggerItem>
-            ))}
-          </StaggerGrid>
-
-          {/* Trust strip below tracks */}
-          <FadeUp delay={0.15} className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5"><BadgeCheck className="w-4 h-4 text-primary" /> Practitioner-led curriculum</span>
-            <span className="inline-flex items-center gap-1.5"><Shield className="w-4 h-4 text-primary" /> 30-day money-back</span>
-            <span className="inline-flex items-center gap-1.5"><InfinityIcon className="w-4 h-4 text-primary" /> Lifetime access</span>
-            <span className="inline-flex items-center gap-1.5"><Users className="w-4 h-4 text-primary" /> 2,400+ active students</span>
-          </FadeUp>
         </div>
       </section>
 
