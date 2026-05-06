@@ -988,7 +988,7 @@ export default function BundleCheckoutPage() {
                         {appliedCoupon.type === "percentage" ? `${appliedCoupon.discount}% off` : `₹${appliedCoupon.discount} off`}
                       </span>
                     </div>
-                    <button type="button" onClick={() => { setAppliedCoupon(null); setCouponCode(""); }} className="text-xs text-muted-foreground hover:text-foreground">Remove</button>
+                    <button type="button" onClick={() => { setAppliedCoupon(null); setCouponCode(""); }} className="text-xs text-muted-foreground hover:text-foreground cursor-pointer">Remove</button>
                   </div>
                 )}
               </div>
