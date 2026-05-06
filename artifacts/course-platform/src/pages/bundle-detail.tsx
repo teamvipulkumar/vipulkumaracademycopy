@@ -287,9 +287,24 @@ export default function BundleDetailPage() {
             <div className="space-y-4">
               {bundle.courses.map((course, idx) => (
                 <div key={course.id} className="bg-card border border-white/10 rounded-2xl overflow-hidden hover:border-primary/30 transition-colors">
+                  {/* Mobile: full-width banner thumbnail on top */}
+                  <div className="relative w-full aspect-video sm:hidden">
+                    {course.thumbnailUrl ? (
+                      <img src={course.thumbnailUrl} alt={course.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-primary/20 to-blue-900/40 flex items-center justify-center">
+                        <span className="text-5xl font-black text-primary/30">{course.category?.charAt(0)}</span>
+                      </div>
+                    )}
+                    {course.tag === "coming_soon" && (
+                      <div className="absolute top-2 left-2 z-10 bg-[#1d4fd7] backdrop-blur-md border border-primary/60 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded">
+                        Coming Soon
+                      </div>
+                    )}
+                  </div>
                   <div className="flex gap-3 sm:gap-4 p-3 sm:p-4">
-                    {/* Thumbnail */}
-                    <div className="relative flex-shrink-0 w-24 sm:w-28 md:w-36 aspect-video rounded-lg sm:rounded-xl overflow-hidden">
+                    {/* Desktop / sm+: compact side thumbnail */}
+                    <div className="relative flex-shrink-0 w-24 sm:w-28 md:w-36 aspect-video rounded-lg sm:rounded-xl overflow-hidden hidden sm:block">
                       {course.thumbnailUrl ? (
                         <img src={course.thumbnailUrl} alt={course.title} className="w-full h-full object-cover" />
                       ) : (
