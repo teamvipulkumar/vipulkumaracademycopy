@@ -207,7 +207,6 @@ export default function Home() {
 
   return (
     <div className="flex flex-col">
-
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
       <section className="relative isolate py-12 md:py-32 px-4 sm:px-6 flex flex-col items-center text-center overflow-hidden">
         {/* layered background glows */}
@@ -248,7 +247,6 @@ export default function Home() {
           ))}
         </div>
       </section>
-
       {/* ── STATS BAR ────────────────────────────────────────────────────── */}
       <section className="bg-card/40 border-y border-border/60 py-10 px-6">
         <StaggerGrid className="container mx-auto max-w-4xl grid grid-cols-2 md:grid-cols-4 gap-8">
@@ -260,7 +258,6 @@ export default function Home() {
           ))}
         </StaggerGrid>
       </section>
-
       {/* ── TOPICS MARQUEE ─────────────────────────────────────────────── */}
       <section className="relative py-8 md:py-10 bg-background border-b border-border/60 overflow-hidden">
         <div className="text-center mb-6 px-4">
@@ -289,7 +286,6 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
-
       {/* ── FEATURED COURSES ─────────────────────────────────────────────── */}
       {showCourses && (
         <section className="py-20 px-6 bg-background">
@@ -353,7 +349,6 @@ export default function Home() {
           </div>
         </section>
       )}
-
       {/* ── FEATURED PACKAGES ────────────────────────────────────────────── */}
       {showPackages && (bundlesLoading || (bundles && bundles.length > 0)) && (
         <section className="py-20 px-6 bg-card/25 border-y border-border/60">
@@ -422,7 +417,6 @@ export default function Home() {
           </div>
         </section>
       )}
-
       {/* ── 3 SIMPLE STEPS ───────────────────────────────────────────────── */}
       <section className="relative py-20 px-6 overflow-hidden bg-background border-b border-border/60">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_0%,hsl(var(--primary)/0.07),transparent)]" />
@@ -456,7 +450,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
       {/* ── WHY VKA ──────────────────────────────────────────────────────── */}
       <section className="py-20 px-6 bg-card/25 border-b border-border/60">
         <div className="container mx-auto max-w-5xl">
@@ -482,7 +475,6 @@ export default function Home() {
           </StaggerGrid>
         </div>
       </section>
-
       {/* ── ABOUT / MOVEMENT ─────────────────────────────────────────────── */}
       <section className="relative py-20 md:py-24 px-6 bg-background border-b border-border/60 overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_80%_50%,hsl(var(--primary)/0.08),transparent)]" />
@@ -568,14 +560,13 @@ export default function Home() {
                     <Trophy className="w-3.5 h-3.5 text-amber-400" />
                     <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Top Outcome</span>
                   </div>
-                  <p className="text-xs font-semibold text-foreground leading-snug">First ₹1L month within 90 days of starting.</p>
+                  <p className="text-xs font-semibold text-foreground leading-snug">Focused on skills that compound.</p>
                 </div>
               </div>
             </FadeUp>
           </div>
         </div>
       </section>
-
       {/* ── PLATFORM PILLARS ─────────────────────────────────────────────── */}
       <section className="relative py-20 px-6 bg-background border-b border-border/60 overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,hsl(var(--primary)/0.06),transparent)]" />
@@ -609,7 +600,6 @@ export default function Home() {
           </StaggerGrid>
         </div>
       </section>
-
       {/* ── OUTCOMES — SKILLS YOU'LL MASTER ──────────────────────────────── */}
       <section className="py-20 px-6 bg-card/25 border-b border-border/60">
         <div className="container mx-auto max-w-6xl">
@@ -643,7 +633,6 @@ export default function Home() {
           </StaggerGrid>
         </div>
       </section>
-
       {/* ── COMPARISON: VKA vs Generic ───────────────────────────────────── */}
       <section className="py-20 px-6 bg-background border-b border-border/60">
         <div className="container mx-auto max-w-4xl">
@@ -703,7 +692,6 @@ export default function Home() {
           </FadeUp>
         </div>
       </section>
-
       {/* ── TESTIMONIALS ─────────────────────────────────────────────────── */}
       <section className="py-20 px-6 bg-background border-b border-border/60">
         <div className="container mx-auto max-w-5xl">
@@ -736,7 +724,6 @@ export default function Home() {
           </StaggerGrid>
         </div>
       </section>
-
       {/* ── FAQ ──────────────────────────────────────────────────────────── */}
       <section className="py-20 px-6 bg-card/25 border-b border-border/60">
         <div className="container mx-auto max-w-3xl">
@@ -765,7 +752,6 @@ export default function Home() {
           </FadeUp>
         </div>
       </section>
-
       {/* ── FINAL CTA ────────────────────────────────────────────────────── */}
       <section className="relative py-14 md:py-24 px-4 sm:px-6 overflow-hidden">
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_80%_80%_at_50%_50%,hsl(var(--primary)/0.12),transparent)]" />
@@ -794,7 +780,6 @@ export default function Home() {
           </p>
         </div>
       </section>
-
     </div>
   );
 }
