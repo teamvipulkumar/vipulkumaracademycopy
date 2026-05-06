@@ -234,7 +234,7 @@ export default function CourseDetailPage() {
 
                   {/* Lessons list */}
                   {expandedModules.includes(idx) && (
-                    <div className="divide-y divide-border">
+                    <div className="border-t border-white/10 divide-y divide-white/10">
                       {(mod.lessons ?? []).map(lesson => (
                         <div
                           key={lesson.id}
