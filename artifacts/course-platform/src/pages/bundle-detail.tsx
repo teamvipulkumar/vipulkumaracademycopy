@@ -69,10 +69,10 @@ export default function BundleDetailPage() {
   const totalHours = Math.round(totalMinutes / 60);
 
   const PurchaseCard = () => (
-    <div className="space-y-4">
-      <div className="bg-card border border-white/10 rounded-2xl p-4 shadow-xl shadow-primary/5 sticky top-24">
+    <div className="space-y-6">
+      <div className="bg-card border border-white/10 rounded-2xl p-5 shadow-xl shadow-primary/5 sticky top-24">
         {/* Price */}
-        <div className="mb-3">
+        <div className="mb-4">
           {savingsPct > 0 && (
             <div className="inline-flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-bold px-2.5 py-1 rounded-full mb-2">
               <Zap className="w-3 h-3" />{savingsPct}% OFF — Save ₹{savings.toFixed(0)}
@@ -93,12 +93,12 @@ export default function BundleDetailPage() {
         >
           <Package className="w-4 h-4" />Get Package Now
         </Button>
-        <p className="text-xs text-muted-foreground text-center mb-3">
+        <p className="text-xs text-muted-foreground text-center mb-4">
           30-day money-back guarantee · Instant access
         </p>
 
         {/* What's included */}
-        <div className="border-t border-white/10 pt-3 space-y-2">
+        <div className="border-t border-white/10 pt-4 space-y-2.5">
           <p className="text-xs font-semibold text-foreground mb-2">This package includes:</p>
           {[
             { icon: <BookOpen className="w-3.5 h-3.5 text-primary" />, label: `${bundle.courses.length} complete courses` },
