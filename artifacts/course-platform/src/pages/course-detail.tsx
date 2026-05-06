@@ -77,7 +77,7 @@ export default function CourseDetailPage() {
   /* Shared purchase card */
   const PurchaseCard = () => (
     <div className="space-y-3">
-      <div className="bg-card border border-border rounded-xl p-5 md:p-6 shadow-lg">
+      <div className="bg-card border border-white/10 rounded-xl p-5 md:p-6 shadow-lg">
         {appliedCoupon ? (
           <div className="mb-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground line-through">₹{price.toFixed(2)}</div>
@@ -133,7 +133,7 @@ export default function CourseDetailPage() {
       </div>
 
       {/* This course includes — sits directly below the pricing card */}
-      <div className="bg-card border border-border rounded-xl p-4">
+      <div className="bg-card border border-white/10 rounded-xl p-4">
         <h3 className="font-semibold mb-3 text-sm">This course includes</h3>
         <div className="space-y-2.5">
           <div className="flex items-center gap-2 text-xs text-muted-foreground"><Clock className="w-3.5 h-3.5 text-primary flex-shrink-0" /><span>{course.durationMinutes ? `${+(course.durationMinutes / 60).toFixed(1)} hours of content` : "Self-paced content"}</span></div>
