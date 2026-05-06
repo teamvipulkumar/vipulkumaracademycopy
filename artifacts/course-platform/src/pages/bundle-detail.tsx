@@ -279,16 +279,16 @@ export default function BundleDetailPage() {
       </div>
 
       {/* ── Courses Included ── */}
-      <div className="w-full max-w-5xl mx-auto px-4 py-8 md:py-12">
-        <div className="md:grid md:grid-cols-3 gap-8">
-          <div className="md:col-span-2">
+      <div className="w-full max-w-7xl mx-auto px-4 py-8 md:py-12">
+        <div>
+          <div>
             <h2 className="text-xl md:text-2xl font-bold mb-6">Courses Included in This Package</h2>
 
-            <div className="space-y-4 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
+            <div className="space-y-4 sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:gap-4 sm:space-y-0">
               {bundle.courses.map((course, idx) => (
                 <div key={course.id} className="bg-card border border-white/10 rounded-2xl overflow-hidden hover:border-primary/30 transition-colors flex flex-col">
-                  {/* Full-width banner: visible on mobile (<sm) AND desktop (md+) */}
-                  <div className="relative w-full aspect-video sm:hidden md:block">
+                  {/* Full-width banner on top — all breakpoints */}
+                  <div className="relative w-full aspect-video">
                     {course.thumbnailUrl ? (
                       <img src={course.thumbnailUrl} alt={course.title} className="w-full h-full object-cover" />
                     ) : (
@@ -302,60 +302,28 @@ export default function BundleDetailPage() {
                       </div>
                     )}
                   </div>
-                  <div className="flex gap-3 sm:gap-4 p-3 sm:p-4 md:flex-1">
-                    {/* Tablet only (sm to <md): compact side thumbnail */}
-                    <div className="relative flex-shrink-0 w-28 aspect-video rounded-xl overflow-hidden hidden sm:block md:hidden">
-                      {course.thumbnailUrl ? (
-                        <img src={course.thumbnailUrl} alt={course.title} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-primary/20 to-blue-900/40 flex items-center justify-center">
-                          <span className="text-2xl font-black text-primary/30">{course.category?.charAt(0)}</span>
-                        </div>
-                      )}
-                      {course.tag === "coming_soon" && (
-                        <div className="absolute top-1 left-1 z-10 bg-[#1d4fd7] backdrop-blur-md border border-primary/60 text-white text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded">
-                          Soon
-                        </div>
-                      )}
-                    </div>
 
-                    {/* Info */}
-                    <div className="flex-1 min-w-0 flex flex-col">
-                      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap mb-1.5">
-                        <Badge variant="outline" className={`text-[10px] px-1.5 py-0 capitalize ${levelColors[course.level] ?? ""}`}>
-                          {course.level}
-                        </Badge>
-                        <span className="text-[11px] sm:text-xs text-muted-foreground truncate">{course.category}</span>
-                        <span className="text-xs text-muted-foreground hidden sm:block md:hidden">·</span>
-                        <span className="text-xs text-muted-foreground hidden sm:block md:hidden">{Math.round((course.durationMinutes ?? 0) / 60)}h</span>
-                      </div>
-                      <h3 className="font-bold text-foreground text-sm md:text-base leading-snug mb-1.5">
-                        <span className="text-primary/50 font-normal mr-1.5 text-xs">#{idx + 1}</span>
-                        {course.title}
-                      </h3>
-                      {course.description && (
-                        <p className="text-xs text-muted-foreground line-clamp-2 mb-2 hidden sm:block">{course.description}</p>
-                      )}
-                      {/* Meta row — mobile + md+ show inline crossed price + Included; tablet (sm-md) shows on side */}
-                      <div className="flex items-center gap-2 sm:gap-3 text-[11px] sm:text-xs text-muted-foreground flex-wrap mt-auto">
-                        <span className="flex items-center gap-1"><Clock className="w-3 h-3 text-primary" />{Math.round((course.durationMinutes ?? 0) / 60)}h<span className="hidden sm:inline md:hidden"> content</span></span>
-                        <span className="hidden sm:flex md:hidden items-center gap-1"><Lock className="w-3 h-3 text-green-400" />Included in package</span>
-                        <span className="sm:hidden md:inline line-through">₹{course.price}</span>
-                        <span className="sm:hidden md:flex items-center gap-1 text-green-400 font-medium">
-                          <Check className="w-3 h-3" />Included
-                        </span>
-                      </div>
+                  {/* Info */}
+                  <div className="flex-1 min-w-0 flex flex-col p-3 sm:p-4">
+                    <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap mb-1.5">
+                      <Badge variant="outline" className={`text-[10px] px-1.5 py-0 capitalize ${levelColors[course.level] ?? ""}`}>
+                        {course.level}
+                      </Badge>
+                      <span className="text-[11px] sm:text-xs text-muted-foreground truncate">{course.category}</span>
                     </div>
-
-                    {/* Tablet only (sm to <md): price crossed out / Included column */}
-                    <div className="hidden sm:flex md:hidden flex-shrink-0 flex-col items-end justify-between">
-                      <div className="text-right">
-                        <p className="text-xs text-muted-foreground line-through">₹{course.price}</p>
-                        <div className="flex items-center gap-1 mt-1">
-                          <Check className="w-3.5 h-3.5 text-green-400" />
-                          <span className="text-xs text-green-400 font-medium">Included</span>
-                        </div>
-                      </div>
+                    <h3 className="font-bold text-foreground text-sm md:text-base leading-snug mb-1.5 line-clamp-2">
+                      <span className="text-primary/50 font-normal mr-1.5 text-xs">#{idx + 1}</span>
+                      {course.title}
+                    </h3>
+                    {course.description && (
+                      <p className="text-xs text-muted-foreground line-clamp-2 mb-2 hidden sm:block">{course.description}</p>
+                    )}
+                    <div className="flex items-center gap-2 sm:gap-3 text-[11px] sm:text-xs text-muted-foreground flex-wrap mt-auto">
+                      <span className="flex items-center gap-1"><Clock className="w-3 h-3 text-primary" />{Math.round((course.durationMinutes ?? 0) / 60)}h</span>
+                      <span className="line-through">₹{course.price}</span>
+                      <span className="flex items-center gap-1 text-green-400 font-medium">
+                        <Check className="w-3 h-3" />Included
+                      </span>
                     </div>
                   </div>
                 </div>
