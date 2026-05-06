@@ -70,7 +70,7 @@ export default function BundleDetailPage() {
 
   const PurchaseCard = () => (
     <div className="space-y-6">
-      <div className="bg-card border border-border rounded-2xl p-5 shadow-xl shadow-primary/5 sticky top-24">
+      <div className="bg-card border border-white/10 rounded-2xl p-5 shadow-xl shadow-primary/5 sticky top-24">
         {/* Price */}
         <div className="mb-4">
           {savingsPct > 0 && (
@@ -98,7 +98,7 @@ export default function BundleDetailPage() {
         </p>
 
         {/* What's included */}
-        <div className="border-t border-border pt-4 space-y-2.5">
+        <div className="border-t border-white/10 pt-4 space-y-2.5">
           <p className="text-xs font-semibold text-foreground mb-2">This package includes:</p>
           {[
             { icon: <BookOpen className="w-3.5 h-3.5 text-primary" />, label: `${bundle.courses.length} complete courses` },
@@ -117,7 +117,7 @@ export default function BundleDetailPage() {
       </div>
 
       {/* Social proof */}
-      <div className="bg-card border border-border rounded-xl p-4 text-center">
+      <div className="bg-card border border-white/10 rounded-xl p-4 text-center">
         <div className="flex items-center justify-center gap-1 mb-1">
           {[1,2,3,4,5].map(i => <Star key={i} className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />)}
         </div>
@@ -210,7 +210,7 @@ export default function BundleDetailPage() {
 
             <div className="space-y-4">
               {bundle.courses.map((course, idx) => (
-                <div key={course.id} className="bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/30 transition-colors">
+                <div key={course.id} className="bg-card border border-white/10 rounded-2xl overflow-hidden hover:border-primary/30 transition-colors">
                   <div className="flex gap-4 p-4">
                     {/* Thumbnail */}
                     <div className="relative flex-shrink-0 w-28 md:w-36 aspect-video rounded-xl overflow-hidden">
@@ -300,7 +300,7 @@ export default function BundleDetailPage() {
                 { icon: <BookOpen className="w-5 h-5 text-primary" />, title: "All Courses", desc: "Instant access to every course in the package" },
                 { icon: <Award className="w-5 h-5 text-primary" />, title: "Certificates", desc: "Earn a certificate for each completed course" },
               ].map(({ icon, title, desc }) => (
-                <div key={title} className="bg-card border border-border rounded-xl p-4 text-center">
+                <div key={title} className="bg-card border border-white/10 rounded-xl p-4 text-center">
                   <div className="flex justify-center mb-2">{icon}</div>
                   <p className="font-semibold text-sm text-foreground mb-1">{title}</p>
                   <p className="text-xs text-muted-foreground">{desc}</p>
