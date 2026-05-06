@@ -60,6 +60,20 @@ function RefTracker() {
   return null;
 }
 
+/* Reset scroll position to top on every route change. Without this, wouter
+   keeps the previous page's scroll offset when navigating to a new page
+   (e.g. clicking a footer link from the bottom of Home leaves the next
+   page scrolled to the bottom). */
+function ScrollToTop() {
+  const [location] = useLocation();
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.location.hash) return; // respect in-page anchors
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [location]);
+  return null;
+}
+
 function PixelTracker() {
   const [location] = useLocation();
 
@@ -264,6 +278,7 @@ function App() {
           <CodeSnippetsInjector />
           <MaintenanceWatcher />
           <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+            <ScrollToTop />
             <Router />
           </WouterRouter>
           <Toaster />
