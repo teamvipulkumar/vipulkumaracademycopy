@@ -1084,7 +1084,7 @@ export default function CheckoutPage() {
                           key={g.name}
                           type="button"
                           onClick={() => setGateway(g.name)}
-                          className={`py-3.5 px-4 rounded-xl border-2 transition-all text-sm font-semibold flex flex-col items-center gap-1.5 ${
+                          className={`py-3.5 px-4 rounded-xl border-2 transition-all text-sm font-semibold flex flex-col items-center gap-1.5 cursor-pointer ${
                             gateway === g.name
                               ? "border-primary bg-primary/10 text-primary"
                               : "border-border text-muted-foreground hover:border-border/80"

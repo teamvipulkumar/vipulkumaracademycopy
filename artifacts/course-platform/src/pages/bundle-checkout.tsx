@@ -944,7 +944,7 @@ export default function BundleCheckoutPage() {
                       const m = GATEWAY_META[g.name] ?? { icon: "💰", label: g.displayName, tagline: "Secure Payment" };
                       return (
                         <button key={g.name} type="button" onClick={() => setGateway(g.name)}
-                          className={`py-3.5 px-4 rounded-xl border-2 transition-all text-sm font-semibold flex flex-col items-center gap-1.5 ${gateway === g.name ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-border/80"}`}>
+                          className={`py-3.5 px-4 rounded-xl border-2 transition-all text-sm font-semibold flex flex-col items-center gap-1.5 cursor-pointer ${gateway === g.name ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-border/80"}`}>
                           {m.logo
                             ? <img src={`${import.meta.env.BASE_URL}${m.logo}`} alt={m.label} className="w-8 h-8 object-contain rounded" />
                             : <span className="text-xl">{m.icon}</span>}
