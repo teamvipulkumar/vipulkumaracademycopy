@@ -9,9 +9,15 @@ html {
 }
 body {
   overflow-x: hidden;
+  width: 100vw;
   max-width: 100vw;
   padding-right: 0 !important;
   margin-right: 0 !important;
+  /* Neutralise the CSS var that react-remove-scroll-bar (used by Radix
+     Select / Dialog / Popover) reads to compute scrollbar-width padding.
+     Setting it to 0 prevents the body from being padded when those
+     primitives lock scroll, eliminating the horizontal layout shift. */
+  --removed-body-scroll-bar-size: 0px !important;
 }
 
 @keyframes cta-bounce-glow {
