@@ -45,6 +45,19 @@ body {
   animation: wave-emoji 2.4s ease-in-out infinite;
 }
 
+/* GPU-accelerated marquee — runs on the compositor thread, not main JS. */
+@keyframes marquee-x {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
+}
+.marquee-track {
+  animation: marquee-x 40s linear infinite;
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track { animation: none; }
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

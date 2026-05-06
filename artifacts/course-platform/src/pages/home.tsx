@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import * as Accordion from "@radix-ui/react-accordion";
-import movementImage from "@/assets/movement-workspace.png";
+import movementImage from "@/assets/movement-workspace.webp";
 
 const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -269,11 +269,7 @@ export default function Home() {
         <div className="pointer-events-none absolute top-0 bottom-0 left-0 w-16 md:w-32 z-10 bg-gradient-to-r from-background to-transparent" />
         <div className="pointer-events-none absolute top-0 bottom-0 right-0 w-16 md:w-32 z-10 bg-gradient-to-l from-background to-transparent" />
         <div className="flex overflow-hidden">
-          <motion.div
-            className="flex gap-3 pr-3 flex-shrink-0"
-            animate={{ x: ["0%", "-50%"] }}
-            transition={{ duration: 40, ease: "linear", repeat: Infinity }}
-          >
+          <div className="marquee-track flex gap-3 pr-3 flex-shrink-0">
             {[...TOPICS, ...TOPICS].map((topic, i) => (
               <span
                 key={`${topic}-${i}`}
@@ -283,7 +279,7 @@ export default function Home() {
                 {topic}
               </span>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
       {/* ── FEATURED COURSES ─────────────────────────────────────────────── */}
@@ -540,6 +536,9 @@ export default function Home() {
                   src={movementImage}
                   alt="A focused builder's workspace"
                   loading="lazy"
+                  decoding="async"
+                  width={1280}
+                  height={800}
                   className="w-full h-full object-cover aspect-[16/10]"
                 />
                 {/* Subtle vignette overlay for cohesion */}
