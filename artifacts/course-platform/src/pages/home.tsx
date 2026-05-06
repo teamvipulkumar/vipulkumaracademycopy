@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import * as Accordion from "@radix-ui/react-accordion";
+import movementImage from "@/assets/movement-workspace.png";
 
 const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -479,6 +480,99 @@ export default function Home() {
               </StaggerItem>
             ))}
           </StaggerGrid>
+        </div>
+      </section>
+
+      {/* ── ABOUT / MOVEMENT ─────────────────────────────────────────────── */}
+      <section className="relative py-20 md:py-24 px-6 bg-background border-b border-border/60 overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_80%_50%,hsl(var(--primary)/0.08),transparent)]" />
+        <div className="relative container mx-auto max-w-6xl">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
+            {/* Left — Text */}
+            <FadeUp className="order-2 lg:order-1">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-border/70 bg-card/60 text-[11px] font-semibold tracking-wider uppercase text-muted-foreground mb-5">
+                <Heart className="w-3 h-3 text-primary" />
+                About VKA
+              </span>
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight leading-[1.1] mb-5">
+                More Than a Course Library —{" "}
+                <span className="text-primary">A Builder's Community.</span>
+              </h2>
+              <p className="text-sm md:text-base text-muted-foreground leading-relaxed mb-5">
+                Vipul Kumar Academy started with one belief: serious learners deserve more than
+                recycled tutorials and theory-heavy slides. Every course we publish is shaped by
+                operators actively running businesses — not retired marketers reading from old
+                playbooks.
+              </p>
+              <p className="text-sm md:text-base text-muted-foreground leading-relaxed mb-7">
+                Inside, you get hands-on toolkits, live breakdowns, a network of fellow builders,
+                and a roadmap that meets you where you are — whether you're starting your first
+                store or scaling past your first lakh in monthly revenue.
+              </p>
+
+              {/* Mini stat row */}
+              <div className="grid grid-cols-3 gap-4 sm:gap-6 mb-7 pb-7 border-b border-border/60">
+                <div>
+                  <div className="text-2xl md:text-3xl font-extrabold text-foreground tracking-tight">2.4k+</div>
+                  <div className="text-[11px] text-muted-foreground mt-1 uppercase tracking-wider">Builders</div>
+                </div>
+                <div>
+                  <div className="text-2xl md:text-3xl font-extrabold text-foreground tracking-tight">15+</div>
+                  <div className="text-[11px] text-muted-foreground mt-1 uppercase tracking-wider">Programs</div>
+                </div>
+                <div>
+                  <div className="text-2xl md:text-3xl font-extrabold text-foreground tracking-tight">4.9★</div>
+                  <div className="text-[11px] text-muted-foreground mt-1 uppercase tracking-wider">Rating</div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button size="lg" className="h-12 px-6 text-sm font-semibold" asChild>
+                  <Link href="/courses">
+                    Join the Movement
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Link>
+                </Button>
+                <Button size="lg" variant="outline" className="h-12 px-6 text-sm font-semibold border-border/60 hover:border-primary/40" asChild>
+                  <Link href="/about-us">Our Story</Link>
+                </Button>
+              </div>
+            </FadeUp>
+
+            {/* Right — Image */}
+            <FadeUp delay={0.15} className="order-1 lg:order-2 relative">
+              {/* Glow behind image */}
+              <div className="pointer-events-none absolute -inset-4 md:-inset-8 bg-gradient-to-br from-primary/20 via-blue-500/10 to-transparent rounded-[2rem] blur-2xl" />
+              <div className="relative rounded-2xl overflow-hidden border border-border/70 shadow-2xl shadow-primary/10 bg-card">
+                <img
+                  src={movementImage}
+                  alt="A focused builder's workspace"
+                  loading="lazy"
+                  className="w-full h-full object-cover aspect-[16/10]"
+                />
+                {/* Subtle vignette overlay for cohesion */}
+                <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-transparent pointer-events-none" />
+
+                {/* Floating mini badge */}
+                <div className="absolute top-4 left-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/80 backdrop-blur-md border border-border/70 shadow-lg">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                  </span>
+                  <span className="text-[11px] font-semibold text-foreground">Live cohort building</span>
+                </div>
+
+                {/* Floating bottom card */}
+                <div className="absolute bottom-4 right-4 max-w-[200px] p-3 rounded-xl bg-background/85 backdrop-blur-md border border-border/70 shadow-xl">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Trophy className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Top Outcome</span>
+                  </div>
+                  <p className="text-xs font-semibold text-foreground leading-snug">First ₹1L month within 90 days of starting.</p>
+                </div>
+              </div>
+            </FadeUp>
+          </div>
         </div>
       </section>
 

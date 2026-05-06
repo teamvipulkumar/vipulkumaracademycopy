@@ -18,3 +18,9 @@ id = "1OTsNh8qZIynXSTMZCfXg"
 uri = "file://artifacts/course-platform/src/assets/learn-dropshipping.png"
 type = "image"
 title = "dropshipping banner"
+
+[[generated]]
+id = "sX1dF6xuzFFG4AAesjLr4"
+uri = "file://artifacts/course-platform/src/assets/movement-workspace.png"
+type = "image"
+title = "movement workspace banner"
