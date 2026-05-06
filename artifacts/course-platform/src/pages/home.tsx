@@ -472,17 +472,17 @@ export default function Home() {
         </div>
       </section>
       {/* ── ABOUT / MOVEMENT ─────────────────────────────────────────────── */}
-      <section className="relative py-20 md:py-24 px-6 bg-background border-b border-border/60 overflow-hidden">
+      <section className="relative py-14 md:py-24 px-4 sm:px-6 bg-background border-b border-border/60 overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_80%_50%,hsl(var(--primary)/0.08),transparent)]" />
         <div className="relative container mx-auto max-w-6xl">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-14 items-center">
             {/* Left — Text */}
             <FadeUp className="order-2 lg:order-1">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-border/70 bg-card/60 text-[11px] font-semibold tracking-wider uppercase text-muted-foreground mb-5">
                 <Heart className="w-3 h-3 text-primary" />
                 About VKA
               </span>
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight leading-[1.1] mb-5">
+              <h2 className="text-[26px] sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight leading-[1.15] sm:leading-[1.1] mb-4 sm:mb-5">
                 More Than a Course Library —{" "}
                 <span className="text-primary">A Builder's Community.</span>
               </h2>
@@ -515,13 +515,13 @@ export default function Home() {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3">
-                <Button size="lg" className="h-12 px-6 text-sm font-semibold" asChild>
+                <Button size="lg" className="h-11 sm:h-12 px-6 text-sm font-semibold w-full sm:w-auto" asChild>
                   <Link href="/courses">
                     Join the Movement
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Link>
                 </Button>
-                <Button size="lg" variant="outline" className="h-12 px-6 text-sm font-semibold border-border/60 hover:border-primary/40" asChild>
+                <Button size="lg" variant="outline" className="h-11 sm:h-12 px-6 text-sm font-semibold border-border/60 hover:border-primary/40 w-full sm:w-auto" asChild>
                   <Link href="/about-us">Our Story</Link>
                 </Button>
               </div>
@@ -545,21 +545,21 @@ export default function Home() {
                 <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-transparent pointer-events-none" />
 
                 {/* Floating mini badge */}
-                <div className="absolute top-4 left-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/80 backdrop-blur-md border border-border/70 shadow-lg">
+                <div className="absolute top-2.5 left-2.5 sm:top-4 sm:left-4 inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-background/80 backdrop-blur-md border border-border/70 shadow-lg">
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
                   </span>
-                  <span className="text-[11px] font-semibold text-foreground">Live cohort building</span>
+                  <span className="text-[10px] sm:text-[11px] font-semibold text-foreground">Live cohort building</span>
                 </div>
 
                 {/* Floating bottom card */}
-                <div className="absolute bottom-4 right-4 max-w-[200px] p-3 rounded-xl bg-background/85 backdrop-blur-md border border-border/70 shadow-xl">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Trophy className="w-3.5 h-3.5 text-amber-400" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Top Outcome</span>
+                <div className="absolute bottom-2.5 right-2.5 sm:bottom-4 sm:right-4 max-w-[160px] sm:max-w-[200px] p-2.5 sm:p-3 rounded-xl bg-background/85 backdrop-blur-md border border-border/70 shadow-xl">
+                  <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
+                    <Trophy className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400" />
+                    <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Top Outcome</span>
                   </div>
-                  <p className="text-xs font-semibold text-foreground leading-snug">Focused on skills that compound.</p>
+                  <p className="text-[11px] sm:text-xs font-semibold text-foreground leading-snug">Focused on skills that compound.</p>
                 </div>
               </div>
             </FadeUp>
@@ -567,12 +567,12 @@ export default function Home() {
         </div>
       </section>
       {/* ── PLATFORM PILLARS ─────────────────────────────────────────────── */}
-      <section className="relative py-20 px-6 bg-background border-b border-border/60 overflow-hidden">
+      <section className="relative py-14 sm:py-20 px-4 sm:px-6 bg-background border-b border-border/60 overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,hsl(var(--primary)/0.06),transparent)]" />
         <div className="relative container mx-auto max-w-6xl">
-          <FadeUp className="text-center mb-14 max-w-2xl mx-auto">
+          <FadeUp className="text-center mb-10 sm:mb-14 max-w-2xl mx-auto">
             <SectionLabel>The Platform</SectionLabel>
-            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
+            <h2 className="text-[26px] sm:text-3xl md:text-4xl font-extrabold tracking-tight leading-[1.15] sm:leading-tight mb-3">
               An Ecosystem Built Around <span className="text-primary">Real Outcomes</span>
             </h2>
             <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
@@ -600,11 +600,11 @@ export default function Home() {
         </div>
       </section>
       {/* ── OUTCOMES — SKILLS YOU'LL MASTER ──────────────────────────────── */}
-      <section className="py-20 px-6 bg-card/25 border-b border-border/60">
+      <section className="py-14 sm:py-20 px-4 sm:px-6 bg-card/25 border-b border-border/60">
         <div className="container mx-auto max-w-6xl">
-          <FadeUp className="text-center mb-14 max-w-2xl mx-auto">
+          <FadeUp className="text-center mb-10 sm:mb-14 max-w-2xl mx-auto">
             <SectionLabel>What You'll Master</SectionLabel>
-            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
+            <h2 className="text-[26px] sm:text-3xl md:text-4xl font-extrabold tracking-tight leading-[1.15] sm:leading-tight mb-3">
               Skills You'll Walk Away <span className="text-primary">Actually Knowing</span>
             </h2>
             <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
@@ -633,11 +633,11 @@ export default function Home() {
         </div>
       </section>
       {/* ── COMPARISON: VKA vs Generic ───────────────────────────────────── */}
-      <section className="py-20 px-6 bg-background border-b border-border/60">
+      <section className="py-14 sm:py-20 px-4 sm:px-6 bg-background border-b border-border/60">
         <div className="container mx-auto max-w-4xl">
-          <FadeUp className="text-center mb-12 max-w-2xl mx-auto">
+          <FadeUp className="text-center mb-10 sm:mb-12 max-w-2xl mx-auto">
             <SectionLabel>The Difference</SectionLabel>
-            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
+            <h2 className="text-[26px] sm:text-3xl md:text-4xl font-extrabold tracking-tight leading-[1.15] sm:leading-tight mb-3">
               VKA vs <span className="text-muted-foreground">Generic Course Sites</span>
             </h2>
             <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
@@ -648,40 +648,40 @@ export default function Home() {
 
           <FadeUp className="rounded-2xl border border-border/70 bg-card/60 overflow-hidden shadow-sm">
             {/* Header */}
-            <div className="grid grid-cols-[1fr_auto_auto] sm:grid-cols-[1fr_120px_120px] items-center gap-3 sm:gap-6 px-4 sm:px-6 py-4 bg-card border-b border-border/70">
-              <span className="text-xs font-semibold tracking-wider uppercase text-muted-foreground">Feature</span>
-              <span className="text-xs font-bold tracking-wider uppercase text-primary text-center flex items-center justify-center gap-1">
-                <Award className="w-3.5 h-3.5" /> VKA
+            <div className="grid grid-cols-[1fr_56px_56px] sm:grid-cols-[1fr_120px_120px] items-center gap-2 sm:gap-6 px-3 sm:px-6 py-3 sm:py-4 bg-card border-b border-border/70">
+              <span className="text-[11px] sm:text-xs font-semibold tracking-wider uppercase text-muted-foreground">Feature</span>
+              <span className="text-[11px] sm:text-xs font-bold tracking-wider uppercase text-primary text-center flex items-center justify-center gap-1">
+                <Award className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> VKA
               </span>
-              <span className="text-xs font-semibold tracking-wider uppercase text-muted-foreground/80 text-center">Others</span>
+              <span className="text-[11px] sm:text-xs font-semibold tracking-wider uppercase text-muted-foreground/80 text-center">Others</span>
             </div>
             {/* Rows */}
             <StaggerGrid>
               {COMPARISON.map((row, i) => (
                 <StaggerItem
                   key={row.feature}
-                  className={`grid grid-cols-[1fr_auto_auto] sm:grid-cols-[1fr_120px_120px] items-center gap-3 sm:gap-6 px-4 sm:px-6 py-4 ${i !== COMPARISON.length - 1 ? "border-b border-border/50" : ""} hover:bg-card/80 transition-colors`}
+                  className={`grid grid-cols-[1fr_56px_56px] sm:grid-cols-[1fr_120px_120px] items-center gap-2 sm:gap-6 px-3 sm:px-6 py-3 sm:py-4 ${i !== COMPARISON.length - 1 ? "border-b border-border/50" : ""} hover:bg-card/80 transition-colors`}
                 >
-                  <span className="text-sm text-foreground/90 leading-snug">{row.feature}</span>
-                  <span className="flex items-center justify-center w-12 sm:w-auto">
+                  <span className="text-[13px] sm:text-sm text-foreground/90 leading-snug">{row.feature}</span>
+                  <span className="flex items-center justify-center">
                     {row.vka ? (
-                      <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-emerald-500/15 border border-emerald-500/30">
-                        <CheckCircle className="w-4 h-4 text-emerald-400" />
+                      <span className="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-emerald-500/15 border border-emerald-500/30">
+                        <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" />
                       </span>
                     ) : (
-                      <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-rose-500/10 border border-rose-500/25">
-                        <X className="w-4 h-4 text-rose-400" />
+                      <span className="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-rose-500/10 border border-rose-500/25">
+                        <X className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-400" />
                       </span>
                     )}
                   </span>
-                  <span className="flex items-center justify-center w-12 sm:w-auto">
+                  <span className="flex items-center justify-center">
                     {row.others ? (
-                      <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-rose-500/10 border border-rose-500/25">
-                        <CheckCircle className="w-4 h-4 text-rose-400/70" />
+                      <span className="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-rose-500/10 border border-rose-500/25">
+                        <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-400/70" />
                       </span>
                     ) : (
-                      <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-muted/50 border border-border/60">
-                        <X className="w-4 h-4 text-muted-foreground/60" />
+                      <span className="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-muted/50 border border-border/60">
+                        <X className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground/60" />
                       </span>
                     )}
                   </span>
@@ -692,16 +692,16 @@ export default function Home() {
         </div>
       </section>
       {/* ── TESTIMONIALS ─────────────────────────────────────────────────── */}
-      <section className="py-20 px-6 bg-background border-b border-border/60">
+      <section className="py-14 sm:py-20 px-4 sm:px-6 bg-background border-b border-border/60">
         <div className="container mx-auto max-w-5xl">
-          <FadeUp className="text-center mb-12">
+          <FadeUp className="text-center mb-10 sm:mb-12">
             <SectionLabel>Student Results</SectionLabel>
-            <h2 className="text-3xl font-extrabold tracking-tight mb-2">Real People. Real Revenue.</h2>
+            <h2 className="text-[26px] sm:text-3xl font-extrabold tracking-tight leading-[1.15] sm:leading-tight mb-2">Real People. Real Revenue.</h2>
             <p className="text-muted-foreground text-sm">Hear directly from operators who've taken the courses.</p>
           </FadeUp>
-          <StaggerGrid className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <StaggerGrid className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
             {TESTIMONIALS.map(t => (
-              <StaggerItem key={t.name} className="relative p-6 rounded-xl bg-card border border-border/70 hover:border-primary/30 hover:-translate-y-1 transition-all duration-300 flex flex-col">
+              <StaggerItem key={t.name} className="relative p-5 sm:p-6 rounded-xl bg-card border border-border/70 hover:border-primary/30 hover:-translate-y-1 transition-all duration-300 flex flex-col">
                 <Quote className="w-6 h-6 text-primary/20 mb-3 flex-shrink-0" />
                 <div className="flex gap-0.5 mb-3">
                   {Array.from({ length: t.stars }).map((_, i) => (
@@ -724,12 +724,12 @@ export default function Home() {
         </div>
       </section>
       {/* ── FAQ ──────────────────────────────────────────────────────────── */}
-      <section className="py-20 px-6 bg-card/25 border-b border-border/60">
+      <section className="py-14 sm:py-20 px-4 sm:px-6 bg-card/25 border-b border-border/60">
         <div className="container mx-auto max-w-3xl">
-          <FadeUp className="text-center mb-12">
+          <FadeUp className="text-center mb-10 sm:mb-12">
             <SectionLabel>Questions, Answered</SectionLabel>
-            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3 inline-flex items-center gap-3">
-              <HelpCircle className="w-7 h-7 text-primary" strokeWidth={1.75} />
+            <h2 className="text-[26px] sm:text-3xl md:text-4xl font-extrabold tracking-tight leading-[1.15] sm:leading-tight mb-3 inline-flex items-center gap-2 sm:gap-3">
+              <HelpCircle className="w-6 h-6 sm:w-7 sm:h-7 text-primary flex-shrink-0" strokeWidth={1.75} />
               Frequently Asked
             </h2>
             <p className="text-muted-foreground text-sm sm:text-base max-w-md mx-auto leading-relaxed">
