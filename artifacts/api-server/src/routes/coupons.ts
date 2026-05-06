@@ -27,22 +27,27 @@ router.post("/", requireAdmin, async (req, res): Promise<void> => {
 
 router.post("/validate", async (req, res): Promise<void> => {
   const { code, courseId } = req.body;
-  if (!code || !courseId) { res.status(400).json({ error: "code and courseId required" }); return; }
+  if (!code) { res.status(400).json({ error: "code required" }); return; }
 
   const [coupon] = await db.select().from(couponsTable).where(eq(couponsTable.code, code.toUpperCase())).limit(1);
   if (!coupon || !coupon.isActive) { res.json({ valid: false, message: "Invalid or inactive coupon" }); return; }
   if (coupon.expiresAt && coupon.expiresAt < new Date()) { res.json({ valid: false, message: "Coupon has expired" }); return; }
   if (coupon.maxUses && coupon.usedCount >= coupon.maxUses) { res.json({ valid: false, message: "Coupon usage limit reached" }); return; }
-  if (coupon.courseId && coupon.courseId !== courseId) { res.json({ valid: false, message: "Coupon not valid for this course" }); return; }
+  if (coupon.courseId && courseId && coupon.courseId !== courseId) { res.json({ valid: false, message: "Coupon not valid for this course" }); return; }
 
-  const [course] = await db.select().from(coursesTable).where(eq(coursesTable.id, courseId)).limit(1);
-  if (!course) { res.status(404).json({ error: "Course not found" }); return; }
-
-  const price = parseFloat(course.price);
   const discountValue = parseFloat(String(coupon.discountValue));
-  const finalPrice = coupon.discountType === "percentage" ? price * (1 - discountValue / 100) : Math.max(0, price - discountValue);
 
-  res.json({ valid: true, discountType: coupon.discountType, discountValue, finalPrice, message: `Coupon applied! You save ${coupon.discountType === "percentage" ? discountValue + "%" : "$" + discountValue}` });
+  // If courseId provided, calculate final price for that course; else return discount info only (bundle/generic case)
+  if (courseId) {
+    const [course] = await db.select().from(coursesTable).where(eq(coursesTable.id, courseId)).limit(1);
+    if (!course) { res.status(404).json({ error: "Course not found" }); return; }
+    const price = parseFloat(course.price);
+    const finalPrice = coupon.discountType === "percentage" ? price * (1 - discountValue / 100) : Math.max(0, price - discountValue);
+    res.json({ valid: true, discountType: coupon.discountType, discountValue, finalPrice, message: `Coupon applied! You save ${coupon.discountType === "percentage" ? discountValue + "%" : "₹" + discountValue}` });
+    return;
+  }
+
+  res.json({ valid: true, discountType: coupon.discountType, discountValue, message: `Coupon applied! You save ${coupon.discountType === "percentage" ? discountValue + "%" : "₹" + discountValue}` });
 });
 
 router.delete("/:couponId", requireAdmin, async (req, res): Promise<void> => {
