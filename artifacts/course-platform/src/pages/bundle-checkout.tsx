@@ -528,6 +528,24 @@ export default function BundleCheckoutPage() {
     });
   };
 
+  // Auto-apply coupon from ?coupon= URL param once bundle is loaded
+  const couponAutoApplied = useRef(false);
+  useEffect(() => {
+    if (couponAutoApplied.current || !bundle || appliedCoupon) return;
+    const params = new URLSearchParams(window.location.search);
+    const urlCoupon = params.get("coupon");
+    if (!urlCoupon) return;
+    couponAutoApplied.current = true;
+    const code = urlCoupon.trim().toUpperCase();
+    setCouponCode(code);
+    validateCoupon.mutate({ data: { code, courseId: undefined as unknown as number } }, {
+      onSuccess: (data) => {
+        if (!data.valid) return;
+        setAppliedCoupon({ code, discount: data.discountValue ?? 0, type: data.discountType ?? "percentage" });
+      },
+    });
+  }, [bundle, appliedCoupon, validateCoupon]);
+
   // ── Guest/Auth Checkout (simulated gateways) ──────────────────────────────
   const executePayment = async () => {
     setProcessing(true);
