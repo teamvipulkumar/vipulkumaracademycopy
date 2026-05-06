@@ -237,10 +237,10 @@ export function Navbar() {
       <header className={`fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300 ${
         scrolled ? "shadow-[0_2px_20px_0_rgba(0,0,0,0.15)]" : ""
       }`} style={{ backgroundColor: "var(--nav-bg)" }}>
-        {/* Header height is fixed (no on-scroll shrink). h-14 = 56px gives
-            slightly tighter top/bottom breathing room than the previous h-16
-            per user preference. Only the subtle shadow toggles on scroll. */}
-        <div className="max-w-screen-xl mx-auto flex items-center px-4 md:px-8 gap-4 h-14">
+        {/* Header height is fixed (no on-scroll shrink). h-16 = 64px gives
+            comfortable top/bottom breathing room around the logo and nav.
+            Only the subtle shadow toggles on scroll. */}
+        <div className="max-w-screen-xl mx-auto flex items-center px-4 md:px-8 gap-4 h-16">
 
           {/* ── Logo (left) ── */}
           <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 group" onClick={() => setMobileOpen(false)}>
@@ -629,9 +629,9 @@ export function AppLayout({ children, noFooter }: { children: React.ReactNode; n
   return (
     <div className="relative flex min-h-screen flex-col">
       <Navbar />
-      {/* `pt-14` matches the fixed Navbar height (h-14 = 56px) so the page
+      {/* `pt-16` matches the fixed Navbar height (h-16 = 64px) so the page
           content sits flush below the header with no visible gap. */}
-      <div className="pt-14">
+      <div className="pt-16">
         <EmailVerificationBanner />
         <main className="flex-1 min-w-0">{children}</main>
       </div>
