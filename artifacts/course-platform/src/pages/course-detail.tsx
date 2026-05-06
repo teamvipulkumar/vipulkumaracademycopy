@@ -217,7 +217,7 @@ export default function CourseDetailPage() {
             </div>
             <div className="space-y-2 md:space-y-3">
               {(course.modules ?? []).map((mod, idx) => (
-                <div key={mod.id} className="border border-border rounded-xl overflow-hidden">
+                <div key={mod.id} className="border border-white/10 rounded-xl overflow-hidden">
                   {/* Module header */}
                   <button
                     className="w-full flex items-center gap-2.5 p-3.5 md:p-4 bg-card hover:bg-card/80 transition-colors text-left"
