@@ -2,10 +2,16 @@ import { useListCourses, getListCoursesQueryKey } from "@workspace/api-client-re
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   TrendingUp, Users, BookOpen, CheckCircle, ArrowRight, Star,
   Zap, Shield, Award, Package, Play, Trophy, Quote,
+  Target, Rocket, BadgeCheck, Sparkles, Heart, Globe,
+  Megaphone, ShoppingCart, LineChart, Lightbulb, Infinity as InfinityIcon,
+  X, HelpCircle, ChevronDown, Layers, Clock,
 } from "lucide-react";
+import { useState } from "react";
+import * as Accordion from "@radix-ui/react-accordion";
 
 const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -35,6 +41,57 @@ const STEPS = [
   { num: "03", Icon: Trophy,   title: "Apply & Grow",    desc: "Complete courses, earn certificates, and build in-demand digital skills you can apply in your career." },
 ] as const;
 
+const TOPICS = [
+  "Affiliate Marketing", "Dropshipping", "Funnel Building", "Product Research",
+  "Paid Ads", "Email Marketing", "Copywriting", "Conversion Optimization",
+  "Supplier Sourcing", "Brand Building", "Sales Automation", "E-commerce",
+  "Lead Generation", "SEO Basics", "Customer Acquisition", "Offer Crafting",
+];
+
+const OUTCOMES = [
+  { icon: Megaphone,    title: "Build High-Converting Funnels",    desc: "Design landing pages, email sequences, and offers that turn cold traffic into paying customers." },
+  { icon: ShoppingCart, title: "Launch Real E-commerce Stores",    desc: "Source winning products, set up automated fulfillment, and run a store that scales." },
+  { icon: LineChart,    title: "Run Profitable Ad Campaigns",      desc: "Master Meta and Google ad creatives, targeting, and budget management to drive consistent ROI." },
+  { icon: Target,       title: "Find & Validate Winning Offers",   desc: "Use proven research frameworks to spot products and angles before the market gets saturated." },
+  { icon: Lightbulb,    title: "Write Copy That Sells",            desc: "Craft headlines, hooks, and calls-to-action that grab attention and move people to buy." },
+  { icon: Rocket,       title: "Automate Customer Acquisition",    desc: "Set up systems that bring in qualified leads on autopilot — even while you sleep." },
+];
+
+const COMPARISON = [
+  { feature: "Action-first lessons you can apply same day",        vka: true,  others: false },
+  { feature: "Taught by practitioners actively running businesses",vka: true,  others: false },
+  { feature: "Hindi + English — easy for Indian learners",         vka: true,  others: false },
+  { feature: "Lifetime access with all future updates",            vka: true,  others: false },
+  { feature: "Real templates, scripts, and frameworks included",   vka: true,  others: false },
+  { feature: "30-day money-back guarantee, no questions asked",    vka: true,  others: false },
+  { feature: "Outdated theory recycled from old YouTube videos",   vka: false, others: true },
+  { feature: "Locked behind monthly subscriptions",                vka: false, others: true },
+];
+
+const PILLARS = [
+  { icon: Layers,     title: "Curated Curriculum",  desc: "Only the lessons that actually move the needle — no fluff, no filler." },
+  { icon: BadgeCheck, title: "Practitioner-Vetted", desc: "Every framework is tested in real businesses before it reaches a lesson." },
+  { icon: InfinityIcon, title: "Lifetime Updates",  desc: "Markets change. Your access — and the content — stays current forever." },
+  { icon: Heart,      title: "Community Support",   desc: "Join a focused community of operators, founders, and serious learners." },
+  { icon: Sparkles,   title: "Premium Production",  desc: "High-quality video, clear audio, and structured chapters in every course." },
+  { icon: Globe,      title: "Learn From Anywhere", desc: "Mobile, tablet, or desktop — pick up exactly where you left off." },
+];
+
+const FAQS = [
+  { q: "Are these courses suitable for complete beginners?",
+    a: "Yes. Every course starts from the fundamentals and builds up step-by-step. You don't need any prior experience — just the willingness to take action and apply what you learn." },
+  { q: "How long do I have access to a course after I buy it?",
+    a: "Forever. All purchases include lifetime access to the course plus every future update we release — no recurring fees, no subscription traps." },
+  { q: "What if I don't like the course after enrolling?",
+    a: "We offer a no-questions-asked 30-day money-back guarantee. If you genuinely tried the course and it didn't deliver, just email us and we'll refund you in full." },
+  { q: "Do I get a certificate after completing a course?",
+    a: "Yes. Once you finish all lessons in a course, you'll receive a digital certificate of completion that you can share on LinkedIn or with potential clients." },
+  { q: "Can I watch the lessons on my phone?",
+    a: "Absolutely. The platform is fully optimized for mobile, tablet, and desktop. Your progress syncs across all devices automatically." },
+  { q: "Is there any support if I get stuck?",
+    a: "Yes. You can reach our team through the help center inside your dashboard, and you'll also have access to a community of fellow learners." },
+];
+
 const levelColors: Record<string, string> = {
   beginner:     "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
   intermediate: "bg-amber-500/10  text-amber-400  border-amber-500/20",
@@ -52,6 +109,71 @@ type HomepageVisibility = { showFeaturedCourses: boolean; showFeaturedPackages: 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <p className="text-xs font-semibold tracking-[0.18em] uppercase text-primary mb-3">{children}</p>
+  );
+}
+
+/* Reusable scroll-in motion primitives */
+function FadeUp({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
+  const reduce = useReducedMotion();
+  return (
+    <motion.div
+      className={className}
+      initial={reduce ? false : { opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-60px" }}
+      transition={{ duration: 0.55, delay, ease: [0.22, 1, 0.36, 1] }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function StaggerGrid({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  const reduce = useReducedMotion();
+  return (
+    <motion.div
+      className={className}
+      initial="hidden"
+      whileInView="show"
+      viewport={{ once: true, margin: "-60px" }}
+      variants={{
+        hidden: {},
+        show: { transition: { staggerChildren: reduce ? 0 : 0.08, delayChildren: reduce ? 0 : 0.05 } },
+      }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function StaggerItem({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  const reduce = useReducedMotion();
+  return (
+    <motion.div
+      className={className}
+      variants={{
+        hidden: reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 22 },
+        show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
+      }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function FaqItem({ q, a, value }: { q: string; a: string; value: string }) {
+  return (
+    <Accordion.Item value={value} className="group bg-card/60 border border-border/70 rounded-xl overflow-hidden hover:border-primary/30 transition-colors data-[state=open]:border-primary/40 data-[state=open]:bg-card">
+      <Accordion.Header>
+        <Accordion.Trigger className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left text-sm font-semibold text-foreground hover:text-primary transition-colors cursor-pointer">
+          <span>{q}</span>
+          <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0 transition-transform duration-300 group-data-[state=open]:rotate-180 group-data-[state=open]:text-primary" />
+        </Accordion.Trigger>
+      </Accordion.Header>
+      <Accordion.Content className="overflow-hidden data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
+        <p className="px-5 pb-5 text-sm text-muted-foreground leading-relaxed">{a}</p>
+      </Accordion.Content>
+    </Accordion.Item>
   );
 }
 
@@ -128,13 +250,42 @@ export default function Home() {
 
       {/* ── STATS BAR ────────────────────────────────────────────────────── */}
       <section className="bg-card/40 border-y border-border/60 py-10 px-6">
-        <div className="container mx-auto max-w-4xl grid grid-cols-2 md:grid-cols-4 gap-8">
+        <StaggerGrid className="container mx-auto max-w-4xl grid grid-cols-2 md:grid-cols-4 gap-8">
           {STATS.map((s, i) => (
-            <div key={s.label} className={`text-center ${i < 3 ? "md:border-r md:border-border/50" : ""}`}>
+            <StaggerItem key={s.label} className={`text-center ${i < 3 ? "md:border-r md:border-border/50" : ""}`}>
               <div className="text-3xl md:text-4xl font-extrabold text-foreground tracking-tight">{s.value}</div>
               <div className="text-xs text-muted-foreground mt-1.5 font-medium">{s.label}</div>
-            </div>
+            </StaggerItem>
           ))}
+        </StaggerGrid>
+      </section>
+
+      {/* ── TOPICS MARQUEE ─────────────────────────────────────────────── */}
+      <section className="relative py-8 md:py-10 bg-background border-b border-border/60 overflow-hidden">
+        <div className="text-center mb-6 px-4">
+          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-muted-foreground/80">
+            Skills · Topics · Frameworks Inside
+          </p>
+        </div>
+        {/* Edge fade masks */}
+        <div className="pointer-events-none absolute top-0 bottom-0 left-0 w-16 md:w-32 z-10 bg-gradient-to-r from-background to-transparent" />
+        <div className="pointer-events-none absolute top-0 bottom-0 right-0 w-16 md:w-32 z-10 bg-gradient-to-l from-background to-transparent" />
+        <div className="flex overflow-hidden">
+          <motion.div
+            className="flex gap-3 pr-3 flex-shrink-0"
+            animate={{ x: ["0%", "-50%"] }}
+            transition={{ duration: 40, ease: "linear", repeat: Infinity }}
+          >
+            {[...TOPICS, ...TOPICS].map((topic, i) => (
+              <span
+                key={`${topic}-${i}`}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card px-4 py-2 text-xs font-medium text-foreground/85 whitespace-nowrap shadow-sm"
+              >
+                <Sparkles className="w-3 h-3 text-primary flex-shrink-0" />
+                {topic}
+              </span>
+            ))}
+          </motion.div>
         </div>
       </section>
 
@@ -308,16 +459,16 @@ export default function Home() {
       {/* ── WHY VKA ──────────────────────────────────────────────────────── */}
       <section className="py-20 px-6 bg-card/25 border-b border-border/60">
         <div className="container mx-auto max-w-5xl">
-          <div className="text-center mb-12">
+          <FadeUp className="text-center mb-12">
             <SectionLabel>Why Choose Us</SectionLabel>
             <h2 className="text-3xl font-extrabold tracking-tight mb-2">Built Different. On Purpose.</h2>
             <p className="text-muted-foreground text-sm max-w-md mx-auto">
               We built the platform we wished existed when we were starting out.
             </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          </FadeUp>
+          <StaggerGrid className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {FEATURES.map(f => (
-              <div key={f.title} className="flex gap-4 p-5 rounded-xl bg-card border border-border/70 hover:border-primary/30 transition-colors duration-200">
+              <StaggerItem key={f.title} className="flex gap-4 p-5 rounded-xl bg-card border border-border/70 hover:border-primary/30 hover:-translate-y-0.5 transition-all duration-200">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <f.icon className="w-5 h-5 text-primary" />
                 </div>
@@ -325,23 +476,151 @@ export default function Home() {
                   <h3 className="font-semibold text-sm mb-1">{f.title}</h3>
                   <p className="text-xs text-muted-foreground leading-relaxed">{f.desc}</p>
                 </div>
-              </div>
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerGrid>
+        </div>
+      </section>
+
+      {/* ── PLATFORM PILLARS ─────────────────────────────────────────────── */}
+      <section className="relative py-20 px-6 bg-background border-b border-border/60 overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,hsl(var(--primary)/0.06),transparent)]" />
+        <div className="relative container mx-auto max-w-6xl">
+          <FadeUp className="text-center mb-14 max-w-2xl mx-auto">
+            <SectionLabel>The Platform</SectionLabel>
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
+              An Ecosystem Built Around <span className="text-primary">Real Outcomes</span>
+            </h2>
+            <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
+              Six pillars that separate us from generic course marketplaces — every feature designed
+              to help serious learners turn knowledge into income.
+            </p>
+          </FadeUp>
+          <StaggerGrid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {PILLARS.map(p => (
+              <StaggerItem
+                key={p.title}
+                className="group relative p-6 rounded-2xl bg-card/70 border border-border/70 hover:border-primary/40 transition-all duration-300 overflow-hidden"
+              >
+                <div className="pointer-events-none absolute -top-12 -right-12 w-32 h-32 rounded-full bg-primary/8 opacity-0 group-hover:opacity-100 blur-2xl transition-opacity duration-500" />
+                <div className="relative">
+                  <div className="w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                    <p.icon className="w-5 h-5 text-primary" strokeWidth={1.75} />
+                  </div>
+                  <h3 className="font-bold text-base mb-1.5 text-foreground">{p.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{p.desc}</p>
+                </div>
+              </StaggerItem>
+            ))}
+          </StaggerGrid>
+        </div>
+      </section>
+
+      {/* ── OUTCOMES — SKILLS YOU'LL MASTER ──────────────────────────────── */}
+      <section className="py-20 px-6 bg-card/25 border-b border-border/60">
+        <div className="container mx-auto max-w-6xl">
+          <FadeUp className="text-center mb-14 max-w-2xl mx-auto">
+            <SectionLabel>What You'll Master</SectionLabel>
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
+              Skills You'll Walk Away <span className="text-primary">Actually Knowing</span>
+            </h2>
+            <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
+              Every course is built around concrete outcomes — not vague promises. Here's what you'll
+              be able to do after going through our curriculum.
+            </p>
+          </FadeUp>
+          <StaggerGrid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+            {OUTCOMES.map(o => (
+              <StaggerItem
+                key={o.title}
+                className="group relative h-full p-6 rounded-2xl bg-card border border-border/70 hover:border-primary/40 hover:-translate-y-1 transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-primary/5"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/20 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
+                    <o.icon className="w-6 h-6 text-primary" strokeWidth={1.75} />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-base mb-1.5 text-foreground group-hover:text-primary transition-colors">{o.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{o.desc}</p>
+                  </div>
+                </div>
+              </StaggerItem>
+            ))}
+          </StaggerGrid>
+        </div>
+      </section>
+
+      {/* ── COMPARISON: VKA vs Generic ───────────────────────────────────── */}
+      <section className="py-20 px-6 bg-background border-b border-border/60">
+        <div className="container mx-auto max-w-4xl">
+          <FadeUp className="text-center mb-12 max-w-2xl mx-auto">
+            <SectionLabel>The Difference</SectionLabel>
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
+              VKA vs <span className="text-muted-foreground">Generic Course Sites</span>
+            </h2>
+            <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
+              We strip out everything that wastes your time and double down on what actually moves
+              the needle for your business.
+            </p>
+          </FadeUp>
+
+          <FadeUp className="rounded-2xl border border-border/70 bg-card/60 overflow-hidden shadow-sm">
+            {/* Header */}
+            <div className="grid grid-cols-[1fr_auto_auto] sm:grid-cols-[1fr_120px_120px] items-center gap-3 sm:gap-6 px-4 sm:px-6 py-4 bg-card border-b border-border/70">
+              <span className="text-xs font-semibold tracking-wider uppercase text-muted-foreground">Feature</span>
+              <span className="text-xs font-bold tracking-wider uppercase text-primary text-center flex items-center justify-center gap-1">
+                <Award className="w-3.5 h-3.5" /> VKA
+              </span>
+              <span className="text-xs font-semibold tracking-wider uppercase text-muted-foreground/80 text-center">Others</span>
+            </div>
+            {/* Rows */}
+            <StaggerGrid>
+              {COMPARISON.map((row, i) => (
+                <StaggerItem
+                  key={row.feature}
+                  className={`grid grid-cols-[1fr_auto_auto] sm:grid-cols-[1fr_120px_120px] items-center gap-3 sm:gap-6 px-4 sm:px-6 py-4 ${i !== COMPARISON.length - 1 ? "border-b border-border/50" : ""} hover:bg-card/80 transition-colors`}
+                >
+                  <span className="text-sm text-foreground/90 leading-snug">{row.feature}</span>
+                  <span className="flex items-center justify-center w-12 sm:w-auto">
+                    {row.vka ? (
+                      <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-emerald-500/15 border border-emerald-500/30">
+                        <CheckCircle className="w-4 h-4 text-emerald-400" />
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-rose-500/10 border border-rose-500/25">
+                        <X className="w-4 h-4 text-rose-400" />
+                      </span>
+                    )}
+                  </span>
+                  <span className="flex items-center justify-center w-12 sm:w-auto">
+                    {row.others ? (
+                      <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-rose-500/10 border border-rose-500/25">
+                        <CheckCircle className="w-4 h-4 text-rose-400/70" />
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-muted/50 border border-border/60">
+                        <X className="w-4 h-4 text-muted-foreground/60" />
+                      </span>
+                    )}
+                  </span>
+                </StaggerItem>
+              ))}
+            </StaggerGrid>
+          </FadeUp>
         </div>
       </section>
 
       {/* ── TESTIMONIALS ─────────────────────────────────────────────────── */}
       <section className="py-20 px-6 bg-background border-b border-border/60">
         <div className="container mx-auto max-w-5xl">
-          <div className="text-center mb-12">
+          <FadeUp className="text-center mb-12">
             <SectionLabel>Student Results</SectionLabel>
             <h2 className="text-3xl font-extrabold tracking-tight mb-2">Real People. Real Revenue.</h2>
             <p className="text-muted-foreground text-sm">Hear directly from operators who've taken the courses.</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          </FadeUp>
+          <StaggerGrid className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {TESTIMONIALS.map(t => (
-              <div key={t.name} className="relative p-6 rounded-xl bg-card border border-border/70 flex flex-col">
+              <StaggerItem key={t.name} className="relative p-6 rounded-xl bg-card border border-border/70 hover:border-primary/30 hover:-translate-y-1 transition-all duration-300 flex flex-col">
                 <Quote className="w-6 h-6 text-primary/20 mb-3 flex-shrink-0" />
                 <div className="flex gap-0.5 mb-3">
                   {Array.from({ length: t.stars }).map((_, i) => (
@@ -358,9 +637,38 @@ export default function Home() {
                     <p className="text-[11px] text-muted-foreground">{t.role}</p>
                   </div>
                 </div>
-              </div>
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerGrid>
+        </div>
+      </section>
+
+      {/* ── FAQ ──────────────────────────────────────────────────────────── */}
+      <section className="py-20 px-6 bg-card/25 border-b border-border/60">
+        <div className="container mx-auto max-w-3xl">
+          <FadeUp className="text-center mb-12">
+            <SectionLabel>Questions, Answered</SectionLabel>
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3 inline-flex items-center gap-3">
+              <HelpCircle className="w-7 h-7 text-primary" strokeWidth={1.75} />
+              Frequently Asked
+            </h2>
+            <p className="text-muted-foreground text-sm sm:text-base max-w-md mx-auto leading-relaxed">
+              Everything you need to know before getting started — straight answers, no marketing fluff.
+            </p>
+          </FadeUp>
+          <FadeUp delay={0.1}>
+            <Accordion.Root type="single" collapsible className="space-y-3">
+              {FAQS.map((f, i) => (
+                <FaqItem key={f.q} q={f.q} a={f.a} value={`faq-${i}`} />
+              ))}
+            </Accordion.Root>
+          </FadeUp>
+          <FadeUp delay={0.2} className="text-center mt-10">
+            <p className="text-sm text-muted-foreground mb-4">Still have a question we didn't cover?</p>
+            <Button variant="outline" size="sm" className="h-10 px-6 text-xs font-semibold border-border/60 hover:border-primary/40" asChild>
+              <Link href="/contact-us">Contact Our Team <ArrowRight className="w-3.5 h-3.5 ml-2" /></Link>
+            </Button>
+          </FadeUp>
         </div>
       </section>
 
