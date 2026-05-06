@@ -103,8 +103,8 @@ export default function BundleDetailPage() {
   const totalHours = Math.round(totalMinutes / 60);
 
   const PurchaseCard = () => (
-    <div className="space-y-6">
-      <div className="bg-card border border-border rounded-2xl p-5 shadow-xl shadow-primary/5 sticky top-24">
+    <div className="space-y-6 self-start">
+      <div className="bg-card border border-border rounded-2xl px-5 pt-4 pb-5 shadow-xl shadow-primary/5 md:sticky md:top-24">
         {/* Price */}
         <div className="mb-4">
           {savingsPct > 0 && !appliedCoupon && (
