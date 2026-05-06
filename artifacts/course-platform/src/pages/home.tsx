@@ -563,12 +563,12 @@ export default function Home() {
                 </div>
 
                 {/* Floating bottom card */}
-                <div className="absolute bottom-4 right-4 max-w-[200px] p-3 rounded-xl bg-background/85 backdrop-blur-md border border-border/70 shadow-xl">
+                <div className="absolute bottom-4 right-4 max-w-[210px] p-3 rounded-xl bg-background/85 backdrop-blur-md border border-border/70 shadow-xl">
                   <div className="flex items-center gap-2 mb-1">
-                    <Trophy className="w-3.5 h-3.5 text-amber-400" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Top Outcome</span>
+                    <BookOpen className="w-3.5 h-3.5 text-primary" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Skill Focus</span>
                   </div>
-                  <p className="text-xs font-semibold text-foreground leading-snug">First ₹1L month within 90 days of starting.</p>
+                  <p className="text-xs font-semibold text-foreground leading-snug">Practical, hands-on learning across modern digital skills.</p>
                 </div>
               </div>
             </FadeUp>
