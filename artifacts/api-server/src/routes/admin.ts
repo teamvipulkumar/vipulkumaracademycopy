@@ -592,15 +592,58 @@ router.get("/enrollments", requireAdmin, async (req, res): Promise<void> => {
   .limit(parseInt(limit))
   .offset(parseInt(offset));
 
-  let result = rows;
+  let baseResult = rows;
   if (search) {
     const s = search.toLowerCase();
-    result = rows.filter(r =>
+    baseResult = rows.filter(r =>
       r.userName.toLowerCase().includes(s) ||
       r.userEmail.toLowerCase().includes(s) ||
       r.courseTitle.toLowerCase().includes(s)
     );
   }
+
+  // Progress per (user, course): two grouped queries scoped to the visible
+  // result page so we avoid N+1. Total lessons per course (via modules join)
+  // and completed lessons per (user, course) from lesson_completions.
+  const courseIds = Array.from(new Set(baseResult.map(r => r.courseId)));
+  const userIds = Array.from(new Set(baseResult.map(r => r.userId)));
+  const totalMap = new Map<number, number>();
+  const completedMap = new Map<string, number>();
+  if (courseIds.length > 0) {
+    const totalsByCourse = await db.select({
+      courseId: modulesTable.courseId,
+      total: count(lessonsTable.id),
+    })
+    .from(lessonsTable)
+    .innerJoin(modulesTable, eq(lessonsTable.moduleId, modulesTable.id))
+    .where(inArray(modulesTable.courseId, courseIds))
+    .groupBy(modulesTable.courseId);
+    for (const t of totalsByCourse) totalMap.set(t.courseId, Number(t.total));
+
+    if (userIds.length > 0) {
+      const completedRows = await db.select({
+        userId: lessonCompletionsTable.userId,
+        courseId: modulesTable.courseId,
+        completed: count(lessonCompletionsTable.id),
+      })
+      .from(lessonCompletionsTable)
+      .innerJoin(lessonsTable, eq(lessonCompletionsTable.lessonId, lessonsTable.id))
+      .innerJoin(modulesTable, eq(lessonsTable.moduleId, modulesTable.id))
+      .where(and(
+        inArray(lessonCompletionsTable.userId, userIds),
+        inArray(modulesTable.courseId, courseIds),
+      ))
+      .groupBy(lessonCompletionsTable.userId, modulesTable.courseId);
+      for (const c of completedRows) completedMap.set(`${c.userId}:${c.courseId}`, Number(c.completed));
+    }
+  }
+
+  const result = baseResult.map(r => {
+    const totalLessons = totalMap.get(r.courseId) ?? 0;
+    const completedLessons = completedMap.get(`${r.userId}:${r.courseId}`) ?? 0;
+    const progressPercent = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+    return { ...r, totalLessons, completedLessons, progressPercent };
+  });
 
   const [totalResult] = await db.select({ total: count() }).from(enrollmentsTable);
   const [completedResult] = await db.select({ total: count() }).from(enrollmentsTable).where(sql`completed_at IS NOT NULL`);

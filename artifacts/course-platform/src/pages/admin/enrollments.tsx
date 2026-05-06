@@ -25,6 +25,9 @@ type Enrollment = {
   userEmail: string;
   courseTitle: string;
   courseThumbnail: string | null;
+  progressPercent: number;
+  completedLessons: number;
+  totalLessons: number;
 };
 
 type Stats = { total: number; active: number; completed: number };
@@ -384,10 +387,10 @@ export default function AdminEnrollmentsPage() {
         </div>
       ) : (
         <div className="border border-border rounded-xl overflow-hidden overflow-x-auto">
-          <table className="w-full min-w-[700px]">
+          <table className="w-full min-w-[860px]">
             <thead className="bg-card border-b border-border">
               <tr>
-                {["Student", "Course", "Enrolled On", "Status", "Actions"].map(h => (
+                {["Student", "Course", "Enrolled On", "Progress", "Status", "Actions"].map(h => (
                   <th key={h} className="text-left text-xs font-semibold text-muted-foreground px-4 py-3 uppercase tracking-wide whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -425,6 +428,33 @@ export default function AdminEnrollmentsPage() {
                     <div className="flex items-center gap-1.5">
                       <Calendar className="w-3 h-3" />{formatDate(e.enrolledAt)}
                     </div>
+                  </td>
+                  {/* Progress */}
+                  <td className="px-4 py-3 whitespace-nowrap min-w-[140px]">
+                    {e.totalLessons === 0 ? (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <div className="w-20 h-1.5 bg-card rounded-full overflow-hidden border border-border">
+                          <div
+                            className={`h-full rounded-full transition-all ${
+                              e.progressPercent >= 100
+                                ? "bg-purple-400"
+                                : e.progressPercent >= 50
+                                ? "bg-green-400"
+                                : e.progressPercent > 0
+                                ? "bg-blue-400"
+                                : "bg-muted-foreground/30"
+                            }`}
+                            style={{ width: `${Math.min(100, Math.max(0, e.progressPercent))}%` }}
+                          />
+                        </div>
+                        <div className="text-xs whitespace-nowrap">
+                          <span className="font-semibold text-foreground">{e.progressPercent}%</span>
+                          <span className="text-muted-foreground ml-1">({e.completedLessons}/{e.totalLessons})</span>
+                        </div>
+                      </div>
+                    )}
                   </td>
                   {/* Status */}
                   <td className="px-4 py-3">
