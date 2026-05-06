@@ -113,7 +113,7 @@ export default function CourseDetailPage() {
                 <div className="flex items-center gap-2 text-sm text-green-400">
                   <Check className="w-3.5 h-3.5" /><span className="font-mono font-bold">{appliedCoupon.code}</span>
                 </div>
-                <button onClick={() => { setAppliedCoupon(null); setCouponCode(""); }} className="text-xs text-muted-foreground hover:text-foreground">Remove</button>
+                <button onClick={() => { setAppliedCoupon(null); setCouponCode(""); }} className="text-xs text-muted-foreground hover:text-foreground cursor-pointer">Remove</button>
               </div>
             )}
             <Button className="w-full cursor-pointer" size="lg" onClick={handleEnroll}>
