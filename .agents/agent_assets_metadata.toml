@@ -1,0 +1,20 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "5-Lt0uMCZuMQ-39W2kotU"
+uri = "file://artifacts/course-platform/src/assets/learn-affiliate.png"
+type = "image"
+title = "affiliate marketing banner"
+
+[[generated]]
+id = "7Q0Oqg4DtBQNWClobqEjv"
+uri = "file://artifacts/course-platform/src/assets/learn-ecommerce.png"
+type = "image"
+title = "ecommerce store banner"
+
+[[generated]]
+id = "1OTsNh8qZIynXSTMZCfXg"
+uri = "file://artifacts/course-platform/src/assets/learn-dropshipping.png"
+type = "image"
+title = "dropshipping banner"
