@@ -103,7 +103,10 @@ export default function BundleDetailPage() {
       : Math.max(0, basePrice - appliedCoupon.discount)
     : basePrice;
 
-  const PurchaseCard = () => (
+  /* Declared as JSX (not a component) so it doesn't get a fresh function
+     identity per render — otherwise the coupon Input loses focus on
+     every keystroke (and the mobile keyboard hides). */
+  const purchaseCard = (
     <div className="space-y-6">
       <div className="bg-card border border-white/10 rounded-2xl p-5 shadow-xl shadow-primary/5 sticky top-4">
         {/* Price */}
@@ -241,7 +244,7 @@ export default function BundleDetailPage() {
               <div className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-primary" /><span>{totalHours}+ hours</span></div>
               <div className="flex items-center gap-1"><Award className="w-3.5 h-3.5 text-primary" /><span>Certificates included</span></div>
             </div>
-            <PurchaseCard />
+            {purchaseCard}
           </div>
 
           {/* Desktop layout */}
@@ -270,7 +273,7 @@ export default function BundleDetailPage() {
                 <div className="flex items-center gap-1.5"><Award className="w-4 h-4 text-primary" /><span>Certificates included</span></div>
               </div>
             </div>
-            <PurchaseCard />
+            {purchaseCard}
           </div>
         </div>
       </div>

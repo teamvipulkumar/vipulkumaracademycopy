@@ -74,8 +74,12 @@ export default function CourseDetailPage() {
     <div className="min-h-screen flex items-center justify-center text-muted-foreground">Course not found.</div>
   );
 
-  /* Shared purchase card */
-  const PurchaseCard = () => (
+  /* Shared purchase card — declared as JSX (not a component) so it doesn't
+     get a fresh function identity on every render. Defining it as a
+     component caused React to unmount/remount the subtree on every
+     keystroke in the coupon Input, killing focus (and hiding the mobile
+     keyboard after each character). */
+  const purchaseCard = (
     <div className="space-y-3">
       <div className="bg-card border border-white/10 rounded-xl p-5 md:p-6 shadow-lg">
         {appliedCoupon ? (
@@ -172,7 +176,7 @@ export default function CourseDetailPage() {
               <div className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-primary" /><span>{Math.round(course.durationMinutes / 60)}h</span></div>
               <div className="flex items-center gap-1"><Award className="w-3.5 h-3.5 text-primary" /><span className="capitalize">{course.level}</span></div>
             </div>
-            <PurchaseCard />
+            {purchaseCard}
           </div>
 
           {/* Desktop: side-by-side */}
@@ -194,7 +198,7 @@ export default function CourseDetailPage() {
                 <div className="flex items-center gap-1.5"><Award className="w-4 h-4 text-primary" /><span className="capitalize">{course.level}</span></div>
               </div>
             </div>
-            <PurchaseCard />
+            {purchaseCard}
           </div>
         </div>
       </div>
