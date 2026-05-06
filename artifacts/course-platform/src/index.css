@@ -6,6 +6,9 @@ html, body {
   overflow-x: hidden;
   max-width: 100vw;
 }
+html {
+  overflow-y: scroll;
+}
 
 @keyframes cta-bounce-glow {
   0%, 100% { transform: translateY(0); }
@@ -612,16 +615,17 @@ html, body {
 
 /* ──────────────────────────────────────────────────────────────────
    Prevent layout shift when Radix UI components (Select, Dialog,
-   Popover) lock body scroll. Radix's react-remove-scroll adds an
-   inline padding-right on <body> equal to the scrollbar width,
-   which pushes content left. We forcibly override any inline
-   padding/margin on body and reserve scrollbar gutter on html.
+   Popover) open. Radix's react-remove-scroll sets body overflow to
+   hidden and adds an inline padding-right equal to the scrollbar
+   width — this pushes content left. We force the scrollbar to be
+   permanently visible on <html> (rule above) so Radix's body
+   overflow:hidden has no visual effect, and we strip any inline
+   padding/margin Radix injects on <body>.
    ────────────────────────────────────────────────────────────── */
-html {
-  scrollbar-gutter: stable;
-}
 body[style*="padding-right"],
-body[data-scroll-locked] {
+body[data-scroll-locked],
+body.with-scroll-bars-hidden {
   padding-right: 0 !important;
   margin-right: 0 !important;
+  overflow: visible !important;
 }
