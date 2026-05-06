@@ -1059,8 +1059,7 @@ export const CreateCouponBody = zod.object({
  */
 export const ValidateCouponBody = zod.object({
   code: zod.string(),
-  courseId: zod.number().nullish(),
-  bundleId: zod.number().nullish(),
+  courseId: zod.number(),
 });
 
 export const ValidateCouponResponse = zod.object({

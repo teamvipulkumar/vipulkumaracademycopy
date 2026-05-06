@@ -515,34 +515,10 @@ export default function BundleCheckoutPage() {
 
   const savings = compareAt ? compareAt - discountedPrice : individualTotal - discountedPrice;
 
-  // Auto-apply coupon code passed via URL query param (?coupon=CODE) from
-  // the bundle detail page's "Get Package Now" button. Runs once per page
-  // load after the bundle has loaded so server-side validation succeeds.
-  const couponAutoApplied = useRef(false);
-  useEffect(() => {
-    if (couponAutoApplied.current || bundleId <= 0 || !bundle) return;
-    const urlCoupon = new URLSearchParams(window.location.search).get("coupon");
-    if (!urlCoupon) return;
-    couponAutoApplied.current = true;
-    const code = urlCoupon.trim().toUpperCase();
-    setCouponCode(code);
-    validateCoupon.mutate({ data: { code, bundleId } }, {
-      onSuccess: (data) => {
-        if (!data.valid) {
-          toast({ title: "Coupon no longer valid", description: data.message, variant: "destructive" });
-          return;
-        }
-        setAppliedCoupon({ code, discount: data.discountValue ?? 0, type: data.discountType ?? "percentage" });
-        toast({ title: "Coupon applied!", description: data.message });
-      },
-      onError: () => toast({ title: "Could not apply coupon", description: "Please re-enter the code.", variant: "destructive" }),
-    });
-  }, [bundleId, bundle]);
-
   const handleApplyCoupon = () => {
     if (!couponCode.trim()) return;
     const code = couponCode.trim().toUpperCase();
-    validateCoupon.mutate({ data: { code, bundleId } }, {
+    validateCoupon.mutate({ data: { code, courseId: undefined as unknown as number } }, {
       onSuccess: (data) => {
         if (!data.valid) { toast({ title: "Invalid coupon", description: data.message, variant: "destructive" }); return; }
         setAppliedCoupon({ code, discount: data.discountValue ?? 0, type: data.discountType ?? "percentage" });
@@ -994,7 +970,7 @@ export default function BundleCheckoutPage() {
                         {appliedCoupon.type === "percentage" ? `${appliedCoupon.discount}% off` : `₹${appliedCoupon.discount} off`}
                       </span>
                     </div>
-                    <button type="button" onClick={() => { setAppliedCoupon(null); setCouponCode(""); }} className="text-xs text-muted-foreground hover:text-foreground cursor-pointer">Remove</button>
+                    <button type="button" onClick={() => { setAppliedCoupon(null); setCouponCode(""); }} className="text-xs text-muted-foreground hover:text-foreground">Remove</button>
                   </div>
                 )}
               </div>

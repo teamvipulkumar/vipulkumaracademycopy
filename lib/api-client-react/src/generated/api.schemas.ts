@@ -581,8 +581,7 @@ export interface CreateCouponBody {
 
 export interface ValidateCouponBody {
   code: string;
-  courseId?: number | null;
-  bundleId?: number | null;
+  courseId: number;
 }
 
 export interface CouponValidation {

@@ -1,14 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { useValidateCoupon } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
 import {
   Package, ChevronRight, Check, BookOpen, Clock, Award, Lock,
-  Zap, Shield, Users, Star, Tag,
+  Zap, Shield, Users, Star,
 } from "lucide-react";
 
 const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -33,9 +30,6 @@ export default function BundleDetailPage() {
   const [, params] = useRoute("/bundles/:id");
   const bundleId = parseInt(params?.id ?? "0");
   const [, navigate] = useLocation();
-  const { toast } = useToast();
-  const [couponCode, setCouponCode] = useState("");
-  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number; type: string } | null>(null);
 
   useEffect(() => { window.scrollTo({ top: 0, behavior: "instant" }); }, [bundleId]);
 
@@ -48,28 +42,6 @@ export default function BundleDetailPage() {
     },
     enabled: bundleId > 0,
   });
-
-  const validateCoupon = useValidateCoupon();
-
-  const handleApplyCoupon = () => {
-    if (!couponCode.trim() || bundleId <= 0) return;
-    const code = couponCode.trim().toUpperCase();
-    validateCoupon.mutate({ data: { code, bundleId } }, {
-      onSuccess: (data) => {
-        if (!data.valid) { toast({ title: "Invalid coupon", description: data.message, variant: "destructive" }); return; }
-        setAppliedCoupon({ code, discount: data.discountValue ?? 0, type: data.discountType ?? "percentage" });
-        toast({ title: "Coupon applied!", description: data.message });
-      },
-      onError: () => toast({ title: "Invalid coupon", description: "This code is invalid or expired.", variant: "destructive" }),
-    });
-  };
-
-  const goToCheckout = () => {
-    const query = new URLSearchParams();
-    if (appliedCoupon) query.set("coupon", appliedCoupon.code);
-    const qs = query.toString();
-    navigate(`/bundles/${bundleId}/checkout${qs ? `?${qs}` : ""}`);
-  };
 
   if (isLoading) {
     return (
@@ -87,12 +59,6 @@ export default function BundleDetailPage() {
     );
   }
 
-  const discountedPrice = appliedCoupon
-    ? appliedCoupon.type === "percentage"
-      ? bundle.price - (bundle.price * appliedCoupon.discount / 100)
-      : Math.max(0, bundle.price - appliedCoupon.discount)
-    : bundle.price;
-
   const savings = bundle.compareAtPrice
     ? bundle.compareAtPrice - bundle.price
     : bundle.courses.reduce((s, c) => s + c.price, 0) - bundle.price;
@@ -107,58 +73,25 @@ export default function BundleDetailPage() {
       <div className="bg-card border border-border rounded-2xl p-5 shadow-xl shadow-primary/5 sticky top-24">
         {/* Price */}
         <div className="mb-4">
-          {savingsPct > 0 && !appliedCoupon && (
+          {savingsPct > 0 && (
             <div className="inline-flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-bold px-2.5 py-1 rounded-full mb-2">
               <Zap className="w-3 h-3" />{savingsPct}% OFF — Save ₹{savings.toFixed(0)}
             </div>
           )}
-          {appliedCoupon ? (
-            <>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground line-through">₹{bundle.price}</div>
-              <div className="text-3xl font-bold text-green-400">₹{discountedPrice.toFixed(2)}</div>
-              <div className="flex items-center gap-1.5 text-xs text-green-400 mt-1">
-                <Tag className="w-3 h-3" /><span>{appliedCoupon.code} applied</span>
-              </div>
-            </>
-          ) : (
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-foreground">₹{bundle.price}</span>
-              {compareAt > bundle.price && (
-                <span className="text-base text-muted-foreground line-through">₹{compareAt.toFixed(0)}</span>
-              )}
-            </div>
-          )}
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-bold text-foreground">₹{bundle.price}</span>
+            {compareAt > bundle.price && (
+              <span className="text-base text-muted-foreground line-through">₹{compareAt.toFixed(0)}</span>
+            )}
+          </div>
         </div>
-
-        {/* Coupon code field */}
-        {!appliedCoupon ? (
-          <div className="flex gap-2 mb-3">
-            <Input
-              placeholder="Coupon code"
-              value={couponCode}
-              onChange={e => setCouponCode(e.target.value.toUpperCase())}
-              onKeyDown={e => e.key === "Enter" && handleApplyCoupon()}
-              className="bg-background text-sm h-9 font-mono min-w-0"
-            />
-            <Button variant="outline" size="sm" onClick={handleApplyCoupon} disabled={validateCoupon.isPending} className="h-9 px-3 cursor-pointer">
-              {validateCoupon.isPending ? "..." : <Tag className="w-4 h-4" />}
-            </Button>
-          </div>
-        ) : (
-          <div className="flex items-center justify-between mb-3 p-2 rounded-lg bg-green-500/10 border border-green-500/20">
-            <div className="flex items-center gap-2 text-sm text-green-400">
-              <Check className="w-3.5 h-3.5" /><span className="font-mono font-bold">{appliedCoupon.code}</span>
-            </div>
-            <button onClick={() => { setAppliedCoupon(null); setCouponCode(""); }} className="text-xs text-muted-foreground hover:text-foreground cursor-pointer">Remove</button>
-          </div>
-        )}
 
         <Button
           size="lg"
-          className="w-full gap-2 text-base font-semibold mb-3 cursor-pointer"
-          onClick={goToCheckout}
+          className="w-full gap-2 text-base font-semibold mb-3"
+          onClick={() => navigate(`/bundles/${bundleId}/checkout`)}
         >
-          <Package className="w-4 h-4" />Get Package Now · ₹{discountedPrice.toFixed(2)}
+          <Package className="w-4 h-4" />Get Package Now
         </Button>
         <p className="text-xs text-muted-foreground text-center mb-4">
           30-day money-back guarantee · Instant access
@@ -379,10 +312,10 @@ export default function BundleDetailPage() {
             <div className="mt-6 md:hidden">
               <Button
                 size="lg"
-                className="w-full gap-2 text-base font-semibold cursor-pointer"
-                onClick={goToCheckout}
+                className="w-full gap-2 text-base font-semibold"
+                onClick={() => navigate(`/bundles/${bundleId}/checkout`)}
               >
-                <Package className="w-4 h-4" />Get Package · ₹{discountedPrice.toFixed(2)}
+                <Package className="w-4 h-4" />Get Package · ₹{bundle.price}
               </Button>
               <p className="text-xs text-muted-foreground text-center mt-2">30-day money-back guarantee</p>
             </div>

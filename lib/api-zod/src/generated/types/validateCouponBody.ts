@@ -8,6 +8,5 @@
 
 export interface ValidateCouponBody {
   code: string;
-  courseId?: number | null;
-  bundleId?: number | null;
+  courseId: number;
 }

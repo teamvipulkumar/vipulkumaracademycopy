@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { couponsTable, coursesTable, bundlesTable } from "@workspace/db";
+import { couponsTable, coursesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { requireAdmin } from "../middlewares/auth";
 
@@ -26,32 +26,13 @@ router.post("/", requireAdmin, async (req, res): Promise<void> => {
 });
 
 router.post("/validate", async (req, res): Promise<void> => {
-  const { code, courseId, bundleId } = req.body;
-  if (!code || (!courseId && !bundleId)) {
-    res.status(400).json({ error: "code and either courseId or bundleId required" });
-    return;
-  }
+  const { code, courseId } = req.body;
+  if (!code || !courseId) { res.status(400).json({ error: "code and courseId required" }); return; }
 
   const [coupon] = await db.select().from(couponsTable).where(eq(couponsTable.code, code.toUpperCase())).limit(1);
   if (!coupon || !coupon.isActive) { res.json({ valid: false, message: "Invalid or inactive coupon" }); return; }
   if (coupon.expiresAt && coupon.expiresAt < new Date()) { res.json({ valid: false, message: "Coupon has expired" }); return; }
   if (coupon.maxUses && coupon.usedCount >= coupon.maxUses) { res.json({ valid: false, message: "Coupon usage limit reached" }); return; }
-
-  // Bundle path: bundle-scoped purchase. Course-restricted coupons (those tied
-  // to a specific course) are NOT applicable to bundles — mirrors the server's
-  // bundle checkout logic at routes/bundles.ts which skips coupons with courseId.
-  if (bundleId && !courseId) {
-    if (coupon.courseId) { res.json({ valid: false, message: "Coupon not valid for packages" }); return; }
-    const [bundle] = await db.select().from(bundlesTable).where(eq(bundlesTable.id, bundleId)).limit(1);
-    if (!bundle) { res.status(404).json({ error: "Bundle not found" }); return; }
-    const price = parseFloat(String(bundle.price));
-    const discountValue = parseFloat(String(coupon.discountValue));
-    const finalPrice = coupon.discountType === "percentage" ? price * (1 - discountValue / 100) : Math.max(0, price - discountValue);
-    res.json({ valid: true, discountType: coupon.discountType, discountValue, finalPrice, message: `Coupon applied! You save ${coupon.discountType === "percentage" ? discountValue + "%" : "₹" + discountValue}` });
-    return;
-  }
-
-  // Course path (original behaviour).
   if (coupon.courseId && coupon.courseId !== courseId) { res.json({ valid: false, message: "Coupon not valid for this course" }); return; }
 
   const [course] = await db.select().from(coursesTable).where(eq(coursesTable.id, courseId)).limit(1);
@@ -61,7 +42,7 @@ router.post("/validate", async (req, res): Promise<void> => {
   const discountValue = parseFloat(String(coupon.discountValue));
   const finalPrice = coupon.discountType === "percentage" ? price * (1 - discountValue / 100) : Math.max(0, price - discountValue);
 
-  res.json({ valid: true, discountType: coupon.discountType, discountValue, finalPrice, message: `Coupon applied! You save ${coupon.discountType === "percentage" ? discountValue + "%" : "₹" + discountValue}` });
+  res.json({ valid: true, discountType: coupon.discountType, discountValue, finalPrice, message: `Coupon applied! You save ${coupon.discountType === "percentage" ? discountValue + "%" : "$" + discountValue}` });
 });
 
 router.delete("/:couponId", requireAdmin, async (req, res): Promise<void> => {
