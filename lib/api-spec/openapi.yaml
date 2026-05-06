@@ -2005,7 +2005,11 @@ components:
           type: string
         courseId:
           type: integer
-      required: [code, courseId]
+          nullable: true
+        bundleId:
+          type: integer
+          nullable: true
+      required: [code]
 
     CouponValidation:
       type: object
