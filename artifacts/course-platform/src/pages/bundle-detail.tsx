@@ -284,11 +284,11 @@ export default function BundleDetailPage() {
           <div className="md:col-span-2">
             <h2 className="text-xl md:text-2xl font-bold mb-6">Courses Included in This Package</h2>
 
-            <div className="space-y-4">
+            <div className="space-y-4 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
               {bundle.courses.map((course, idx) => (
-                <div key={course.id} className="bg-card border border-white/10 rounded-2xl overflow-hidden hover:border-primary/30 transition-colors">
-                  {/* Mobile: full-width banner thumbnail on top */}
-                  <div className="relative w-full aspect-video sm:hidden">
+                <div key={course.id} className="bg-card border border-white/10 rounded-2xl overflow-hidden hover:border-primary/30 transition-colors flex flex-col">
+                  {/* Full-width banner: visible on mobile (<sm) AND desktop (md+) */}
+                  <div className="relative w-full aspect-video sm:hidden md:block">
                     {course.thumbnailUrl ? (
                       <img src={course.thumbnailUrl} alt={course.title} className="w-full h-full object-cover" />
                     ) : (
@@ -302,9 +302,9 @@ export default function BundleDetailPage() {
                       </div>
                     )}
                   </div>
-                  <div className="flex gap-3 sm:gap-4 p-3 sm:p-4">
-                    {/* Desktop / sm+: compact side thumbnail */}
-                    <div className="relative flex-shrink-0 w-24 sm:w-28 md:w-36 aspect-video rounded-lg sm:rounded-xl overflow-hidden hidden sm:block">
+                  <div className="flex gap-3 sm:gap-4 p-3 sm:p-4 md:flex-1">
+                    {/* Tablet only (sm to <md): compact side thumbnail */}
+                    <div className="relative flex-shrink-0 w-28 aspect-video rounded-xl overflow-hidden hidden sm:block md:hidden">
                       {course.thumbnailUrl ? (
                         <img src={course.thumbnailUrl} alt={course.title} className="w-full h-full object-cover" />
                       ) : (
@@ -320,14 +320,14 @@ export default function BundleDetailPage() {
                     </div>
 
                     {/* Info */}
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 flex flex-col">
                       <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap mb-1.5">
                         <Badge variant="outline" className={`text-[10px] px-1.5 py-0 capitalize ${levelColors[course.level] ?? ""}`}>
                           {course.level}
                         </Badge>
                         <span className="text-[11px] sm:text-xs text-muted-foreground truncate">{course.category}</span>
-                        <span className="text-xs text-muted-foreground hidden sm:block">·</span>
-                        <span className="text-xs text-muted-foreground hidden sm:block">{Math.round((course.durationMinutes ?? 0) / 60)}h</span>
+                        <span className="text-xs text-muted-foreground hidden sm:block md:hidden">·</span>
+                        <span className="text-xs text-muted-foreground hidden sm:block md:hidden">{Math.round((course.durationMinutes ?? 0) / 60)}h</span>
                       </div>
                       <h3 className="font-bold text-foreground text-sm md:text-base leading-snug mb-1.5">
                         <span className="text-primary/50 font-normal mr-1.5 text-xs">#{idx + 1}</span>
@@ -336,19 +336,19 @@ export default function BundleDetailPage() {
                       {course.description && (
                         <p className="text-xs text-muted-foreground line-clamp-2 mb-2 hidden sm:block">{course.description}</p>
                       )}
-                      {/* Mobile: compact meta row with crossed price + Included */}
-                      <div className="flex items-center gap-2 sm:gap-3 text-[11px] sm:text-xs text-muted-foreground flex-wrap">
-                        <span className="flex items-center gap-1"><Clock className="w-3 h-3 text-primary" />{Math.round((course.durationMinutes ?? 0) / 60)}h<span className="hidden sm:inline"> content</span></span>
-                        <span className="hidden sm:flex items-center gap-1"><Lock className="w-3 h-3 text-green-400" />Included in package</span>
-                        <span className="sm:hidden line-through">₹{course.price}</span>
-                        <span className="sm:hidden flex items-center gap-1 text-green-400 font-medium">
+                      {/* Meta row — mobile + md+ show inline crossed price + Included; tablet (sm-md) shows on side */}
+                      <div className="flex items-center gap-2 sm:gap-3 text-[11px] sm:text-xs text-muted-foreground flex-wrap mt-auto">
+                        <span className="flex items-center gap-1"><Clock className="w-3 h-3 text-primary" />{Math.round((course.durationMinutes ?? 0) / 60)}h<span className="hidden sm:inline md:hidden"> content</span></span>
+                        <span className="hidden sm:flex md:hidden items-center gap-1"><Lock className="w-3 h-3 text-green-400" />Included in package</span>
+                        <span className="sm:hidden md:inline line-through">₹{course.price}</span>
+                        <span className="sm:hidden md:flex items-center gap-1 text-green-400 font-medium">
                           <Check className="w-3 h-3" />Included
                         </span>
                       </div>
                     </div>
 
-                    {/* Desktop only: price crossed out / Included column */}
-                    <div className="hidden sm:flex flex-shrink-0 flex-col items-end justify-between">
+                    {/* Tablet only (sm to <md): price crossed out / Included column */}
+                    <div className="hidden sm:flex md:hidden flex-shrink-0 flex-col items-end justify-between">
                       <div className="text-right">
                         <p className="text-xs text-muted-foreground line-through">₹{course.price}</p>
                         <div className="flex items-center gap-1 mt-1">
