@@ -497,9 +497,9 @@ export default function Home() {
                 playbooks.
               </p>
               <p className="text-sm md:text-base text-muted-foreground leading-relaxed mb-7">
-                Inside, you get hands-on toolkits, live breakdowns, a network of fellow builders,
-                and a roadmap that meets you where you are — whether you're starting your first
-                store or scaling past your first lakh in monthly revenue.
+                Inside, you get hands-on toolkits, live breakdowns, a network of fellow learners,
+                and a structured learning path that meets you where you are — whether you're
+                exploring a new digital skill or sharpening your existing toolkit.
               </p>
 
               {/* Mini stat row */}
