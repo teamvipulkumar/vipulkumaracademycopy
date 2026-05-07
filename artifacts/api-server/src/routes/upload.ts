@@ -28,11 +28,12 @@ const mediaUpload = multer({
   storage: memoryStorage,
   limits: { fileSize: 50 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    // SECURITY: SVGs intentionally excluded — they're XML and can carry inline
-    // <script> / event handlers, which would execute as the same origin as the
-    // public Supabase Storage URL the file is served from.
+    // NOTE: SVGs are accepted but sanitized below in `sanitizeSvgBuffer` to
+    // strip scripts, event handlers, and javascript: URLs before upload —
+    // Supabase Storage serves them from a different origin so XSS impact on
+    // the app is already contained, but defence-in-depth still applies.
     const allowed = [
-      "image/jpeg", "image/png", "image/webp", "image/gif", "image/avif",
+      "image/jpeg", "image/png", "image/webp", "image/gif", "image/avif", "image/svg+xml",
       "video/mp4", "video/webm", "video/quicktime", "video/x-msvideo",
       "application/pdf",
       "application/msword",
@@ -46,6 +47,28 @@ const mediaUpload = multer({
     else cb(new Error("File type not allowed."));
   },
 });
+
+// Sanitize SVG XML by stripping <script>, <foreignObject>, on* event handler
+// attributes, and javascript: URLs. Defence-in-depth — SVGs served from
+// Supabase Storage live on a different origin from the app, but a sanitized
+// SVG is still safer if linked or embedded directly via <object>/<iframe>.
+function sanitizeSvgBuffer(buf: Buffer): Buffer {
+  let s = buf.toString("utf8");
+  // Strip <script> … </script>
+  s = s.replace(/<script\b[\s\S]*?<\/script\s*>/gi, "");
+  // Strip self-closing <script ... />
+  s = s.replace(/<script\b[^>]*\/>/gi, "");
+  // Strip <foreignObject> … </foreignObject> (can host arbitrary HTML/JS)
+  s = s.replace(/<foreignObject\b[\s\S]*?<\/foreignObject\s*>/gi, "");
+  // Strip on*=" … " / on*=' … ' / on*=value (event handlers)
+  s = s.replace(/\son[a-z]+\s*=\s*"[^"]*"/gi, "");
+  s = s.replace(/\son[a-z]+\s*=\s*'[^']*'/gi, "");
+  s = s.replace(/\son[a-z]+\s*=\s*[^\s/>]+/gi, "");
+  // Neutralize javascript: in href/xlink:href/src
+  s = s.replace(/(href|xlink:href|src)\s*=\s*"\s*javascript:[^"]*"/gi, '$1="#"');
+  s = s.replace(/(href|xlink:href|src)\s*=\s*'\s*javascript:[^']*'/gi, "$1='#'");
+  return Buffer.from(s, "utf8");
+}
 
 function generateFilename(originalName: string): string {
   const ext = path.extname(originalName).toLowerCase() || ".bin";
@@ -68,12 +91,15 @@ router.post("/file", requireAdmin, mediaUpload.single("file"), async (req, res) 
   if (!req.file) { res.status(400).json({ error: "No file provided" }); return; }
   try {
     const filename = generateFilename(req.file.originalname);
-    const url = await uploadFile(filename, req.file.buffer, req.file.mimetype);
+    const buffer = req.file.mimetype === "image/svg+xml"
+      ? sanitizeSvgBuffer(req.file.buffer)
+      : req.file.buffer;
+    const url = await uploadFile(filename, buffer, req.file.mimetype);
     res.json({
       url,
       filename,
       originalName: req.file.originalname,
-      size: req.file.size,
+      size: buffer.length,
       mimetype: req.file.mimetype,
     });
   } catch (err) {

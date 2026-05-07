@@ -158,7 +158,7 @@ export default function AdminFilesPage() {
             ref={inputRef}
             type="file"
             multiple
-            accept="image/*,video/*,application/pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx"
+            accept="image/*,image/svg+xml,.svg,video/*,application/pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx"
             className="hidden"
             onChange={e => uploadFiles(e.target.files)}
           />
