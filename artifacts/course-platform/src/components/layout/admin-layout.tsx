@@ -5,13 +5,21 @@ import { Button } from "@/components/ui/button";
 import { useAuth, getStaffLandingPath, useAdminBase, adminPathSuffix } from "@/lib/auth-context";
 
 function AdminLogo() {
+  // ClickOcean mark (matches the public navbar mark, scaled for admin sidebar).
   return (
     <svg width="26" height="26" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="40" height="40" rx="10" fill="#2563eb" />
-      <path d="M20 8L32 14v2l-12 6L8 16v-2L20 8z" fill="white" opacity="0.95" />
-      <path d="M12 18.5v7c0 1.5 3.6 4.5 8 4.5s8-3 8-4.5v-7L20 22l-8-3.5z" fill="white" opacity="0.85" />
-      <rect x="31" y="14" width="2" height="10" rx="1" fill="white" opacity="0.7" />
-      <circle cx="32" cy="25" r="2" fill="#60a5fa" />
+      <defs>
+        <linearGradient id="coAdminBg" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#22D3EE" />
+          <stop offset="55%" stopColor="#0284C7" />
+          <stop offset="100%" stopColor="#0C4A6E" />
+        </linearGradient>
+      </defs>
+      <rect width="40" height="40" rx="10" fill="url(#coAdminBg)" />
+      <circle cx="20" cy="11.5" r="5.6" stroke="white" strokeOpacity="0.35" strokeWidth="1.1" fill="none" />
+      <circle cx="20" cy="11.5" r="2.6" fill="white" />
+      <path d="M5 24 C 9 21, 13 21, 17 24 S 25 27, 29 24 S 35 21, 37 23.5" stroke="white" strokeWidth="2.4" strokeLinecap="round" fill="none" />
+      <path d="M5 30.5 C 9 27.5, 13 27.5, 17 30.5 S 25 33.5, 29 30.5 S 35 27.5, 37 30" stroke="white" strokeOpacity="0.65" strokeWidth="2.2" strokeLinecap="round" fill="none" />
     </svg>
   );
 }
@@ -215,7 +223,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-2">
             <AdminLogo />
             <div className="leading-none">
-              <p className="font-bold text-xs text-foreground tracking-wide">VK ACADEMY</p>
+              <p className="font-bold text-xs text-foreground tracking-wide">CLICKOCEAN</p>
               <p className="text-[10px] text-primary/80 tracking-wider uppercase font-medium">{panelLabel}</p>
             </div>
           </div>
@@ -229,7 +237,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         </Button>
         <AdminLogo />
         <div className="leading-none">
-          <p className="font-bold text-xs text-foreground">VK ACADEMY</p>
+          <p className="font-bold text-xs text-foreground">CLICKOCEAN</p>
           <p className="text-[10px] text-primary/80 tracking-wide uppercase">{panelLabel}</p>
         </div>
       </div>
@@ -242,7 +250,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               <div className="flex items-center gap-2">
                 <AdminLogo />
                 <div className="leading-none">
-                  <p className="font-bold text-xs text-foreground tracking-wide">VK ACADEMY</p>
+                  <p className="font-bold text-xs text-foreground tracking-wide">CLICKOCEAN</p>
                   <p className="text-[10px] text-primary/80 tracking-wider uppercase">{panelLabel}</p>
                 </div>
               </div>

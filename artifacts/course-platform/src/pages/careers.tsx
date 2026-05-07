@@ -108,7 +108,7 @@ export default function CareersPage() {
                 </ul>
               </div>
               <a
-                href="mailto:careers@vipulkumaracademy.com?subject=Application: Vipul Kumar Academy"
+                href="mailto:careers@vipulkumaracademy.com?subject=Application: ClickOcean"
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors"
               >
                 Apply Now
@@ -124,7 +124,7 @@ export default function CareersPage() {
             We're always looking for exceptional talent. Send us your CV and a short note on what you'd like to build with us.
           </p>
           <a
-            href="mailto:careers@vipulkumaracademy.com?subject=General Application – Vipul Kumar Academy"
+            href="mailto:careers@vipulkumaracademy.com?subject=General Application – ClickOcean"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-accent transition-colors"
           >
             Send a General Application

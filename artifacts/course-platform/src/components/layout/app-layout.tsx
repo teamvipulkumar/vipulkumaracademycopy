@@ -11,33 +11,31 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { EmailVerificationBanner } from "@/components/email-verification-banner";
 
 function AcademyLogo({ size = 32 }: { size?: number }) {
+  // ClickOcean brand mark — rounded square with ocean gradient, a click
+  // ripple at the top (cursor "tap"), and two flowing white waves below.
+  // Designed for crisp rendering down to 16px (favicon parity).
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id="logoGrad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#3b82f6" />
-          <stop offset="100%" stopColor="#1d4ed8" />
+        <linearGradient id="coLogoBg" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#22D3EE" />
+          <stop offset="55%" stopColor="#0284C7" />
+          <stop offset="100%" stopColor="#0C4A6E" />
         </linearGradient>
-        <linearGradient id="shineGrad" x1="0" y1="0" x2="40" y2="20" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="white" stopOpacity="0.15" />
-          <stop offset="100%" stopColor="white" stopOpacity="0" />
+        <linearGradient id="coLogoShine" x1="0" y1="0" x2="0" y2="40" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="white" stopOpacity="0.22" />
+          <stop offset="55%" stopColor="white" stopOpacity="0" />
         </linearGradient>
       </defs>
-      {/* Background */}
-      <rect width="40" height="40" rx="10" fill="url(#logoGrad)" />
-      <rect width="40" height="40" rx="10" fill="url(#shineGrad)" />
-      {/* Mortarboard cap top */}
-      <polygon points="20,9 33,15.5 20,22 7,15.5" fill="white" opacity="0.97" />
-      {/* Cap brim highlight */}
-      <polygon points="20,9 33,15.5 20,16.5 7,15.5" fill="white" opacity="0.2" />
-      {/* Gown / diploma scroll body */}
-      <path d="M13 18.2v7.3c0 2 3.1 4.5 7 4.5s7-2.5 7-4.5v-7.3L20 21.5l-7-3.3z" fill="white" opacity="0.88" />
-      {/* Tassel cord */}
-      <line x1="33" y1="15.5" x2="33" y2="25" stroke="white" strokeWidth="1.8" strokeLinecap="round" opacity="0.7" />
-      {/* Tassel ball */}
-      <circle cx="33" cy="26.5" r="2" fill="#93c5fd" />
-      {/* Star spark top-left */}
-      <circle cx="9" cy="10" r="1" fill="white" opacity="0.5" />
+      <rect width="40" height="40" rx="10" fill="url(#coLogoBg)" />
+      <rect width="40" height="40" rx="10" fill="url(#coLogoShine)" />
+      {/* Click ripple ring + dot */}
+      <circle cx="20" cy="11.5" r="5.6" stroke="white" strokeOpacity="0.35" strokeWidth="1.1" fill="none" />
+      <circle cx="20" cy="11.5" r="2.6" fill="white" />
+      {/* Top wave */}
+      <path d="M5 24 C 9 21, 13 21, 17 24 S 25 27, 29 24 S 35 21, 37 23.5" stroke="white" strokeWidth="2.4" strokeLinecap="round" fill="none" />
+      {/* Bottom wave */}
+      <path d="M5 30.5 C 9 27.5, 13 27.5, 17 30.5 S 25 33.5, 29 30.5 S 35 27.5, 37 30" stroke="white" strokeOpacity="0.65" strokeWidth="2.2" strokeLinecap="round" fill="none" />
     </svg>
   );
 }
@@ -269,11 +267,11 @@ export function Navbar() {
             </div>
             {!branding.siteLogo && (
               <div className="leading-tight">
-                <p className="font-extrabold text-sm tracking-wide text-foreground whitespace-nowrap leading-none">
-                  VIPUL KUMAR
+                <p className="font-extrabold text-base tracking-tight text-foreground whitespace-nowrap leading-none">
+                  Click<span className="bg-gradient-to-r from-cyan-400 to-sky-500 bg-clip-text text-transparent">Ocean</span>
                 </p>
-                <p className="text-[10px] font-semibold tracking-[0.2em] text-primary uppercase leading-none mt-0.5">
-                  ACADEMY
+                <p className="text-[9px] font-semibold tracking-[0.22em] text-muted-foreground uppercase leading-none mt-1">
+                  Skill • Build • Grow
                 </p>
               </div>
             )}
@@ -519,8 +517,10 @@ export function SiteFooter() {
                 <>
                   <AcademyLogo size={36} />
                   <div className="leading-tight">
-                    <p className="font-extrabold text-sm tracking-wide text-foreground whitespace-nowrap leading-none">VIPUL KUMAR</p>
-                    <p className="text-[10px] font-semibold tracking-[0.2em] text-primary uppercase leading-none mt-0.5">ACADEMY</p>
+                    <p className="font-extrabold text-base tracking-tight text-foreground whitespace-nowrap leading-none">
+                      Click<span className="bg-gradient-to-r from-cyan-400 to-sky-500 bg-clip-text text-transparent">Ocean</span>
+                    </p>
+                    <p className="text-[9px] font-semibold tracking-[0.22em] text-muted-foreground uppercase leading-none mt-1">Skill • Build • Grow</p>
                   </div>
                 </>
               )}

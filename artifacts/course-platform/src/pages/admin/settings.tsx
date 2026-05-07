@@ -530,7 +530,7 @@ export default function AdminSettingsPage() {
               <Input
                 value={brandingForm.siteName}
                 onChange={e => setBrandingForm(f => ({ ...f, siteName: e.target.value }))}
-                placeholder="e.g. Vipul Kumar Academy"
+                placeholder="e.g. ClickOcean"
                 className="bg-background border-border"
               />
               <p className="text-[11px] text-muted-foreground">Displayed in the navbar, emails and browser tab</p>
@@ -667,7 +667,7 @@ export default function AdminSettingsPage() {
                 <Input
                   value={brandingForm.metaTitle}
                   onChange={e => setBrandingForm(f => ({ ...f, metaTitle: e.target.value }))}
-                  placeholder="e.g. Vipul Kumar Academy — Learn Affiliate Marketing"
+                  placeholder="e.g. ClickOcean — Learn Affiliate Marketing"
                   className="bg-background border-border"
                   maxLength={70}
                 />

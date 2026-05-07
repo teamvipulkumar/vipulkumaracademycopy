@@ -446,7 +446,7 @@ export default function Home() {
           </div>
         </div>
       </section>
-      {/* ── WHY VKA ──────────────────────────────────────────────────────── */}
+      {/* ── WHY CLICKOCEAN ───────────────────────────────────────────────── */}
       <section className="py-20 px-6 bg-card/25 border-b border-border/60">
         <div className="container mx-auto max-w-5xl">
           <FadeUp className="text-center mb-12">
@@ -480,14 +480,14 @@ export default function Home() {
             <FadeUp className="order-2 lg:order-1">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-border/70 bg-card/60 text-[11px] font-semibold tracking-wider uppercase text-muted-foreground mb-5">
                 <Heart className="w-3 h-3 text-primary" />
-                About VKA
+                About ClickOcean
               </span>
               <h2 className="text-[26px] sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight leading-[1.15] sm:leading-[1.1] mb-4 sm:mb-5">
                 More Than a Course Library —{" "}
                 <span className="text-primary">A Builder's Community.</span>
               </h2>
               <p className="text-sm md:text-base text-muted-foreground leading-relaxed mb-5">
-                Vipul Kumar Academy started with one belief: serious learners deserve more than
+                ClickOcean started with one belief: serious learners deserve more than
                 recycled tutorials and theory-heavy slides. Every course we publish is shaped by
                 operators actively running businesses — not retired marketers reading from old
                 playbooks.
@@ -632,13 +632,13 @@ export default function Home() {
           </StaggerGrid>
         </div>
       </section>
-      {/* ── COMPARISON: VKA vs Generic ───────────────────────────────────── */}
+      {/* ── COMPARISON: ClickOcean vs Generic ────────────────────────────── */}
       <section className="py-14 sm:py-20 px-4 sm:px-6 bg-background border-b border-border/60">
         <div className="container mx-auto max-w-4xl">
           <FadeUp className="text-center mb-10 sm:mb-12 max-w-2xl mx-auto">
             <SectionLabel>The Difference</SectionLabel>
             <h2 className="text-[26px] sm:text-3xl md:text-4xl font-extrabold tracking-tight leading-[1.15] sm:leading-tight mb-3">
-              VKA vs <span className="text-muted-foreground">Generic Course Sites</span>
+              ClickOcean vs <span className="text-muted-foreground">Generic Course Sites</span>
             </h2>
             <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
               We strip out everything that wastes your time and double down on what actually moves
@@ -651,7 +651,7 @@ export default function Home() {
             <div className="grid grid-cols-[1fr_56px_56px] sm:grid-cols-[1fr_120px_120px] items-center gap-2 sm:gap-6 px-3 sm:px-6 py-3 sm:py-4 bg-card border-b border-border/70">
               <span className="text-[11px] sm:text-xs font-semibold tracking-wider uppercase text-muted-foreground">Feature</span>
               <span className="text-[11px] sm:text-xs font-bold tracking-wider uppercase text-primary text-center flex items-center justify-center gap-1">
-                <Award className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> VKA
+                <Award className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> ClickOcean
               </span>
               <span className="text-[11px] sm:text-xs font-semibold tracking-wider uppercase text-muted-foreground/80 text-center">Others</span>
             </div>

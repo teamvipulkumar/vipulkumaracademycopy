@@ -17,7 +17,7 @@ export default function TermsOfServicePage() {
 
           <section>
             <h2 className="text-xl font-bold text-foreground mb-3">1. Acceptance of Terms</h2>
-            <p>By accessing or using the Vipul Kumar Academy platform ("Service"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, do not use the Service. These Terms apply to all visitors, users, and others who access the Service.</p>
+            <p>By accessing or using the ClickOcean platform ("Service"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, do not use the Service. These Terms apply to all visitors, users, and others who access the Service.</p>
           </section>
 
           <section>
@@ -67,7 +67,7 @@ export default function TermsOfServicePage() {
 
           <section>
             <h2 className="text-xl font-bold text-foreground mb-3">8. Intellectual Property</h2>
-            <p>All content on the platform — including courses, videos, text, graphics, logos, and software — is the property of Vipul Kumar Academy or its content creators and is protected by applicable intellectual property laws. You are granted a limited, non-exclusive, non-transferable license to access and view the content for personal, non-commercial purposes only.</p>
+            <p>All content on the platform — including courses, videos, text, graphics, logos, and software — is the property of ClickOcean or its content creators and is protected by applicable intellectual property laws. You are granted a limited, non-exclusive, non-transferable license to access and view the content for personal, non-commercial purposes only.</p>
           </section>
 
           <section>
@@ -77,7 +77,7 @@ export default function TermsOfServicePage() {
 
           <section>
             <h2 className="text-xl font-bold text-foreground mb-3">10. Limitation of Liability</h2>
-            <p>To the fullest extent permitted by law, Vipul Kumar Academy shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Service, even if advised of the possibility of such damages. Our total liability shall not exceed the amount paid by you in the last 12 months.</p>
+            <p>To the fullest extent permitted by law, ClickOcean shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Service, even if advised of the possibility of such damages. Our total liability shall not exceed the amount paid by you in the last 12 months.</p>
           </section>
 
           <section>
@@ -98,7 +98,7 @@ export default function TermsOfServicePage() {
           <section>
             <h2 className="text-xl font-bold text-foreground mb-3">14. Contact</h2>
             <address className="mt-3 not-italic border border-border rounded-xl p-5 bg-card/50 text-sm space-y-1">
-              <p className="font-semibold text-foreground">Vipul Kumar Academy</p>
+              <p className="font-semibold text-foreground">ClickOcean</p>
               <p>Email: <a href="mailto:legal@vipulkumaracademy.com" className="text-primary hover:underline">legal@vipulkumaracademy.com</a></p>
             </address>
           </section>

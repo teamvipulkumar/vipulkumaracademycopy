@@ -1,3 +1,19 @@
-<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="180" height="180" rx="36" fill="#FF3C00"/>
+<svg width="180" height="180" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="coBg" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#22D3EE"/>
+      <stop offset="55%" stop-color="#0284C7"/>
+      <stop offset="100%" stop-color="#0C4A6E"/>
+    </linearGradient>
+    <linearGradient id="coShine" x1="0" y1="0" x2="0" y2="40" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="white" stop-opacity="0.22"/>
+      <stop offset="55%" stop-color="white" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="40" height="40" rx="10" fill="url(#coBg)"/>
+  <rect width="40" height="40" rx="10" fill="url(#coShine)"/>
+  <circle cx="20" cy="11.5" r="5.6" stroke="white" stroke-opacity="0.35" stroke-width="1.1" fill="none"/>
+  <circle cx="20" cy="11.5" r="2.6" fill="white"/>
+  <path d="M5 24 C 9 21, 13 21, 17 24 S 25 27, 29 24 S 35 21, 37 23.5" stroke="white" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+  <path d="M5 30.5 C 9 27.5, 13 27.5, 17 30.5 S 25 33.5, 29 30.5 S 35 27.5, 37 30" stroke="white" stroke-opacity="0.65" stroke-width="2.2" stroke-linecap="round" fill="none"/>
 </svg>

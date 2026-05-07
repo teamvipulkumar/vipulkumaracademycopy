@@ -37,7 +37,7 @@ function BrandBlock() {
           Creator <span className="bg-gradient-to-r from-violet-400 to-blue-400 bg-clip-text text-transparent">Panel</span>
         </p>
         <p className="text-[9.5px] text-muted-foreground tracking-[0.14em] uppercase font-semibold mt-0.5">
-          VKA · Partner Portal
+          ClickOcean · Partner Portal
         </p>
       </div>
     </div>

@@ -79,7 +79,7 @@ export default function VerifyEmailPage() {
               <p className="text-slate-300 text-sm mb-7 leading-relaxed">
                 {state === "already"
                   ? "Your email address is already verified. You have full access to your account."
-                  : "Your email has been successfully verified. Welcome to Vipul Kumar Academy!"}
+                  : "Your email has been successfully verified. Welcome to ClickOcean!"}
               </p>
               <Link href="/my-courses"
                 className="inline-flex items-center justify-center h-11 px-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors text-sm">

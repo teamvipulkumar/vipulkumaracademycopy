@@ -40,7 +40,7 @@ export function GoogleSignInButton({ mode = "signin" }: GoogleSignInButtonProps)
   const [, setLocation] = useLocation();
 
   const handleFinish = () => {
-    toast({ title: mode === "signup" ? "Account created!" : "Signed in!", description: "Welcome to Vipul Kumar Academy" });
+    toast({ title: mode === "signup" ? "Account created!" : "Signed in!", description: "Welcome to ClickOcean" });
     // Resolve the right landing page based on role / staff permissions, the
     // same way email/password login does. Without this, an admin or staff
     // member who signs in with Google would always land on /my-courses.
