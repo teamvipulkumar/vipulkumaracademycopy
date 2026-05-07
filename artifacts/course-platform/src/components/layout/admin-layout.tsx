@@ -5,21 +5,23 @@ import { Button } from "@/components/ui/button";
 import { useAuth, getStaffLandingPath, useAdminBase, adminPathSuffix } from "@/lib/auth-context";
 
 function AdminLogo() {
-  // ClickOcean mark (matches the public navbar mark, scaled for admin sidebar).
+  // ClickOcean mark — matches the public navbar mark for brand consistency.
   return (
     <svg width="26" height="26" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id="coAdminBg" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#22D3EE" />
-          <stop offset="55%" stopColor="#0284C7" />
-          <stop offset="100%" stopColor="#0C4A6E" />
+        <linearGradient id="coAdminWave" x1="6" y1="34" x2="34" y2="8" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#0EA5E9" />
+          <stop offset="55%" stopColor="#2563EB" />
+          <stop offset="100%" stopColor="#1E3A8A" />
+        </linearGradient>
+        <linearGradient id="coAdminCursor" x1="20" y1="14" x2="28" y2="24" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#38BDF8" />
+          <stop offset="100%" stopColor="#1D4ED8" />
         </linearGradient>
       </defs>
-      <rect width="40" height="40" rx="10" fill="url(#coAdminBg)" />
-      <circle cx="20" cy="11.5" r="5.6" stroke="white" strokeOpacity="0.35" strokeWidth="1.1" fill="none" />
-      <circle cx="20" cy="11.5" r="2.6" fill="white" />
-      <path d="M5 24 C 9 21, 13 21, 17 24 S 25 27, 29 24 S 35 21, 37 23.5" stroke="white" strokeWidth="2.4" strokeLinecap="round" fill="none" />
-      <path d="M5 30.5 C 9 27.5, 13 27.5, 17 30.5 S 25 33.5, 29 30.5 S 35 27.5, 37 30" stroke="white" strokeOpacity="0.65" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+      <path d="M30 11 C 25 7, 16 7, 11 13 C 5 20, 6 30, 14 34 C 22 38, 32 33, 33 24" stroke="url(#coAdminWave)" strokeWidth="5" strokeLinecap="round" fill="none" />
+      <path d="M11 35 Q 18 33, 25 35" stroke="url(#coAdminWave)" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.55" />
+      <path d="M21 14 L 29 17.5 L 25.5 19.5 L 27.3 23.3 L 25.4 24.2 L 23.6 20.4 L 20.2 22.5 Z" fill="url(#coAdminCursor)" stroke="white" strokeWidth="0.5" strokeLinejoin="round" />
     </svg>
   );
 }
