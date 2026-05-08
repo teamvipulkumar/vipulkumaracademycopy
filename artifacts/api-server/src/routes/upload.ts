@@ -15,9 +15,12 @@ const imageUpload = multer({
   storage: memoryStorage,
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"];
+    // SVGs are allowed but sanitized in the route handler below via
+    // `sanitizeSvgBuffer` to strip <script>, event handlers, and javascript:
+    // URLs before upload. Keeps logos/favicons workable from the media picker.
+    const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif", "image/svg+xml"];
     if (allowed.includes(file.mimetype)) cb(null, true);
-    else cb(new Error("Only JPEG, PNG, WebP, GIF, and AVIF images are allowed."));
+    else cb(new Error("Only JPEG, PNG, WebP, GIF, AVIF, and SVG images are allowed."));
   },
 });
 
@@ -80,7 +83,10 @@ router.post("/image", requireAuth, imageUpload.single("image"), async (req, res)
   if (!req.file) { res.status(400).json({ error: "No image file provided" }); return; }
   try {
     const filename = generateFilename(req.file.originalname);
-    const url = await uploadFile(filename, req.file.buffer, req.file.mimetype);
+    const buffer = req.file.mimetype === "image/svg+xml"
+      ? sanitizeSvgBuffer(req.file.buffer)
+      : req.file.buffer;
+    const url = await uploadFile(filename, buffer, req.file.mimetype);
     res.json({ url, filename });
   } catch (err) {
     res.status(500).json({ error: err instanceof Error ? err.message : "Upload failed" });
