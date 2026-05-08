@@ -158,6 +158,12 @@ const THEMES: { id: Theme; label: string; description: string; swatches: string[
     description: "Clean white & blue",
     swatches: ["#f8fafc", "#e2e8f0", "#3b5bdb", "#1e293b"],
   },
+  {
+    id: "midnight",
+    label: "Midnight",
+    description: "Black canvas & emerald glow",
+    swatches: ["#070d0a", "#0e1612", "#10b981", "#a7f3d0"],
+  },
 ];
 
 export default function AdminSettingsPage() {

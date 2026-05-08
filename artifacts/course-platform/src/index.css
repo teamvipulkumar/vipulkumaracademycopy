@@ -180,6 +180,92 @@ body {
   color-scheme: dark;
 }
 
+/* ── Midnight mode (Sheryians-inspired emerald-on-black) ─────────
+   Deep, almost-black surfaces with a faint emerald undertone, set
+   off by a vivid emerald accent for primary CTAs, focus rings and
+   highlights. A pair of soft radial glows on the body create the
+   ambient green light visible on the reference site. Cards lean
+   slightly cool-green so chrome reads as one cohesive palette.
+   ────────────────────────────────────────────────────────────── */
+.midnight {
+  --button-outline: rgba(16,185,129, .14);
+  --badge-outline: rgba(16,185,129, .10);
+  --opaque-button-border-intensity: 9;
+  --elevate-1: rgba(16,185,129, .04);
+  --elevate-2: rgba(16,185,129, .08);
+
+  --nav-bg: #060a08;
+  --nav-border: rgba(16,185,129, 0.10);
+  --dropdown-bg: #0c1410;
+  --dropdown-border: rgba(16,185,129, 0.14);
+  --footer-bg: #030605;
+  --mobile-drawer-bg: #060a08;
+
+  /* Deep emerald-tinted black */
+  --background: 156 22% 4%;          /* ~#070d0a */
+  --foreground: 140 25% 96%;         /* near-white, faint green tint */
+
+  --border: 158 22% 13%;
+  --input: 158 22% 14%;
+  --ring: 158 64% 50%;               /* emerald focus ring */
+
+  --card: 158 22% 7%;                /* ~#0e1612 */
+  --card-foreground: 140 25% 96%;
+  --card-border: 158 22% 14%;
+
+  --popover: 158 22% 9%;             /* floats above card */
+  --popover-foreground: 140 25% 96%;
+  --popover-border: 158 22% 18%;
+
+  --sidebar: 156 22% 4%;
+  --sidebar-foreground: 140 18% 88%;
+  --sidebar-border: 158 22% 13%;
+  --sidebar-primary: 158 64% 48%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 158 22% 12%;
+  --sidebar-accent-foreground: 140 25% 96%;
+  --sidebar-ring: 158 64% 50%;
+
+  /* Vivid emerald primary — Sheryians-style CTA */
+  --primary: 158 64% 45%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 158 22% 12%;
+  --secondary-foreground: 140 25% 96%;
+
+  --muted: 158 20% 11%;
+  --muted-foreground: 158 10% 62%;
+
+  --accent: 158 22% 14%;
+  --accent-foreground: 140 25% 96%;
+
+  --destructive: 0 72% 54%;
+  --destructive-foreground: 0 0% 100%;
+
+  --chart-1: 158 64% 50%;            /* emerald */
+  --chart-2: 38 92% 60%;             /* amber */
+  --chart-3: 217 91% 60%;            /* blue */
+  --chart-4: 280 65% 65%;            /* violet */
+  --chart-5: 340 75% 62%;            /* rose */
+
+  --shadow-sm: 0px 1px 2px 0px rgba(0,0,0,0.55);
+  --shadow:    0px 4px 12px -2px rgba(0,0,0,0.6);
+  --shadow-md: 0px 8px 24px -4px rgba(0,0,0,0.6);
+  --shadow-lg: 0px 16px 40px -8px rgba(0,0,0,0.65);
+
+  color-scheme: dark;
+}
+
+/* Soft ambient emerald glows on the canvas — fixed so they stay put
+   as the user scrolls, mirroring the reference site's mood. */
+.midnight body {
+  background:
+    radial-gradient(ellipse 1100px 560px at 18% -5%, rgba(16,185,129,0.10), transparent 60%),
+    radial-gradient(ellipse  900px 460px at 82% 25%, rgba(16,185,129,0.05), transparent 60%),
+    hsl(var(--background));
+  background-attachment: fixed;
+}
+
 /* ── Light mode ── */
 .light {
   --button-outline: rgba(15,23,42, .10);
