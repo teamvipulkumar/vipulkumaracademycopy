@@ -105,86 +105,78 @@ body {
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* ── Dark mode (default) ──────────────────────────────────────────
-   Premium SAAS dark palette: neutral zinc surfaces (Linear/Vercel
-   style) with the brand electric-blue reserved for accents. Pure
-   neutral surfaces let the brand colour pop on CTAs, charts and
-   focus rings instead of competing with a navy background.
-   ────────────────────────────────────────────────────────────── */
+/* ── Dark mode (default) ── */
 :root, .dark {
-  --button-outline: rgba(255,255,255, .08);
-  --badge-outline: rgba(255,255,255, .06);
+  --button-outline: rgba(255,255,255, .10);
+  --badge-outline: rgba(255,255,255, .05);
   --opaque-button-border-intensity: 9;
-  --elevate-1: rgba(255,255,255, .035);
-  --elevate-2: rgba(255,255,255, .07);
+  --elevate-1: rgba(255,255,255, .04);
+  --elevate-2: rgba(255,255,255, .09);
 
-  /* Chrome surfaces — slightly deeper than card for visual layering */
-  --nav-bg: #0e0e10;
+  --nav-bg: #0b1120;
   --nav-border: rgba(255,255,255,0.06);
-  --dropdown-bg: #18181b;
-  --dropdown-border: rgba(255,255,255,0.08);
-  --footer-bg: #08080a;
-  --mobile-drawer-bg: #0e0e10;
+  --dropdown-bg: #0b1120;
+  --dropdown-border: rgba(255,255,255,0.10);
+  --footer-bg: #040810;
+  --mobile-drawer-bg: #0b1120;
 
-  /* Neutral zinc base — true neutral with a hair of cool tint */
-  --background: 240 6% 8%;          /* ~#131316 */
-  --foreground: 0 0% 98%;
+  /* Deep Navy Background */
+  --background: 222 47% 7%;
+  --foreground: 210 40% 98%;
+  
+  --border: 217 32% 12%;
+  --input: 217 32% 14%;
+  --ring: 224 76% 48%;
 
-  --border: 240 5% 17%;             /* subtle dividers, never harsh */
-  --input: 240 5% 16%;
-  --ring: 217 91% 60%;              /* brand blue focus ring */
+  --card: 222 47% 11%;
+  --card-foreground: 210 40% 98%;
+  --card-border: 217 32% 12%;
 
-  --card: 240 5% 12%;                /* ~#1c1c20 — one tier above bg */
-  --card-foreground: 0 0% 98%;
-  --card-border: 240 5% 18%;
+  --popover: 222 47% 11%;
+  --popover-foreground: 210 40% 98%;
+  --popover-border: 217 32% 12%;
 
-  --popover: 240 5% 14%;             /* ~#222226 — floats above card */
-  --popover-foreground: 0 0% 98%;
-  --popover-border: 240 5% 22%;
+  --sidebar: 222 47% 7%;
+  --sidebar-foreground: 210 40% 98%;
+  --sidebar-border: 217 32% 12%;
+  --sidebar-primary: 224 76% 48%;
+  --sidebar-primary-foreground: 210 40% 98%;
+  --sidebar-accent: 217 32% 17%;
+  --sidebar-accent-foreground: 210 40% 98%;
+  --sidebar-ring: 224 76% 48%;
 
-  --sidebar: 240 6% 7%;              /* ~#111114 — deeper than canvas */
-  --sidebar-foreground: 0 0% 92%;
-  --sidebar-border: 240 5% 17%;
-  --sidebar-primary: 217 91% 60%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 240 5% 16%;
-  --sidebar-accent-foreground: 0 0% 98%;
-  --sidebar-ring: 217 91% 60%;
-
-  /* Electric blue primary — brand accent, brighter on neutral bg */
-  --primary: 217 91% 60%;
+  /* Electric Blue Primary */
+  --primary: 224 76% 48%;
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 240 5% 16%;
-  --secondary-foreground: 0 0% 95%;
+  --secondary: 217 32% 17%;
+  --secondary-foreground: 210 40% 98%;
 
-  --muted: 240 5% 14%;
-  --muted-foreground: 240 5% 64%;
+  --muted: 217 32% 17%;
+  --muted-foreground: 215 20.2% 65.1%;
 
-  --accent: 240 5% 18%;
-  --accent-foreground: 0 0% 98%;
+  --accent: 217 32% 17%;
+  --accent-foreground: 210 40% 98%;
 
-  --destructive: 0 72% 51%;
-  --destructive-foreground: 0 0% 100%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
 
-  /* Chart palette: brand blue + complementary modern hues */
-  --chart-1: 217 91% 60%;            /* brand blue */
-  --chart-2: 158 64% 52%;            /* emerald */
-  --chart-3: 38 92% 60%;             /* amber */
-  --chart-4: 280 65% 65%;            /* violet */
-  --chart-5: 340 75% 62%;            /* rose */
+  --chart-1: 224 76% 48%;
+  --chart-2: 210 40% 98%;
+  --chart-3: 199 89% 48%;
+  --chart-4: 217 32% 17%;
+  --chart-5: 222 47% 11%;
 
   --app-font-sans: 'Inter', sans-serif;
   --app-font-serif: Georgia, serif;
   --app-font-mono: Menlo, monospace;
   --radius: .5rem;
 
-  /* Layered shadows — premium depth without heaviness */
-  --shadow-sm: 0px 1px 2px 0px rgba(0,0,0,0.45);
-  --shadow:    0px 4px 12px -2px rgba(0,0,0,0.55);
-  --shadow-md: 0px 8px 24px -4px rgba(0,0,0,0.55);
-  --shadow-lg: 0px 16px 40px -8px rgba(0,0,0,0.6);
-
+  --shadow-sm: 0px 2px 4px 0px rgba(0,0,0,0.5);
+  --shadow: 0px 4px 8px 0px rgba(0,0,0,0.5);
+  --shadow-md: 0px 8px 16px 0px rgba(0,0,0,0.5);
+  --shadow-lg: 0px 16px 32px 0px rgba(0,0,0,0.5);
+  
   color-scheme: dark;
 }
 
@@ -270,122 +262,6 @@ body {
 }
 
 
-/* ──────────────────────────────────────────────────────────────────
-   Dark-mode remap for hardcoded navy/slate Tailwind classes.
-   Many pages were authored against the old NAVY dark theme and use
-   classes like `bg-slate-900`, `bg-[#0d1424]`, `border-slate-800`.
-   In the new neutral-zinc dark palette those would produce blue-
-   tinted patches sitting on a neutral background — clashing instead
-   of blending. Remap them to the active dark tokens so every page
-   feels native to the new SAAS palette.
-   ────────────────────────────────────────────────────────────── */
-
-/* Hardcoded near-black surfaces → card */
-.dark .bg-slate-950,
-.dark .bg-slate-900,
-.dark .bg-gray-950,
-.dark .bg-gray-900,
-.dark .bg-zinc-950,
-.dark .bg-zinc-900,
-.dark .bg-neutral-950,
-.dark .bg-neutral-900 {
-  background-color: hsl(var(--card)) !important;
-}
-
-/* One tier up → muted */
-.dark .bg-slate-800,
-.dark .bg-gray-800,
-.dark .bg-zinc-800,
-.dark .bg-neutral-800 {
-  background-color: hsl(var(--muted)) !important;
-}
-
-/* Two tiers up → accent */
-.dark .bg-slate-700,
-.dark .bg-gray-700,
-.dark .bg-zinc-700,
-.dark .bg-neutral-700 {
-  background-color: hsl(var(--accent)) !important;
-}
-
-/* Hardcoded GitHub-style hex backgrounds used in admin pages */
-.dark .bg-\[\#0d1424\],
-.dark .bg-\[\#0d1117\],
-.dark .bg-\[\#0b1120\],
-.dark .bg-\[\#040810\] {
-  background-color: hsl(var(--card)) !important;
-}
-.dark .bg-\[\#161b22\],
-.dark .bg-\[\#1a2332\] {
-  background-color: hsl(var(--muted)) !important;
-}
-
-/* Borders: hardcoded slate/blue-grey → neutral border token */
-.dark .border-slate-700,
-.dark .border-slate-800,
-.dark .border-slate-900,
-.dark .border-gray-700,
-.dark .border-gray-800,
-.dark .border-gray-900,
-.dark .border-zinc-700,
-.dark .border-zinc-800,
-.dark .border-zinc-900,
-.dark .border-neutral-700,
-.dark .border-neutral-800,
-.dark .border-neutral-900 {
-  border-color: hsl(var(--border)) !important;
-}
-
-/* Directional borders used as dividers */
-.dark .border-t-slate-800,
-.dark .border-t-slate-900,
-.dark .border-t-gray-800,
-.dark .border-t-gray-900,
-.dark .border-t-zinc-800,
-.dark .border-t-zinc-900,
-.dark .border-b-slate-800,
-.dark .border-b-slate-900,
-.dark .border-b-gray-800,
-.dark .border-b-gray-900,
-.dark .border-b-zinc-800,
-.dark .border-b-zinc-900 {
-  border-color: hsl(var(--border)) !important;
-}
-
-/* Divide colours (table inter-row borders) */
-.dark .divide-slate-700 > * + *,
-.dark .divide-slate-800 > * + *,
-.dark .divide-gray-700 > * + *,
-.dark .divide-gray-800 > * + *,
-.dark .divide-zinc-700 > * + *,
-.dark .divide-zinc-800 > * + * {
-  border-color: hsl(var(--border)) !important;
-}
-
-/* Gradients fading between dark navy stops → use neutral card stops */
-.dark .from-slate-950, .dark .from-slate-900,
-.dark .from-gray-950, .dark .from-gray-900,
-.dark .from-zinc-950, .dark .from-zinc-900,
-.dark .from-neutral-950, .dark .from-neutral-900 {
-  --tw-gradient-from: hsl(var(--card)) !important;
-  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, transparent) !important;
-}
-.dark .via-slate-900, .dark .via-gray-900, .dark .via-zinc-900 {
-  --tw-gradient-via: hsl(var(--muted)) !important;
-}
-.dark .to-slate-950, .dark .to-slate-900,
-.dark .to-gray-950, .dark .to-gray-900,
-.dark .to-zinc-950, .dark .to-zinc-900,
-.dark .to-neutral-950, .dark .to-neutral-900 {
-  --tw-gradient-to: hsl(var(--card)) !important;
-}
-.dark .from-slate-800, .dark .from-gray-800, .dark .from-zinc-800 {
-  --tw-gradient-from: hsl(var(--muted)) !important;
-  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, transparent) !important;
-}
-.dark .to-slate-800, .dark .to-gray-800, .dark .to-zinc-800 {
-  --tw-gradient-to: hsl(var(--muted)) !important;
-}
 
 
 /* ──────────────────────────────────────────────────────────────────
