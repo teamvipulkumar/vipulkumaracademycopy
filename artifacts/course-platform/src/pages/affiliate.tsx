@@ -507,18 +507,18 @@ function AffiliateDashboard({ user }: { user: any }) {
   );
 
   return (
-    // Heights below use `3.5rem` (56px) to match the global Navbar height
-    // (h-14). Previously these were `4rem`/`top-16` from the old h-16 navbar
-    // and left an 8px gap between the header and the affiliate sidebar on
-    // mobile. Keep these in sync if the navbar height ever changes again.
-    <div className="flex h-[calc(100vh-3.5rem)] bg-background overflow-hidden">
+    // Heights below use `60px` to exactly match the global Navbar
+    // height (`h-[60px]` in app-layout). Earlier `3.5rem` (56px) caused
+    // a 4px overlap with the header on mobile when the sidebar opened.
+    // Keep these in sync if the navbar height ever changes.
+    <div className="flex h-[calc(100vh-60px)] bg-background overflow-hidden">
       {/* Mobile overlay */}
       {sidebarOpen && (
-        <div className="fixed top-14 inset-x-0 bottom-0 z-40 bg-black/60 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed top-[60px] inset-x-0 bottom-0 z-40 bg-black/60 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
       {/* Sidebar — fixed on desktop, slide-over on mobile (force-open during tour) */}
       <aside className={`
-        fixed lg:sticky top-14 h-[calc(100vh-3.5rem)] z-50 lg:z-auto
+        fixed lg:sticky top-[60px] h-[calc(100vh-60px)] z-50 lg:z-auto
         w-56 flex-shrink-0 bg-card border-r border-border flex flex-col overflow-y-auto
         transition-transform duration-200
         ${sidebarOpen || tourSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
