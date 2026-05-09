@@ -7,24 +7,28 @@ import { UpcalifyLogo } from "@/components/upcalify-logo";
 import { useBranding, useThemedLogo } from "@/lib/branding-context";
 
 /**
- * Logo for the admin/staff sidebar header. Honours the same `logoSize`
- * configured in Site Identity & SEO so the brand mark looks identical
- * across the public site and the back-office panels.
- *
- * `variant="desktop"` uses the desktop logo size, `"mobile"` uses the
- * mobile size — keeps the small top-bar tidy on phones.
+ * Logo for the admin/staff sidebar header. Reads the configured `logoSize`
+ * from Site Identity & SEO but caps it for the sidebar — the public navbar
+ * is wide enough for big logos, but a 224px sidebar needs a tighter mark
+ * to stay legible and professional. The 28/22px ceilings are tuned so the
+ * brand mark sits like a typical SaaS dashboard wordmark (Linear, Stripe).
  */
+const SIDEBAR_LOGO_MAX_DESKTOP = 28;
+const SIDEBAR_LOGO_MAX_MOBILE = 22;
+
 function AdminLogo({ variant = "desktop" }: { variant?: "desktop" | "mobile" }) {
   const themedLogo = useThemedLogo();
   const { siteName, logoSize, logoSizeMobile } = useBranding();
-  const height = variant === "mobile" ? logoSizeMobile : logoSize;
+  const cap = variant === "mobile" ? SIDEBAR_LOGO_MAX_MOBILE : SIDEBAR_LOGO_MAX_DESKTOP;
+  const configured = variant === "mobile" ? logoSizeMobile : logoSize;
+  const height = Math.min(configured, cap);
   if (themedLogo) {
     return (
       <img
         src={themedLogo}
         alt={siteName || "Logo"}
         className="object-contain"
-        style={{ height, width: "auto", maxWidth: height * 4 }}
+        style={{ height, width: "auto", maxWidth: height * 5 }}
       />
     );
   }
@@ -226,14 +230,15 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <aside className="hidden md:flex w-56 border-r border-border bg-card flex-shrink-0 flex-col h-screen">
-        {/* Sidebar brand block — logo sits on top, panel label centered just
-            below it. Stacked layout (vs. inline) gives the back-office a
-            cleaner, more "product header" feel and lets the logo breathe at
-            its real configured size. */}
-        <div className="p-4 border-b border-border">
-          <div className="flex flex-col items-center gap-1.5 text-center">
+        {/* Sidebar brand block — left-aligned, two tight rows: brand mark on
+            top and a small panel label directly underneath. Mirrors the
+            condensed wordmark + section subtitle pattern used by Linear,
+            Stripe and Vercel back-offices, which read as far more "product
+            grade" than centered marketing-style headers. */}
+        <div className="px-4 py-3.5 border-b border-border">
+          <div className="flex flex-col items-start gap-1">
             <AdminLogo variant="desktop" />
-            <span className="text-[10px] text-primary/80 tracking-[0.18em] uppercase font-semibold leading-none">
+            <span className="text-[9px] text-muted-foreground tracking-[0.22em] uppercase font-semibold leading-none">
               {panelLabel}
             </span>
           </div>
@@ -241,29 +246,29 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         <NavContent location={location} />
       </aside>
 
-      {/* Mobile top bar — kept horizontal because the 56px strip is too
-          tight to stack. Logo uses the configured mobile size, label sits
-          right next to it like the public site's mobile navbar. */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 h-14 bg-card border-b border-border flex items-center px-4 gap-3">
+      {/* Mobile top bar — horizontal layout because the 56px strip can't
+          stack two rows. Logo + tiny pill label sit beside the menu button. */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 h-14 bg-card border-b border-border flex items-center px-3 gap-2">
         <Button variant="ghost" size="sm" className="px-2" onClick={() => setMobileOpen(o => !o)}>
           {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </Button>
-        <AdminLogo variant="mobile" />
-        <span className="text-[10px] text-primary/80 tracking-[0.18em] uppercase font-semibold border-l border-border pl-2 leading-none">
-          {panelLabel}
-        </span>
+        <div className="flex flex-col items-start gap-0.5 min-w-0">
+          <AdminLogo variant="mobile" />
+          <span className="text-[8px] text-muted-foreground tracking-[0.22em] uppercase font-semibold leading-none">
+            {panelLabel}
+          </span>
+        </div>
       </div>
 
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-40">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
           <aside className="absolute top-14 left-0 bottom-0 w-64 bg-card border-r border-border flex flex-col shadow-2xl">
-            {/* Mobile drawer mirrors the desktop sidebar — stacked logo +
-                panel label for a consistent professional look. */}
-            <div className="p-4 border-b border-border">
-              <div className="flex flex-col items-center gap-1.5 text-center">
+            {/* Mobile drawer mirrors the desktop sidebar layout exactly. */}
+            <div className="px-4 py-3.5 border-b border-border">
+              <div className="flex flex-col items-start gap-1">
                 <AdminLogo variant="desktop" />
-                <span className="text-[10px] text-primary/80 tracking-[0.18em] uppercase font-semibold leading-none">
+                <span className="text-[9px] text-muted-foreground tracking-[0.22em] uppercase font-semibold leading-none">
                   {panelLabel}
                 </span>
               </div>
