@@ -1,8 +1,14 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { useTheme } from "@/lib/theme-context";
 
 export interface Branding {
   siteName: string;
+  /** Logo used on dark backgrounds (Dark + Midnight themes). Falls back
+   *  for every theme when `siteLogoLight` is null. */
   siteLogo: string | null;
+  /** Optional logo used on the LIGHT theme. When null, `siteLogo` is
+   *  reused so the brand mark always shows up regardless of theme. */
+  siteLogoLight: string | null;
   logoSize: number;
   logoSizeMobile: number;
   favicon: string | null;
@@ -13,6 +19,7 @@ export interface Branding {
 const DEFAULT: Branding = {
   siteName: "ClickOcean",
   siteLogo: null,
+  siteLogoLight: null,
   logoSize: 34,
   logoSizeMobile: 28,
   favicon: null,
@@ -61,4 +68,18 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
 
 export function useBranding() {
   return useContext(BrandingContext);
+}
+
+/**
+ * Picks the right uploaded logo URL for the active theme.
+ *   • Light theme → `siteLogoLight` (falls back to `siteLogo` if not set)
+ *   • Dark / Midnight → `siteLogo` (falls back to `siteLogoLight` if not set)
+ * Returns `null` when neither logo has been uploaded — callers should
+ * render their built-in `UpcalifyLogo` fallback in that case.
+ */
+export function useThemedLogo(): string | null {
+  const { siteLogo, siteLogoLight } = useBranding();
+  const { theme } = useTheme();
+  if (theme === "light") return siteLogoLight || siteLogo || null;
+  return siteLogo || siteLogoLight || null;
 }

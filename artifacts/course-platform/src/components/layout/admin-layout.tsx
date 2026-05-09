@@ -4,9 +4,24 @@ import { LayoutDashboard, Users, BookOpen, Share2, Tag, Settings, ArrowLeft, Men
 import { Button } from "@/components/ui/button";
 import { useAuth, getStaffLandingPath, useAdminBase, adminPathSuffix } from "@/lib/auth-context";
 import { UpcalifyLogo } from "@/components/upcalify-logo";
+import { useBranding, useThemedLogo } from "@/lib/branding-context";
 
 function AdminLogo() {
-  // Upcalify wordmark — uses currentColor so it adapts to every theme.
+  // Prefer the admin-uploaded logo (theme-aware: light vs dark variant).
+  // Fall back to the built-in Upcalify wordmark when nothing is uploaded so
+  // a fresh install still has solid branding in the admin/staff sidebar.
+  const themedLogo = useThemedLogo();
+  const { siteName } = useBranding();
+  if (themedLogo) {
+    return (
+      <img
+        src={themedLogo}
+        alt={siteName || "Logo"}
+        className="object-contain"
+        style={{ height: 24, width: "auto", maxWidth: 140 }}
+      />
+    );
+  }
   return <UpcalifyLogo height={20} className="text-foreground" />;
 }
 

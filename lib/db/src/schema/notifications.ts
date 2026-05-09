@@ -46,6 +46,11 @@ export const platformSettingsTable = pgTable("platform_settings", {
   facebookTestEventCode: text("facebook_test_event_code"),
   siteUrl: text("site_url").notNull().default(""),
   siteLogo: text("site_logo"),
+  // Optional second logo used when the user is on the LIGHT theme. Most logos
+  // are designed for dark backgrounds; this lets admins upload a light-mode
+  // variant (e.g. dark text on transparent) so the brand stays legible. When
+  // null, the dark `siteLogo` is reused for every theme as a safe fallback.
+  siteLogoLight: text("site_logo_light"),
   logoSize: integer("logo_size").notNull().default(34),
   logoSizeMobile: integer("logo_size_mobile").notNull().default(28),
   favicon: text("favicon"),

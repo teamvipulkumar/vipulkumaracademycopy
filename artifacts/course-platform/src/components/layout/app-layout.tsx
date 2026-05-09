@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@/lib/theme-context";
-import { useBranding } from "@/lib/branding-context";
+import { useBranding, useThemedLogo } from "@/lib/branding-context";
 import { Button } from "@/components/ui/button";
 import { useLogout, useListNotifications, getListNotificationsQueryKey, getGetMeQueryKey, useMarkNotificationRead, useMarkAllNotificationsRead } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -151,6 +151,7 @@ export function Navbar() {
   const adminNavHref = isStaff ? "/staff" : "/admin";
   const { theme, toggleTheme } = useTheme();
   const branding = useBranding();
+  const themedLogo = useThemedLogo();
   const [, setLocation] = useLocation();
   const [location] = useLocation();
   const logout = useLogout();
@@ -217,16 +218,16 @@ export function Navbar() {
                 header shrinks — user prefers a consistent brand size and
                 explicitly disabled the scroll-shrink behaviour. */}
             <div className="flex-shrink-0 text-foreground">
-              {branding.siteLogo ? (
+              {themedLogo ? (
                 <>
                   <img
-                    src={branding.siteLogo}
+                    src={themedLogo}
                     alt={branding.siteName}
                     className="hidden md:block object-contain"
                     style={{ height: branding.logoSize, width: "auto", maxWidth: branding.logoSize * 4 }}
                   />
                   <img
-                    src={branding.siteLogo}
+                    src={themedLogo}
                     alt={branding.siteName}
                     className="block md:hidden object-contain"
                     style={{ height: branding.logoSizeMobile, width: "auto", maxWidth: branding.logoSizeMobile * 4 }}
@@ -432,6 +433,7 @@ export function Navbar() {
 export function SiteFooter() {
   const year = new Date().getFullYear();
   const branding = useBranding();
+  const themedLogo = useThemedLogo();
 
   const footerNav = {
     platform: [
@@ -470,9 +472,9 @@ export function SiteFooter() {
           {/* Brand column */}
           <div className="sm:col-span-2 lg:col-span-1">
             <Link href="/" className="inline-flex items-center gap-2.5 mb-4 group">
-              {branding.siteLogo ? (
+              {themedLogo ? (
                 <img
-                  src={branding.siteLogo}
+                  src={themedLogo}
                   alt={branding.siteName}
                   className="object-contain"
                   style={{ height: branding.logoSize, width: "auto", maxWidth: branding.logoSize * 4 }}

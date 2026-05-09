@@ -287,16 +287,17 @@ export default function AdminSettingsPage() {
   const googleLocked = googleSaved && !googleEditing;
 
   const [brandingForm, setBrandingForm] = useState({
-    siteName: "", siteLogo: "", logoSize: 34, logoSizeMobile: 28, favicon: "", metaTitle: "", metaDescription: "",
+    siteName: "", siteLogo: "", siteLogoLight: "", logoSize: 34, logoSizeMobile: 28, favicon: "", metaTitle: "", metaDescription: "",
   });
   const [brandingSaving, setBrandingSaving] = useState(false);
   const [logoPicker, setLogoPicker] = useState(false);
+  const [logoLightPicker, setLogoLightPicker] = useState(false);
   const [faviconPicker, setFaviconPicker] = useState(false);
   // Branding card collapses to a compact summary once it has been saved with
   // real values. Admin clicks "Edit" to expand the full form. This declutters
   // the settings page since branding is rarely changed once configured.
   const [brandingExpanded, setBrandingExpanded] = useState(true);
-  const brandingHasData = !!(brandingForm.siteName || brandingForm.siteLogo || brandingForm.favicon || brandingForm.metaTitle);
+  const brandingHasData = !!(brandingForm.siteName || brandingForm.siteLogo || brandingForm.siteLogoLight || brandingForm.favicon || brandingForm.metaTitle);
   const API_BASE = import.meta.env.VITE_API_URL ?? "";
 
   useEffect(() => {
@@ -327,11 +328,13 @@ export default function AdminSettingsPage() {
       setGoogleEditing(false);
       const bSiteName = settings.siteName ?? "";
       const bSiteLogo = (settings as Record<string, unknown>).siteLogo as string ?? "";
+      const bSiteLogoLight = (settings as Record<string, unknown>).siteLogoLight as string ?? "";
       const bFavicon = (settings as Record<string, unknown>).favicon as string ?? "";
       const bMetaTitle = (settings as Record<string, unknown>).metaTitle as string ?? "";
       setBrandingForm({
         siteName: bSiteName,
         siteLogo: bSiteLogo,
+        siteLogoLight: bSiteLogoLight,
         logoSize: (settings as Record<string, unknown>).logoSize as number ?? 34,
         logoSizeMobile: (settings as Record<string, unknown>).logoSizeMobile as number ?? 28,
         favicon: bFavicon,
@@ -340,7 +343,7 @@ export default function AdminSettingsPage() {
       });
       // If branding has been configured already, collapse to the compact
       // summary view by default. Fresh installs (no data yet) stay expanded.
-      const hasBranding = !!(bSiteName || bSiteLogo || bFavicon || bMetaTitle);
+      const hasBranding = !!(bSiteName || bSiteLogo || bSiteLogoLight || bFavicon || bMetaTitle);
       setBrandingExpanded(!hasBranding);
     }
   }, [settings]);
@@ -415,6 +418,7 @@ export default function AdminSettingsPage() {
       data: {
         siteName: brandingForm.siteName,
         siteLogo: brandingForm.siteLogo,
+        siteLogoLight: brandingForm.siteLogoLight,
         logoSize: brandingForm.logoSize,
         logoSizeMobile: brandingForm.logoSizeMobile,
         favicon: brandingForm.favicon,
@@ -439,6 +443,7 @@ export default function AdminSettingsPage() {
       setBrandingForm({
         siteName: settings.siteName ?? "",
         siteLogo: (settings as Record<string, unknown>).siteLogo as string ?? "",
+        siteLogoLight: (settings as Record<string, unknown>).siteLogoLight as string ?? "",
         logoSize: (settings as Record<string, unknown>).logoSize as number ?? 34,
         logoSizeMobile: (settings as Record<string, unknown>).logoSizeMobile as number ?? 28,
         favicon: (settings as Record<string, unknown>).favicon as string ?? "",
@@ -549,7 +554,15 @@ export default function AdminSettingsPage() {
           onSelect={url => setBrandingForm(f => ({ ...f, siteLogo: url }))}
           uploadFn={uploadImage}
           accept="image/*"
-          title="Choose Logo from Library"
+          title="Choose Dark Mode Logo from Library"
+        />
+        <MediaPickerDialog
+          open={logoLightPicker}
+          onClose={() => setLogoLightPicker(false)}
+          onSelect={url => setBrandingForm(f => ({ ...f, siteLogoLight: url }))}
+          uploadFn={uploadImage}
+          accept="image/*"
+          title="Choose Light Mode Logo from Library"
         />
         <MediaPickerDialog
           open={faviconPicker}
@@ -578,13 +591,26 @@ export default function AdminSettingsPage() {
                Clicking Edit re-expands the full form below. */
             <CardContent className="space-y-3">
               <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50 border border-border">
-                {/* Logo thumbnail */}
-                <div className="w-12 h-12 rounded-lg border border-border flex items-center justify-center bg-card flex-shrink-0 overflow-hidden">
-                  {brandingForm.siteLogo ? (
-                    <img src={brandingForm.siteLogo} alt="Logo" className="max-w-full max-h-full object-contain" />
-                  ) : (
-                    <ImageIcon className="w-5 h-5 text-muted-foreground/40" />
-                  )}
+                {/* Logo thumbnails — show dark + light side by side on their
+                    own backdrops so admins instantly see both variants and
+                    can tell whether a light-mode logo has been configured. */}
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <div className="w-10 h-10 rounded-lg border border-border flex items-center justify-center bg-zinc-900 overflow-hidden" title="Dark mode logo">
+                    {brandingForm.siteLogo ? (
+                      <img src={brandingForm.siteLogo} alt="Dark logo" className="max-w-full max-h-full object-contain" />
+                    ) : (
+                      <ImageIcon className="w-4 h-4 text-zinc-600" />
+                    )}
+                  </div>
+                  <div className="w-10 h-10 rounded-lg border border-border flex items-center justify-center bg-white overflow-hidden" title={brandingForm.siteLogoLight ? "Light mode logo" : "No light logo — dark logo is reused on the light theme"}>
+                    {brandingForm.siteLogoLight ? (
+                      <img src={brandingForm.siteLogoLight} alt="Light logo" className="max-w-full max-h-full object-contain" />
+                    ) : brandingForm.siteLogo ? (
+                      <img src={brandingForm.siteLogo} alt="Light logo (fallback)" className="max-w-full max-h-full object-contain opacity-40" />
+                    ) : (
+                      <ImageIcon className="w-4 h-4 text-zinc-300" />
+                    )}
+                  </div>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
@@ -623,20 +649,26 @@ export default function AdminSettingsPage() {
               <p className="text-[11px] text-muted-foreground">Displayed in the navbar, emails and browser tab</p>
             </div>
 
-            {/* Site Logo */}
+            {/* Site Logo — Dark Mode (default for Dark + Midnight themes) */}
             <div className="space-y-3">
-              <Label className="text-sm font-medium">Site Logo</Label>
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <Label className="text-sm font-medium">Dark Mode Logo</Label>
+                <span className="text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                  Dark · Midnight
+                </span>
+              </div>
+              {/* Preview area uses a dark backdrop so the admin sees the logo
+                  exactly as visitors will when the theme is dark. */}
               <div className="flex items-start gap-4">
-                {/* Preview */}
-                <div className="w-20 h-20 rounded-xl border-2 border-dashed border-border flex items-center justify-center bg-background flex-shrink-0 overflow-hidden">
+                <div className="w-20 h-20 rounded-xl border-2 border-dashed border-border flex items-center justify-center flex-shrink-0 overflow-hidden bg-zinc-900">
                   {brandingForm.siteLogo ? (
                     <img
                       src={brandingForm.siteLogo}
-                      alt="Logo preview"
+                      alt="Dark mode logo preview"
                       style={{ width: brandingForm.logoSize * 1.5, height: brandingForm.logoSize * 1.5, objectFit: "contain" }}
                     />
                   ) : (
-                    <ImageIcon className="w-7 h-7 text-muted-foreground/30" />
+                    <ImageIcon className="w-7 h-7 text-zinc-600" />
                   )}
                 </div>
                 <div className="flex-1 space-y-2">
@@ -649,7 +681,7 @@ export default function AdminSettingsPage() {
                       onClick={() => setLogoPicker(true)}
                     >
                       <FolderOpen className="w-3.5 h-3.5" />
-                      Choose Logo
+                      Choose Dark Logo
                     </Button>
                     {brandingForm.siteLogo && (
                       <Button type="button" variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive cursor-pointer"
@@ -659,12 +691,72 @@ export default function AdminSettingsPage() {
                     )}
                   </div>
                   <Input
-                    placeholder="https://example.com/logo.png"
+                    placeholder="https://example.com/logo-dark.png"
                     value={brandingForm.siteLogo}
                     onChange={e => setBrandingForm(f => ({ ...f, siteLogo: e.target.value }))}
                     className="bg-background border-border text-xs"
                   />
-                  <p className="text-[11px] text-muted-foreground">Recommended: PNG or SVG with transparent background</p>
+                  <p className="text-[11px] text-muted-foreground">Light-coloured artwork for dark backgrounds. PNG or SVG with transparent background.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Site Logo — Light Mode (optional; used only on the Light theme) */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <Label className="text-sm font-medium">Light Mode Logo <span className="text-[11px] font-normal text-muted-foreground">(optional)</span></Label>
+                <span className="text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full bg-amber-400/10 text-amber-500 border border-amber-400/20">
+                  Light theme
+                </span>
+              </div>
+              {/* Light-themed preview backdrop so the admin can verify legibility. */}
+              <div className="flex items-start gap-4">
+                <div className="w-20 h-20 rounded-xl border-2 border-dashed border-border flex items-center justify-center flex-shrink-0 overflow-hidden bg-white">
+                  {brandingForm.siteLogoLight ? (
+                    <img
+                      src={brandingForm.siteLogoLight}
+                      alt="Light mode logo preview"
+                      style={{ width: brandingForm.logoSize * 1.5, height: brandingForm.logoSize * 1.5, objectFit: "contain" }}
+                    />
+                  ) : brandingForm.siteLogo ? (
+                    /* When no light logo is uploaded, we re-use the dark one
+                       at runtime — show that fallback here so the preview
+                       matches what visitors will actually see. */
+                    <img
+                      src={brandingForm.siteLogo}
+                      alt="Falling back to dark logo"
+                      style={{ width: brandingForm.logoSize * 1.5, height: brandingForm.logoSize * 1.5, objectFit: "contain", opacity: 0.5 }}
+                    />
+                  ) : (
+                    <ImageIcon className="w-7 h-7 text-zinc-300" />
+                  )}
+                </div>
+                <div className="flex-1 space-y-2">
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 cursor-pointer"
+                      onClick={() => setLogoLightPicker(true)}
+                    >
+                      <FolderOpen className="w-3.5 h-3.5" />
+                      Choose Light Logo
+                    </Button>
+                    {brandingForm.siteLogoLight && (
+                      <Button type="button" variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive cursor-pointer"
+                        onClick={() => setBrandingForm(f => ({ ...f, siteLogoLight: "" }))}>
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+                  <Input
+                    placeholder="https://example.com/logo-light.png"
+                    value={brandingForm.siteLogoLight}
+                    onChange={e => setBrandingForm(f => ({ ...f, siteLogoLight: e.target.value }))}
+                    className="bg-background border-border text-xs"
+                  />
+                  <p className="text-[11px] text-muted-foreground">Dark-coloured artwork for light backgrounds. Leave empty to reuse the dark logo on every theme.</p>
                 </div>
               </div>
 

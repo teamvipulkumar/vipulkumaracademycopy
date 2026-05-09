@@ -714,7 +714,7 @@ router.get("/settings", requireAdmin, async (req, res): Promise<void> => {
 });
 
 router.put("/settings", requireAdmin, async (req, res): Promise<void> => {
-  const { siteName, siteUrl, siteDescription, commissionRate, currency, stripeEnabled, razorpayEnabled, emailNotificationsEnabled, googleSignInEnabled, googleClientId, googleClientSecret, maintenanceMode, maintenanceMessage, orderPrefix, orderSuffix, showFeaturedCourses, showFeaturedPackages, facebookPixelEnabled, facebookPixelId, facebookAccessToken, facebookPixelBaseCode, facebookTestEventCode, siteLogo, logoSize, logoSizeMobile, favicon, metaTitle, metaDescription } = req.body;
+  const { siteName, siteUrl, siteDescription, commissionRate, currency, stripeEnabled, razorpayEnabled, emailNotificationsEnabled, googleSignInEnabled, googleClientId, googleClientSecret, maintenanceMode, maintenanceMessage, orderPrefix, orderSuffix, showFeaturedCourses, showFeaturedPackages, facebookPixelEnabled, facebookPixelId, facebookAccessToken, facebookPixelBaseCode, facebookTestEventCode, siteLogo, siteLogoLight, logoSize, logoSizeMobile, favicon, metaTitle, metaDescription } = req.body;
   const existing = await db.select().from(platformSettingsTable).limit(1);
   const updates: Record<string, unknown> = {};
   if (siteName !== undefined) updates.siteName = siteName;
@@ -761,6 +761,7 @@ router.put("/settings", requireAdmin, async (req, res): Promise<void> => {
   if (facebookPixelBaseCode !== undefined) updates.facebookPixelBaseCode = facebookPixelBaseCode;
   if (facebookTestEventCode !== undefined) updates.facebookTestEventCode = facebookTestEventCode;
   if (siteLogo !== undefined) updates.siteLogo = siteLogo;
+  if (siteLogoLight !== undefined) updates.siteLogoLight = siteLogoLight;
   if (logoSize !== undefined) updates.logoSize = Number(logoSize);
   if (logoSizeMobile !== undefined) updates.logoSizeMobile = Number(logoSizeMobile);
   if (favicon !== undefined) updates.favicon = favicon;
@@ -1237,6 +1238,7 @@ router.get("/public/branding", async (_req, res): Promise<void> => {
   const settings = await db.select({
     siteName: platformSettingsTable.siteName,
     siteLogo: platformSettingsTable.siteLogo,
+    siteLogoLight: platformSettingsTable.siteLogoLight,
     logoSize: platformSettingsTable.logoSize,
     logoSizeMobile: platformSettingsTable.logoSizeMobile,
     favicon: platformSettingsTable.favicon,
@@ -1244,7 +1246,7 @@ router.get("/public/branding", async (_req, res): Promise<void> => {
     metaDescription: platformSettingsTable.metaDescription,
   }).from(platformSettingsTable).limit(1);
   if (settings.length === 0) {
-    res.json({ siteName: "Academy", siteLogo: null, logoSize: 34, logoSizeMobile: 28, favicon: null, metaTitle: null, metaDescription: null });
+    res.json({ siteName: "Academy", siteLogo: null, siteLogoLight: null, logoSize: 34, logoSizeMobile: 28, favicon: null, metaTitle: null, metaDescription: null });
     return;
   }
   res.json(settings[0]);
