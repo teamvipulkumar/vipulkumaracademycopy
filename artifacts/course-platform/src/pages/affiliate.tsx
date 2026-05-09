@@ -416,7 +416,7 @@ function AffiliateDashboard({ user }: { user: any }) {
                 className={`group relative w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm font-medium transition-all text-left cursor-pointer ${
                   active
                     ? "bg-primary/10 text-primary hover:bg-primary/15"
-                    : "text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
+                    : "text-muted-foreground hover:text-foreground hover:bg-foreground/[0.06]"
                 }`}
               >
                 {/* Icon tile */}
@@ -424,7 +424,7 @@ function AffiliateDashboard({ user }: { user: any }) {
                   className={`flex items-center justify-center w-7 h-7 rounded-md transition-colors ${
                     active
                       ? "bg-primary/15 text-primary group-hover:bg-primary/25"
-                      : "bg-white/[0.03] text-muted-foreground group-hover:bg-white/[0.08] group-hover:text-foreground"
+                      : "bg-foreground/[0.04] text-muted-foreground group-hover:bg-foreground/[0.1] group-hover:text-foreground"
                   }`}
                 >
                   {t.icon}
@@ -441,7 +441,7 @@ function AffiliateDashboard({ user }: { user: any }) {
           like nav rows for visual consistency. */}
       <div className="p-3 border-t border-border space-y-2">
         {/* User chip — elevated card */}
-        <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+        <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-foreground/[0.03] border border-foreground/[0.08]">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center text-primary text-xs font-bold flex-shrink-0 border border-primary/20">
             {user?.name?.charAt(0)?.toUpperCase() ?? "U"}
           </div>
@@ -457,16 +457,16 @@ function AffiliateDashboard({ user }: { user: any }) {
               setSidebarOpen(false);
               setReplayingTour(true);
             }}
-            className="group w-full flex items-center gap-2.5 pl-2.5 pr-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition-all text-left cursor-pointer"
+            className="group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-foreground/[0.06] transition-all text-left cursor-pointer"
           >
-            <span className="flex items-center justify-center w-7 h-7 rounded-md bg-white/[0.03] text-muted-foreground group-hover:bg-white/[0.06] group-hover:text-foreground transition-colors">
+            <span className="flex items-center justify-center w-7 h-7 rounded-md bg-foreground/[0.04] text-muted-foreground group-hover:bg-foreground/[0.1] group-hover:text-foreground transition-colors">
               <Rocket className="w-4 h-4" />
             </span>
             <span className="truncate">Replay tour</span>
           </button>
           <Link href="/">
-            <button className="group w-full flex items-center gap-2.5 pl-2.5 pr-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition-all text-left cursor-pointer">
-              <span className="flex items-center justify-center w-7 h-7 rounded-md bg-white/[0.03] text-muted-foreground group-hover:bg-white/[0.06] group-hover:text-foreground transition-colors">
+            <button className="group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-foreground/[0.06] transition-all text-left cursor-pointer">
+              <span className="flex items-center justify-center w-7 h-7 rounded-md bg-foreground/[0.04] text-muted-foreground group-hover:bg-foreground/[0.1] group-hover:text-foreground transition-colors">
                 <ChevronRight className="w-4 h-4 rotate-180" />
               </span>
               <span className="truncate">Back to Site</span>
