@@ -274,17 +274,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         <div className="md:hidden fixed inset-0 z-40">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
           <aside className="absolute top-14 left-0 bottom-0 w-64 bg-card border-r border-border flex flex-col shadow-2xl">
-            {/* Mobile drawer mirrors the desktop sidebar layout exactly. */}
-            <div className="px-3 py-3.5 border-b border-border">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <div className="min-w-0 flex-shrink overflow-hidden">
-                  <AdminLogo variant="desktop" />
-                </div>
-                <span className="flex-shrink-0 text-[9px] text-foreground/80 tracking-[0.18em] uppercase font-bold leading-none border-l border-foreground/40 pl-1.5 whitespace-nowrap">
-                  {panelLabel}
-                </span>
-              </div>
-            </div>
+            {/* Brand header intentionally omitted here — the mobile top bar
+                already shows the logo + panel label, so repeating it inside
+                the drawer was a duplicate. */}
             <NavContent location={location} onNav={() => setMobileOpen(false)} />
           </aside>
         </div>
