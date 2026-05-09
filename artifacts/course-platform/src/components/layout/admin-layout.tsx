@@ -16,8 +16,8 @@ import { useBranding, useThemedLogo } from "@/lib/branding-context";
 // Tight caps so the logo + "ADMIN PANEL" / "STAFF PANEL" label both fit
 // inside the narrow 224px sidebar without truncation. Bumping these up
 // will start clipping the panel label on the desktop sidebar.
-const SIDEBAR_LOGO_MAX_DESKTOP = 22;
-const SIDEBAR_LOGO_MAX_MOBILE = 20;
+const SIDEBAR_LOGO_MAX_DESKTOP = 28;
+const SIDEBAR_LOGO_MAX_MOBILE = 24;
 
 function AdminLogo({ variant = "desktop" }: { variant?: "desktop" | "mobile" }) {
   const themedLogo = useThemedLogo();
