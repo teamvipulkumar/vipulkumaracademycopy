@@ -396,49 +396,89 @@ function AffiliateDashboard({ user }: { user: any }) {
 
   const SidebarContent = () => (
     <>
-      <nav className="flex-1 pt-2 pb-3 overflow-y-auto">
-        {TABS.map(t => (
-          <button
-            key={t.id}
-            data-tour={`nav-${t.id === "earnings" ? "earnings" : t.id}`}
-            onClick={() => navClick(t.id)}
-            className={`w-full flex items-center gap-3 px-5 py-2.5 text-sm font-medium transition-all text-left cursor-pointer ${
-              tab === t.id
-                ? "bg-primary/10 text-primary border-r-2 border-r-primary"
-                : "text-muted-foreground hover:text-foreground hover:bg-white/5"
-            }`}
-          >
-            {t.icon}{t.label}
-          </button>
-        ))}
+      {/* ── NAVIGATE section ────────────────────────────────────────────
+          Modern SaaS sidebar: small uppercase section header, pill-shaped
+          nav rows with tinted icon tiles, active state uses a soft primary
+          tint + left accent bar (no full-width border), inactive rows get
+          a subtle hover background. */}
+      <nav className="flex-1 px-3 pt-4 pb-3 overflow-y-auto">
+        <p className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/70">
+          Navigate
+        </p>
+        <div className="space-y-0.5">
+          {TABS.map(t => {
+            const active = tab === t.id;
+            return (
+              <button
+                key={t.id}
+                data-tour={`nav-${t.id === "earnings" ? "earnings" : t.id}`}
+                onClick={() => navClick(t.id)}
+                className={`group relative w-full flex items-center gap-2.5 pl-2.5 pr-3 py-2 rounded-lg text-sm font-medium transition-all text-left cursor-pointer ${
+                  active
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
+                }`}
+              >
+                {/* Left accent bar — only on active row */}
+                <span
+                  className={`absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-r-full bg-primary transition-opacity ${
+                    active ? "opacity-100" : "opacity-0"
+                  }`}
+                />
+                {/* Icon tile */}
+                <span
+                  className={`flex items-center justify-center w-7 h-7 rounded-md transition-colors ${
+                    active
+                      ? "bg-primary/15 text-primary"
+                      : "bg-white/[0.03] text-muted-foreground group-hover:bg-white/[0.06] group-hover:text-foreground"
+                  }`}
+                >
+                  {t.icon}
+                </span>
+                <span className="truncate">{t.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </nav>
-      <div className="p-3 border-t border-border space-y-1">
-        <div className="flex items-center gap-2 px-2 py-1 mb-1">
-          <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold flex-shrink-0">
+
+      {/* ── ACCOUNT section (footer) ────────────────────────────────────
+          Elevated user chip card on top, then secondary actions styled
+          like nav rows for visual consistency. */}
+      <div className="p-3 border-t border-border space-y-2">
+        {/* User chip — elevated card */}
+        <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center text-primary text-xs font-bold flex-shrink-0 border border-primary/20">
             {user?.name?.charAt(0)?.toUpperCase() ?? "U"}
           </div>
-          <div className="min-w-0">
-            <p className="text-xs font-semibold text-foreground truncate">{user?.name}</p>
-            <p className="text-[10px] text-muted-foreground truncate">{user?.email}</p>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold text-foreground truncate leading-tight">{user?.name}</p>
+            <p className="text-[10px] text-muted-foreground truncate leading-tight mt-0.5">{user?.email}</p>
           </div>
         </div>
-        {/* Tab-style action buttons — same hover treatment as the main nav
-            tabs above so they feel interactive and grouped with the rest of
-            the sidebar navigation. */}
-        <button
-          onClick={() => {
-            setSidebarOpen(false);
-            setReplayingTour(true);
-          }}
-          className="w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/5 transition-all text-left cursor-pointer"
-        >
-          <Rocket className="w-4 h-4" />Replay tour
-        </button>
-        <Link href="/">
-          <button className="w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/5 transition-all text-left cursor-pointer">
-            <ChevronRight className="w-4 h-4 rotate-180" />Back to Site
+
+        <div className="space-y-0.5 pt-1">
+          <button
+            onClick={() => {
+              setSidebarOpen(false);
+              setReplayingTour(true);
+            }}
+            className="group w-full flex items-center gap-2.5 pl-2.5 pr-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition-all text-left cursor-pointer"
+          >
+            <span className="flex items-center justify-center w-7 h-7 rounded-md bg-white/[0.03] text-muted-foreground group-hover:bg-white/[0.06] group-hover:text-foreground transition-colors">
+              <Rocket className="w-4 h-4" />
+            </span>
+            <span className="truncate">Replay tour</span>
           </button>
-        </Link>
+          <Link href="/">
+            <button className="group w-full flex items-center gap-2.5 pl-2.5 pr-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition-all text-left cursor-pointer">
+              <span className="flex items-center justify-center w-7 h-7 rounded-md bg-white/[0.03] text-muted-foreground group-hover:bg-white/[0.06] group-hover:text-foreground transition-colors">
+                <ChevronRight className="w-4 h-4 rotate-180" />
+              </span>
+              <span className="truncate">Back to Site</span>
+            </button>
+          </Link>
+        </div>
       </div>
     </>
   );
