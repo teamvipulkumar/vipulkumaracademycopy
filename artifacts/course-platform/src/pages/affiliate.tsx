@@ -697,33 +697,41 @@ function AffiliateDashboard({ user }: { user: any }) {
               <div className="space-y-5">
                 <TabHeader title="My Sales" subtitle="All successful purchases made through your referral link." />
 
-                {/* Summary row */}
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-card border border-border rounded-xl p-4 text-center">
-                    <p className="text-xl font-bold text-foreground">{sales.length}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Total Sales</p>
+                {/* Summary row — on mobile, condensed cards with smaller
+                    typography + tighter padding so all three numbers fit
+                    cleanly without truncation. Desktop styling untouched. */}
+                <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                  <div className="bg-card border border-border rounded-xl p-2.5 sm:p-4 text-center">
+                    <p className="text-base sm:text-xl font-bold text-foreground leading-tight">{sales.length}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 leading-tight">Total Sales</p>
                   </div>
-                  <div className="bg-card border border-border rounded-xl p-4 text-center transition-colors hover:border-blue-500/40 hover:bg-blue-500/5 cursor-default">
-                    <p className="text-xl font-bold text-blue-400">₹{sales.reduce((s, r) => s + (r.saleAmount ?? 0), 0).toLocaleString("en-IN")}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Total Revenue</p>
+                  <div className="bg-card border border-border rounded-xl p-2.5 sm:p-4 text-center transition-colors hover:border-blue-500/40 hover:bg-blue-500/5 cursor-default">
+                    <p className="text-base sm:text-xl font-bold text-blue-400 leading-tight break-all">₹{sales.reduce((s, r) => s + (r.saleAmount ?? 0), 0).toLocaleString("en-IN")}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 leading-tight">Total Revenue</p>
                   </div>
-                  <div className="bg-card border border-border rounded-xl p-4 text-center">
-                    <p className="text-xl font-bold text-green-400">₹{sales.reduce((s, r) => s + r.commission, 0).toLocaleString("en-IN")}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Total Commission</p>
+                  <div className="bg-card border border-border rounded-xl p-2.5 sm:p-4 text-center">
+                    <p className="text-base sm:text-xl font-bold text-green-400 leading-tight break-all">₹{sales.reduce((s, r) => s + r.commission, 0).toLocaleString("en-IN")}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 leading-tight">Total Commission</p>
                   </div>
                 </div>
 
-                {/* Sales table */}
+                {/* Sales list —
+                    DESKTOP (md+): original table layout, untouched.
+                    MOBILE (<md): a card-per-sale layout. Tables with 5
+                    columns force horizontal scrolling on phones which is
+                    a bad UX. Cards put commission front-and-center (the
+                    primary metric) with secondary details below. */}
                 <div className="bg-card border border-border rounded-2xl overflow-hidden">
                   {sales.length === 0 ? (
-                    <div className="py-20 text-center">
+                    <div className="py-20 text-center px-4">
                       <FileText className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
                       <p className="font-semibold text-foreground mb-1">No sales yet</p>
                       <p className="text-sm text-muted-foreground">Share your affiliate link to start earning commissions.</p>
                     </div>
                   ) : (
                     <>
-                      <div className="overflow-x-auto">
+                      {/* Desktop table — unchanged */}
+                      <div className="hidden md:block overflow-x-auto">
                         <table className="w-full text-sm">
                           <thead>
                             <tr className="border-b border-border bg-background/50">
@@ -765,6 +773,59 @@ function AffiliateDashboard({ user }: { user: any }) {
                           </tbody>
                         </table>
                       </div>
+
+                      {/* Mobile cards — only renders below md breakpoint */}
+                      <ul className="md:hidden divide-y divide-border">
+                        {pagedSales.map((sale, i) => {
+                          const dt = new Date(sale.createdAt);
+                          const globalIdx = (salesPage - 1) * PAGE_SIZE + i + 1;
+                          return (
+                            <li key={sale.id} className="p-4 active:bg-white/5 transition-colors">
+                              {/* Top row: index badge + course title (left) and
+                                  commission (right, primary metric). */}
+                              <div className="flex items-start justify-between gap-3 mb-2.5">
+                                <div className="flex items-start gap-2 min-w-0 flex-1">
+                                  <span className="text-[10px] font-semibold text-muted-foreground bg-white/5 px-1.5 py-0.5 rounded-md flex-shrink-0 mt-0.5">
+                                    #{globalIdx}
+                                  </span>
+                                  <p className="font-medium text-foreground text-[13px] leading-snug min-w-0 break-words">
+                                    {sale.courseTitle}
+                                  </p>
+                                </div>
+                                <div className="text-right flex-shrink-0">
+                                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider leading-none mb-1">Commission</p>
+                                  <p className="font-bold text-green-400 text-base leading-none">
+                                    ₹{sale.commission.toLocaleString("en-IN")}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Bottom row: sale amount + date/time, side by side */}
+                              <div className="flex items-center justify-between gap-3 pt-2 border-t border-border/60">
+                                <div className="min-w-0">
+                                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider leading-none mb-1">Sale Amount</p>
+                                  {sale.saleAmount != null ? (
+                                    <p className="font-semibold text-foreground text-[13px] leading-none">
+                                      ₹{Number(sale.saleAmount).toLocaleString("en-IN")}
+                                    </p>
+                                  ) : (
+                                    <p className="text-muted-foreground text-xs leading-none">—</p>
+                                  )}
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-[12px] text-foreground leading-none">
+                                    {dt.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                                  </p>
+                                  <p className="text-[10px] text-muted-foreground mt-1 leading-none">
+                                    {dt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })}
+                                  </p>
+                                </div>
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+
                       <Paginator page={salesPage} total={sales.length} onPage={setSalesPage} />
                     </>
                   )}
