@@ -200,7 +200,7 @@ function NavContent({ location, onNav }: { location: string; onNav?: () => void 
         <Link href="/" onClick={onNav}>
           <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:bg-background cursor-pointer transition-colors">
             <ArrowLeft className="w-3.5 h-3.5" />
-            Back to Site
+            Back to Home
           </div>
         </Link>
       </div>

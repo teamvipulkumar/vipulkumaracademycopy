@@ -142,7 +142,7 @@ function NavContent({
         <Link href="/" onClick={onNav}>
           <div className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-[11px] text-muted-foreground hover:bg-muted/50 hover:text-foreground cursor-pointer transition-colors">
             <ArrowLeft className="w-3 h-3" />
-            Back to Site
+            Back to Home
           </div>
         </Link>
       </div>
