@@ -1,17 +1,20 @@
+import { useId } from "react";
+
 /**
- * Upcalify wordmark + supporting icon mark — inline SVG so:
+ * Upcalify wordmark + minimalist icon mark — inline SVG so:
+ *   • the icon is a sleek geometric "U + mortarboard" glyph filled with a
+ *     premium sky→deep-blue gradient (EdTech startup feel). The fixed
+ *     gradient pops cleanly on every theme background (dark / light /
+ *     midnight) so the brand mark stays recognisable across palettes.
  *   • the wordmark fills follow `currentColor` (adapts to every theme via
- *     the parent's text colour: dark / light / midnight)
- *   • the icon mark uses `hsl(var(--primary))` and `--primary-foreground`,
- *     so its accent recolours automatically with each theme palette
- *     (electric blue in Dark, blue on white in Light, emerald in Midnight).
+ *     the parent's text colour).
  *
- * The icon is a rounded primary-tinted square containing an upward
- * "growth chart" arrow — a simple, scalable suggestion of "Up + scale"
- * that pairs cleanly with the wordmark at small sizes (≥18px height).
+ * The mark composes a flat mortarboard (parallelogram) sitting on top of a
+ * thick rounded "U" stroke, with a small tassel hanging from the right
+ * corner — minimal, no chrome/background plate. Reads down to ~18px tall.
  *
  * Width derives from `height` to preserve the 145 × 28 viewBox aspect
- * ratio (~5.18:1). Original artwork: `attached_assets/Upcalify_(7)…svg`.
+ * ratio (~5.18:1). Reference: `attached_assets/image_1778316656550.png`.
  */
 export function UpcalifyLogo({
   height = 32,
@@ -23,6 +26,10 @@ export function UpcalifyLogo({
   title?: string;
 }) {
   const ratio = 145 / 28;
+  // Per-instance gradient ID so multiple logos on a page never collide.
+  const uid = useId().replace(/:/g, "");
+  const gradId = `upcalify-grad-${uid}`;
+  const fillRef = `url(#${gradId})`;
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -36,37 +43,36 @@ export function UpcalifyLogo({
     >
       <title>{title}</title>
 
-      {/* ── Icon mark: primary-tinted rounded square containing a
-             graduation cap (mortarboard + band + tassel) and the
-             letter "U" beneath. Recreated from the reference png so
-             both elements scale crisply down to ~20px tall. ── */}
-      <rect x="3.5" y="11" width="26" height="26" rx="6.5" fill="hsl(var(--primary))" />
+      <defs>
+        {/* Premium sky → deep-blue gradient drives every icon stroke/fill. */}
+        <linearGradient id={gradId} x1="0" y1="0.05" x2="1" y2="1">
+          <stop offset="0%" stopColor="#38BDF8" />
+          <stop offset="55%" stopColor="#2563EB" />
+          <stop offset="100%" stopColor="#1E3A8A" />
+        </linearGradient>
+      </defs>
 
-      {/* Mortarboard (top diamond plate) */}
+      {/* ── Icon mark — modern minimalist "U + graduation cap" ── */}
+
+      {/* Mortarboard plate sitting across the top of the U opening */}
       <path
-        d="M 16.5 14 L 24 17 L 16.5 20 L 9 17 Z"
-        fill="hsl(var(--primary-foreground))"
+        d="M 16.5 11.2 L 27.6 14.2 L 16.5 17.2 L 5.4 14.2 Z"
+        fill={fillRef}
       />
-      {/* Cap band (curved trapezoid sitting under the mortarboard) */}
+      {/* Tassel — short stroke + small bead hanging off the right corner */}
       <path
-        d="M 12 18.6 L 12 20.4 Q 12 22.4 16.5 22.4 Q 21 22.4 21 20.4 L 21 18.6 Z"
-        fill="hsl(var(--primary-foreground))"
-      />
-      {/* Tassel — short line + small bead hanging off the right corner */}
-      <path
-        d="M 23.6 17.4 L 24.6 21.6"
-        stroke="hsl(var(--primary-foreground))"
-        strokeWidth="0.9"
+        d="M 26.4 14.5 L 27.1 19.5"
+        stroke={fillRef}
+        strokeWidth="1"
         strokeLinecap="round"
         fill="none"
       />
-      <circle cx="24.6" cy="22.2" r="0.95" fill="hsl(var(--primary-foreground))" />
-
-      {/* Letter "U" beneath the cap */}
+      <circle cx="27.1" cy="20.2" r="1.1" fill={fillRef} />
+      {/* Thick rounded "U" glyph — hangs cleanly from under the mortarboard */}
       <path
-        d="M 13 25 L 13 30 Q 13 32.2 16.5 32.2 Q 20 32.2 20 30 L 20 25"
-        stroke="hsl(var(--primary-foreground))"
-        strokeWidth="2"
+        d="M 8.5 18.2 L 8.5 25.5 Q 8.5 32.2 16.5 32.2 Q 24.5 32.2 24.5 25.5 L 24.5 18.2"
+        stroke={fillRef}
+        strokeWidth="4.6"
         strokeLinecap="round"
         strokeLinejoin="round"
         fill="none"
