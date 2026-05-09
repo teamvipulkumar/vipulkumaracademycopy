@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Chrome, Info, Construction, Check, Upload, Globe, ImageIcon, Loader2, FolderOpen, CheckCircle2, Lock, Edit2, AlertTriangle, Power, Sparkles } from "lucide-react";
+import { Eye, EyeOff, Chrome, Info, Construction, Check, Upload, Globe, ImageIcon, Loader2, FolderOpen, CheckCircle2, Lock, Edit2, AlertTriangle, Power, Sparkles, Maximize2, X } from "lucide-react";
 import { useTheme, type Theme } from "@/lib/theme-context";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -30,11 +30,14 @@ function MediaPickerDialog({
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+  // Lightbox preview — when set, renders a full-size image overlay so admin
+  // can inspect any thumbnail in detail before picking it.
+  const [previewFile, setPreviewFile] = useState<MediaFile | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!open) { setSelected(null); return; }
+    if (!open) { setSelected(null); setPreviewFile(null); return; }
     setLoading(true);
     fetch(`${API_BASE_URL}/api/upload/admin/files`, { credentials: "include" })
       .then(r => r.ok ? r.json() : [])
@@ -71,6 +74,7 @@ function MediaPickerDialog({
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
       <DialogContent className="max-w-2xl w-full p-0 gap-0 overflow-hidden">
         <DialogHeader className="px-5 py-4 border-b border-border">
@@ -106,27 +110,52 @@ function MediaPickerDialog({
               {files.map(f => {
                 const isSelected = selected === f.url;
                 return (
-                  <button
+                  <div
                     key={f.filename}
-                    onClick={() => setSelected(isSelected ? null : f.url)}
-                    className={`relative aspect-square rounded-lg border-2 overflow-hidden cursor-pointer transition-all ${
+                    className={`group relative aspect-square rounded-lg border-2 overflow-hidden transition-all ${
                       isSelected ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/40"
                     }`}
                   >
-                    <img
-                      src={`${API_BASE_URL}${f.url}`}
-                      alt={f.filename}
-                      className="w-full h-full object-cover"
-                    />
+                    {/* Main select button — fills the tile */}
+                    <button
+                      type="button"
+                      onClick={() => setSelected(isSelected ? null : f.url)}
+                      className="absolute inset-0 cursor-pointer"
+                      aria-label={isSelected ? "Deselect image" : "Select image"}
+                    >
+                      <img
+                        src={`${API_BASE_URL}${f.url}`}
+                        alt={f.filename}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+
+                    {/* Selected overlay (purely decorative — pointer-events off so
+                        clicks fall through to the select button beneath) */}
                     {isSelected && (
-                      <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                      <div className="absolute inset-0 bg-primary/20 flex items-center justify-center pointer-events-none">
                         <CheckCircle2 className="w-6 h-6 text-primary drop-shadow" />
                       </div>
                     )}
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 px-1 py-0.5 text-[9px] text-white truncate">
+
+                    {/* Filename ribbon (decorative, clicks pass through) */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 px-1 py-0.5 text-[9px] text-white truncate pointer-events-none">
                       {f.filename.replace(/^[a-f0-9]+/, "").replace(/^\./, "") || f.filename.slice(0, 8)}
                     </div>
-                  </button>
+
+                    {/* Expand-to-full-view button — top-right corner. Stops
+                        propagation so it never toggles selection. Visible on
+                        hover (desktop) and always on touch devices. */}
+                    <button
+                      type="button"
+                      onClick={e => { e.stopPropagation(); setPreviewFile(f); }}
+                      className="absolute top-1.5 right-1.5 z-10 w-7 h-7 rounded-md bg-black/60 hover:bg-black/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity cursor-pointer backdrop-blur-sm"
+                      aria-label="View full size"
+                      title="View full size"
+                    >
+                      <Maximize2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 );
               })}
             </div>
@@ -142,6 +171,58 @@ function MediaPickerDialog({
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* ── Lightbox preview — full-size view of any thumbnail ── */}
+    <Dialog open={!!previewFile} onOpenChange={v => !v && setPreviewFile(null)}>
+      <DialogContent
+        className="max-w-[95vw] w-fit p-0 gap-0 overflow-hidden bg-black/95 border-border"
+        onOpenAutoFocus={e => e.preventDefault()}
+      >
+        <DialogHeader className="sr-only">
+          <DialogTitle>{previewFile?.filename ?? "Image preview"}</DialogTitle>
+        </DialogHeader>
+        {previewFile && (
+          <div className="relative flex flex-col items-center justify-center">
+            {/* Close button — overlay, top-right */}
+            <button
+              type="button"
+              onClick={() => setPreviewFile(null)}
+              className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-black/70 hover:bg-black/90 text-white flex items-center justify-center cursor-pointer backdrop-blur-sm transition-colors"
+              aria-label="Close preview"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            {/* Image — capped to viewport so it never overflows the screen */}
+            <img
+              src={`${API_BASE_URL}${previewFile.url}`}
+              alt={previewFile.filename}
+              className="max-w-[90vw] max-h-[80vh] object-contain"
+            />
+
+            {/* Footer with filename + "Use this image" shortcut */}
+            <div className="w-full px-4 py-3 bg-black/80 border-t border-white/10 flex items-center justify-between gap-3">
+              <p className="text-xs text-white/80 truncate flex-1" title={previewFile.filename}>
+                {previewFile.filename}
+              </p>
+              <Button
+                size="sm"
+                onClick={() => {
+                  setSelected(previewFile.url);
+                  onSelect(previewFile.url);
+                  setPreviewFile(null);
+                  onClose();
+                }}
+                className="gap-1.5 cursor-pointer flex-shrink-0"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />Use This Image
+              </Button>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
 
