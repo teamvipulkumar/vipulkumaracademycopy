@@ -713,8 +713,13 @@ function AffiliateDashboard({ user }: { user: any }) {
                   </div>
                 </div>
 
-                {/* Sales table */}
-                <div className="bg-card border border-border rounded-2xl overflow-hidden">
+                {/* Sales table — on mobile, break out of the parent's
+                    px-4 padding using negative margins so the table gets
+                    the full viewport width and the Course column doesn't
+                    get squashed. Rounded corners + side borders dropped
+                    on mobile (edge-to-edge looks cleaner). Desktop layout
+                    stays exactly the same from sm: upward. */}
+                <div className="bg-card border-y sm:border border-border sm:rounded-2xl overflow-hidden -mx-4 sm:mx-0">
                   {sales.length === 0 ? (
                     <div className="py-20 text-center">
                       <FileText className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
