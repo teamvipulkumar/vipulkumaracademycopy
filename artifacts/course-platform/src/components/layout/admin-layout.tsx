@@ -13,8 +13,11 @@ import { useBranding, useThemedLogo } from "@/lib/branding-context";
  * to stay legible and professional. The 28/22px ceilings are tuned so the
  * brand mark sits like a typical SaaS dashboard wordmark (Linear, Stripe).
  */
-const SIDEBAR_LOGO_MAX_DESKTOP = 28;
-const SIDEBAR_LOGO_MAX_MOBILE = 22;
+// Tight caps so the logo + "ADMIN PANEL" / "STAFF PANEL" label both fit
+// inside the narrow 224px sidebar without truncation. Bumping these up
+// will start clipping the panel label on the desktop sidebar.
+const SIDEBAR_LOGO_MAX_DESKTOP = 22;
+const SIDEBAR_LOGO_MAX_MOBILE = 20;
 
 function AdminLogo({ variant = "desktop" }: { variant?: "desktop" | "mobile" }) {
   const themedLogo = useThemedLogo();
@@ -238,10 +241,15 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         {/* Sidebar brand block — logo + panel label sit on a single row,
             label slightly muted and divided from the mark by a thin border
             so the eye reads "{Brand} · ADMIN PANEL" as one unit. */}
-        <div className="px-4 py-3.5 border-b border-border">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <AdminLogo variant="desktop" />
-            <span className="text-[9px] text-muted-foreground tracking-[0.2em] uppercase font-semibold leading-none border-l border-border pl-2.5 truncate">
+        {/* Sidebar brand block — logo shrinks if needed so the panel label
+            always shows fully (flex-shrink-0 on the label, min-w-0 + shrink
+            on the logo wrapper). */}
+        <div className="px-3 py-3.5 border-b border-border">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="min-w-0 flex-shrink overflow-hidden">
+              <AdminLogo variant="desktop" />
+            </div>
+            <span className="flex-shrink-0 text-[9px] text-muted-foreground tracking-[0.18em] uppercase font-semibold leading-none border-l border-border pl-2 whitespace-nowrap">
               {panelLabel}
             </span>
           </div>
@@ -251,11 +259,13 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
       {/* Mobile top bar — same inline pattern: logo + label to the right. */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 h-14 bg-card border-b border-border flex items-center px-3 gap-2">
-        <Button variant="ghost" size="sm" className="px-2" onClick={() => setMobileOpen(o => !o)}>
+        <Button variant="ghost" size="sm" className="px-2 flex-shrink-0" onClick={() => setMobileOpen(o => !o)}>
           {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </Button>
-        <AdminLogo variant="mobile" />
-        <span className="text-[9px] text-muted-foreground tracking-[0.2em] uppercase font-semibold leading-none border-l border-border pl-2 truncate">
+        <div className="min-w-0 flex-shrink overflow-hidden">
+          <AdminLogo variant="mobile" />
+        </div>
+        <span className="flex-shrink-0 text-[9px] text-muted-foreground tracking-[0.18em] uppercase font-semibold leading-none border-l border-border pl-2 whitespace-nowrap">
           {panelLabel}
         </span>
       </div>
@@ -265,10 +275,12 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
           <aside className="absolute top-14 left-0 bottom-0 w-64 bg-card border-r border-border flex flex-col shadow-2xl">
             {/* Mobile drawer mirrors the desktop sidebar layout exactly. */}
-            <div className="px-4 py-3.5 border-b border-border">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <AdminLogo variant="desktop" />
-                <span className="text-[9px] text-muted-foreground tracking-[0.2em] uppercase font-semibold leading-none border-l border-border pl-2.5 truncate">
+            <div className="px-3 py-3.5 border-b border-border">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="min-w-0 flex-shrink overflow-hidden">
+                  <AdminLogo variant="desktop" />
+                </div>
+                <span className="flex-shrink-0 text-[9px] text-muted-foreground tracking-[0.18em] uppercase font-semibold leading-none border-l border-border pl-2 whitespace-nowrap">
                   {panelLabel}
                 </span>
               </div>
