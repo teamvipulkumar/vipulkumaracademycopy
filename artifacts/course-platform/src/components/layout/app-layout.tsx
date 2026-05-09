@@ -164,16 +164,36 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Lock body scroll while the mobile drawer is open so the page behind
-  // the overlay doesn't scroll under the user's finger. Restores the
-  // previous overflow value on close/unmount to play nice with any other
-  // component that might also manage body overflow.
+  // Lock page scroll while the mobile drawer is open. On mobile browsers
+  // (especially iOS Safari) `body { overflow: hidden }` alone is NOT
+  // enough — the user can still drag the page behind the overlay. The
+  // reliable fix is to pin the body in place via `position: fixed` while
+  // preserving the current scroll offset, then restore both on close.
+  // Also locks the <html> element's overflow as a belt-and-braces guard.
   useEffect(() => {
     if (!mobileOpen) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const scrollY = window.scrollY;
+    const body = document.body;
+    const html = document.documentElement;
+    const prev = {
+      bodyOverflow: body.style.overflow,
+      bodyPosition: body.style.position,
+      bodyTop: body.style.top,
+      bodyWidth: body.style.width,
+      htmlOverflow: html.style.overflow,
+    };
+    body.style.overflow = "hidden";
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.width = "100%";
+    html.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = previous;
+      body.style.overflow = prev.bodyOverflow;
+      body.style.position = prev.bodyPosition;
+      body.style.top = prev.bodyTop;
+      body.style.width = prev.bodyWidth;
+      html.style.overflow = prev.htmlOverflow;
+      window.scrollTo(0, scrollY);
     };
   }, [mobileOpen]);
 
