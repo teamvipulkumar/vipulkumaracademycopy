@@ -430,7 +430,7 @@ function AffiliateDashboard({ user }: { user: any }) {
           nav rows with tinted icon tiles, active state uses a soft primary
           tint + left accent bar (no full-width border), inactive rows get
           a subtle hover background. */}
-      <nav className="flex-1 px-3 pt-4 pb-3 overflow-y-auto">
+      <nav className="flex-1 px-3 pt-4 pb-3">
         <p className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/70">
           Navigate
         </p>
@@ -519,7 +519,7 @@ function AffiliateDashboard({ user }: { user: any }) {
       {/* Sidebar — fixed on desktop, slide-over on mobile (force-open during tour) */}
       <aside className={`
         fixed lg:sticky top-14 h-[calc(100vh-3.5rem)] z-50 lg:z-auto
-        w-56 flex-shrink-0 bg-card border-r border-border flex flex-col overflow-hidden
+        w-56 flex-shrink-0 bg-card border-r border-border flex flex-col overflow-y-auto
         transition-transform duration-200
         ${sidebarOpen || tourSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
       `}>
