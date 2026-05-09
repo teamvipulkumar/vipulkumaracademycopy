@@ -3,27 +3,11 @@ import { Link, useLocation } from "wouter";
 import { LayoutDashboard, Users, BookOpen, Share2, Tag, Settings, ArrowLeft, Menu, X, ShoppingCart, GraduationCap, Landmark, Mail, Layers, FileText, HardDrive, ShieldCheck, Megaphone, Sparkles, Wallet, Code2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth, getStaffLandingPath, useAdminBase, adminPathSuffix } from "@/lib/auth-context";
+import { UpcalifyLogo } from "@/components/upcalify-logo";
 
 function AdminLogo() {
-  // ClickOcean mark — matches the public navbar mark for brand consistency.
-  return (
-    <svg width="26" height="26" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="coAdminWave" x1="6" y1="34" x2="34" y2="8" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#0EA5E9" />
-          <stop offset="55%" stopColor="#2563EB" />
-          <stop offset="100%" stopColor="#1E3A8A" />
-        </linearGradient>
-        <linearGradient id="coAdminCursor" x1="20" y1="14" x2="28" y2="24" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#38BDF8" />
-          <stop offset="100%" stopColor="#1D4ED8" />
-        </linearGradient>
-      </defs>
-      <path d="M30 11 C 25 7, 16 7, 11 13 C 5 20, 6 30, 14 34 C 22 38, 32 33, 33 24" stroke="url(#coAdminWave)" strokeWidth="5" strokeLinecap="round" fill="none" />
-      <path d="M11 35 Q 18 33, 25 35" stroke="url(#coAdminWave)" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.55" />
-      <path d="M21 14 L 29 17.5 L 25.5 19.5 L 27.3 23.3 L 25.4 24.2 L 23.6 20.4 L 20.2 22.5 Z" fill="url(#coAdminCursor)" stroke="white" strokeWidth="0.5" strokeLinejoin="round" />
-    </svg>
-  );
+  // Upcalify wordmark — uses currentColor so it adapts to every theme.
+  return <UpcalifyLogo height={20} className="text-foreground" />;
 }
 
 /**
@@ -222,12 +206,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     <div className="flex h-screen overflow-hidden bg-background">
       <aside className="hidden md:flex w-56 border-r border-border bg-card flex-shrink-0 flex-col h-screen">
         <div className="p-4 border-b border-border">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <AdminLogo />
-            <div className="leading-none">
-              <p className="font-bold text-xs text-foreground tracking-wide">CLICKOCEAN</p>
-              <p className="text-[10px] text-primary/80 tracking-wider uppercase font-medium">{panelLabel}</p>
-            </div>
+            <span className="text-[10px] text-primary/80 tracking-wider uppercase font-medium border-l border-border pl-2 leading-none">{panelLabel}</span>
           </div>
         </div>
         <NavContent location={location} />
@@ -238,10 +219,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </Button>
         <AdminLogo />
-        <div className="leading-none">
-          <p className="font-bold text-xs text-foreground">CLICKOCEAN</p>
-          <p className="text-[10px] text-primary/80 tracking-wide uppercase">{panelLabel}</p>
-        </div>
+        <span className="text-[10px] text-primary/80 tracking-wider uppercase font-medium border-l border-border pl-2 leading-none">{panelLabel}</span>
       </div>
 
       {mobileOpen && (
@@ -249,12 +227,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
           <aside className="absolute top-14 left-0 bottom-0 w-64 bg-card border-r border-border flex flex-col shadow-2xl">
             <div className="p-4 border-b border-border">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <AdminLogo />
-                <div className="leading-none">
-                  <p className="font-bold text-xs text-foreground tracking-wide">CLICKOCEAN</p>
-                  <p className="text-[10px] text-primary/80 tracking-wider uppercase">{panelLabel}</p>
-                </div>
+                <span className="text-[10px] text-primary/80 tracking-wider uppercase font-medium border-l border-border pl-2 leading-none">{panelLabel}</span>
               </div>
             </div>
             <NavContent location={location} onNav={() => setMobileOpen(false)} />

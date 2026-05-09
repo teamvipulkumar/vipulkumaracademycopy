@@ -9,33 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Bell, Menu, X, Home, BookOpen, Share2, GraduationCap, LogOut, ShieldCheck, ChevronRight, Mail, Youtube, Twitter, Linkedin, Instagram, CheckCheck, Sun, Moon, User, Sparkles } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { EmailVerificationBanner } from "@/components/email-verification-banner";
-
-function AcademyLogo({ size = 32 }: { size?: number }) {
-  // ClickOcean brand mark — a wave that swirls into a C-shape with a cursor
-  // pointer nested inside the bowl, plus a small ripple tail at the bottom.
-  // Designed to read clearly at 16px on light or dark backgrounds.
-  return (
-    <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="coWave" x1="6" y1="34" x2="34" y2="8" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#0EA5E9" />
-          <stop offset="55%" stopColor="#2563EB" />
-          <stop offset="100%" stopColor="#1E3A8A" />
-        </linearGradient>
-        <linearGradient id="coCursor" x1="20" y1="14" x2="28" y2="24" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#38BDF8" />
-          <stop offset="100%" stopColor="#1D4ED8" />
-        </linearGradient>
-      </defs>
-      {/* Main wave swirl forming a C that opens upper-right */}
-      <path d="M30 11 C 25 7, 16 7, 11 13 C 5 20, 6 30, 14 34 C 22 38, 32 33, 33 24" stroke="url(#coWave)" strokeWidth="5" strokeLinecap="round" fill="none" />
-      {/* Bottom ripple tail */}
-      <path d="M11 35 Q 18 33, 25 35" stroke="url(#coWave)" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.55" />
-      {/* Cursor click pointer nested inside the wave bowl */}
-      <path d="M21 14 L 29 17.5 L 25.5 19.5 L 27.3 23.3 L 25.4 24.2 L 23.6 20.4 L 20.2 22.5 Z" fill="url(#coCursor)" stroke="white" strokeWidth="0.5" strokeLinejoin="round" />
-    </svg>
-  );
-}
+import { UpcalifyLogo } from "@/components/upcalify-logo";
 
 /* ─── Notification Popup ─── */
 function NotificationPopup({ iconSize = "w-4 h-4" }: { iconSize?: string }) {
@@ -242,7 +216,7 @@ export function Navbar() {
             {/* Logo intentionally stays at full scale even when the sticky
                 header shrinks — user prefers a consistent brand size and
                 explicitly disabled the scroll-shrink behaviour. */}
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 text-foreground">
               {branding.siteLogo ? (
                 <>
                   <img
@@ -259,19 +233,12 @@ export function Navbar() {
                   />
                 </>
               ) : (
-                <AcademyLogo size={34} />
+                <>
+                  <UpcalifyLogo height={32} className="hidden md:block" />
+                  <UpcalifyLogo height={26} className="block md:hidden" />
+                </>
               )}
             </div>
-            {!branding.siteLogo && (
-              <div className="leading-tight">
-                <p className="font-extrabold text-base tracking-tight text-foreground whitespace-nowrap leading-none">
-                  Click<span className="bg-gradient-to-r from-cyan-400 to-sky-500 bg-clip-text text-transparent">Ocean</span>
-                </p>
-                <p className="text-[9px] font-semibold tracking-[0.22em] text-muted-foreground uppercase leading-none mt-1">
-                  Skill • Build • Grow
-                </p>
-              </div>
-            )}
           </Link>
 
           {/* ── Center nav (desktop) ── */}
@@ -511,15 +478,7 @@ export function SiteFooter() {
                   style={{ height: branding.logoSize, width: "auto", maxWidth: branding.logoSize * 4 }}
                 />
               ) : (
-                <>
-                  <AcademyLogo size={36} />
-                  <div className="leading-tight">
-                    <p className="font-extrabold text-base tracking-tight text-foreground whitespace-nowrap leading-none">
-                      Click<span className="bg-gradient-to-r from-cyan-400 to-sky-500 bg-clip-text text-transparent">Ocean</span>
-                    </p>
-                    <p className="text-[9px] font-semibold tracking-[0.22em] text-muted-foreground uppercase leading-none mt-1">Skill • Build • Grow</p>
-                  </div>
-                </>
+                <UpcalifyLogo height={34} className="text-foreground" />
               )}
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mb-5">
