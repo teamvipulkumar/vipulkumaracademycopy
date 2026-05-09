@@ -44,21 +44,20 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    let link = document.querySelector<HTMLLinkElement>("link[rel~='icon']");
-    if (branding.favicon) {
-      if (!link) {
-        link = document.createElement("link");
-        link.rel = "icon";
-        document.head.appendChild(link);
-      }
-      link.removeAttribute("type");
-      link.href = branding.favicon;
-    } else if (link) {
-      // No brand favicon configured — neutralize the tab icon so the browser
-      // does not fall back to /favicon.ico or any default mark.
-      link.removeAttribute("type");
-      link.href = "data:,";
-    }
+    // Update every favicon-ish <link> (icon, shortcut icon, apple-touch-icon)
+    // so desktop AND mobile (iOS home-screen, Android tab) all reflect the
+    // brand favicon. When no brand favicon is set, fall back to a transparent
+    // 1x1 PNG so no default mark is shown anywhere.
+    const TRANSPARENT_PNG =
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+    const href = branding.favicon || TRANSPARENT_PNG;
+    const links = document.querySelectorAll<HTMLLinkElement>(
+      "link[rel='icon'], link[rel='shortcut icon'], link[rel='apple-touch-icon']"
+    );
+    links.forEach(link => {
+      if (branding.favicon) link.removeAttribute("type");
+      link.href = href;
+    });
   }, [branding.favicon]);
 
   useEffect(() => {
