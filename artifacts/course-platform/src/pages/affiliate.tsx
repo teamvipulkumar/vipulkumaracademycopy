@@ -723,15 +723,22 @@ function AffiliateDashboard({ user }: { user: any }) {
                     </div>
                   ) : (
                     <>
+                      {/* Mobile: enable horizontal scroll on the table.
+                          The table itself gets `min-w-max` on mobile so
+                          columns keep their natural width (Course column
+                          stops getting squashed); user swipes left to see
+                          the rest. Row padding is also tightened on mobile
+                          so more content fits on screen. Desktop layout
+                          (sm:) is byte-identical to before. */}
                       <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
+                        <table className="w-full min-w-[640px] sm:min-w-0 text-sm">
                           <thead>
                             <tr className="border-b border-border bg-background/50">
-                              <th className="text-left text-xs font-semibold text-muted-foreground px-5 py-3">#</th>
-                              <th className="text-xs font-semibold text-muted-foreground px-5 py-3 text-left">Commission</th>
-                              <th className="text-xs font-semibold text-muted-foreground px-5 py-3 text-left">Sale Amount</th>
-                              <th className="text-left text-xs font-semibold text-muted-foreground px-5 py-3">Date & Time</th>
-                              <th className="text-left text-xs font-semibold text-muted-foreground px-5 py-3">Course</th>
+                              <th className="text-left text-xs font-semibold text-muted-foreground px-3 sm:px-5 py-3 whitespace-nowrap">#</th>
+                              <th className="text-xs font-semibold text-muted-foreground px-3 sm:px-5 py-3 text-left whitespace-nowrap">Commission</th>
+                              <th className="text-xs font-semibold text-muted-foreground px-3 sm:px-5 py-3 text-left whitespace-nowrap">Sale Amount</th>
+                              <th className="text-left text-xs font-semibold text-muted-foreground px-3 sm:px-5 py-3 whitespace-nowrap">Date & Time</th>
+                              <th className="text-left text-xs font-semibold text-muted-foreground px-3 sm:px-5 py-3 whitespace-nowrap">Course</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-border">
@@ -740,24 +747,24 @@ function AffiliateDashboard({ user }: { user: any }) {
                               const globalIdx = (salesPage - 1) * PAGE_SIZE + i + 1;
                               return (
                                 <tr key={sale.id}>
-                                  <td className="px-5 py-3.5 text-xs text-muted-foreground">{globalIdx}</td>
-                                  <td className="px-5 py-3.5 text-left">
+                                  <td className="px-3 sm:px-5 py-3.5 text-xs text-muted-foreground whitespace-nowrap">{globalIdx}</td>
+                                  <td className="px-3 sm:px-5 py-3.5 text-left whitespace-nowrap">
                                     <span className="font-bold text-green-400">₹{sale.commission.toLocaleString("en-IN")}</span>
                                   </td>
-                                  <td className="px-5 py-3.5 text-left">
+                                  <td className="px-3 sm:px-5 py-3.5 text-left whitespace-nowrap">
                                     {sale.saleAmount != null
                                       ? <span className="font-semibold text-foreground">₹{Number(sale.saleAmount).toLocaleString("en-IN")}</span>
                                       : <span className="text-muted-foreground text-xs">—</span>
                                     }
                                   </td>
-                                  <td className="px-5 py-3.5">
+                                  <td className="px-3 sm:px-5 py-3.5 whitespace-nowrap">
                                     <div>
                                       <p className="text-sm text-foreground">{dt.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p>
                                       <p className="text-[11px] text-muted-foreground">{dt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })}</p>
                                     </div>
                                   </td>
-                                  <td className="px-5 py-3.5">
-                                    <span className="font-medium text-foreground text-sm">{sale.courseTitle}</span>
+                                  <td className="px-3 sm:px-5 py-3.5">
+                                    <span className="font-medium text-foreground text-sm whitespace-nowrap">{sale.courseTitle}</span>
                                   </td>
                                 </tr>
                               );
