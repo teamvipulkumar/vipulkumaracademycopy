@@ -483,10 +483,7 @@ export function Navbar() {
           </div>
 
           {/* Pinned CTA footer — always visible without scrolling. */}
-          <div
-            className="px-4 py-4 border-t space-y-2 flex-shrink-0"
-            style={{ borderColor: "var(--nav-border)" }}
-          >
+          <div className="px-4 py-4 space-y-2 flex-shrink-0">
             {!isAuthenticated ? (
               <>
                 <Button className="w-full h-11 bg-primary hover:bg-primary/90 font-semibold" asChild onClick={() => setMobileOpen(false)}>
