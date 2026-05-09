@@ -194,8 +194,12 @@ body {
   --elevate-1: rgba(16,185,129, .04);
   --elevate-2: rgba(16,185,129, .08);
 
-  --nav-bg: #060a08;
-  --nav-border: rgba(16,185,129, 0.10);
+  /* Header switched from near-black to a vivid emerald (#29BC86) per user
+     request — the deep green-tinted black was reading as flat dark. The
+     dropdown / footer / mobile drawer stay on the deep palette so only the
+     top bar pops; otherwise the whole chrome would feel oversaturated. */
+  --nav-bg: #29BC86;
+  --nav-border: rgba(16,185,129, 0.35);
   --dropdown-bg: #0c1410;
   --dropdown-border: rgba(16,185,129, 0.14);
   --footer-bg: #030605;
