@@ -36,22 +36,37 @@ export function UpcalifyLogo({
     >
       <title>{title}</title>
 
-      {/* ── Icon mark: primary-tinted rounded square + upward growth arrow ── */}
+      {/* ── Icon mark: primary-tinted rounded square containing a
+             graduation cap (mortarboard + band + tassel) and the
+             letter "U" beneath. Recreated from the reference png so
+             both elements scale crisply down to ~20px tall. ── */}
       <rect x="3.5" y="11" width="26" height="26" rx="6.5" fill="hsl(var(--primary))" />
-      {/* Growth chart line: low → spike up → small dip → peak top-right */}
+
+      {/* Mortarboard (top diamond plate) */}
       <path
-        d="M 9 28.5 L 13.2 23.2 L 17.4 26 L 23.5 17.5"
+        d="M 16.5 14 L 24 17 L 16.5 20 L 9 17 Z"
+        fill="hsl(var(--primary-foreground))"
+      />
+      {/* Cap band (curved trapezoid sitting under the mortarboard) */}
+      <path
+        d="M 12 18.6 L 12 20.4 Q 12 22.4 16.5 22.4 Q 21 22.4 21 20.4 L 21 18.6 Z"
+        fill="hsl(var(--primary-foreground))"
+      />
+      {/* Tassel — short line + small bead hanging off the right corner */}
+      <path
+        d="M 23.6 17.4 L 24.6 21.6"
         stroke="hsl(var(--primary-foreground))"
-        strokeWidth="2.4"
+        strokeWidth="0.9"
         strokeLinecap="round"
-        strokeLinejoin="round"
         fill="none"
       />
-      {/* Arrow head at the peak */}
+      <circle cx="24.6" cy="22.2" r="0.95" fill="hsl(var(--primary-foreground))" />
+
+      {/* Letter "U" beneath the cap */}
       <path
-        d="M 19.8 17.5 L 23.8 17.5 L 23.8 21.5"
+        d="M 13 25 L 13 30 Q 13 32.2 16.5 32.2 Q 20 32.2 20 30 L 20 25"
         stroke="hsl(var(--primary-foreground))"
-        strokeWidth="2.4"
+        strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
         fill="none"
