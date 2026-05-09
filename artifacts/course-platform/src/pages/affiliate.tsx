@@ -498,7 +498,7 @@ function AffiliateDashboard({ user }: { user: any }) {
               <span className="flex items-center justify-center w-7 h-7 rounded-md bg-foreground/[0.04] text-muted-foreground group-hover:bg-foreground/[0.1] group-hover:text-foreground transition-colors">
                 <ChevronRight className="w-4 h-4 rotate-180" />
               </span>
-              <span className="truncate">Back to Site</span>
+              <span className="truncate">Back to Home</span>
             </button>
           </Link>
         </div>
@@ -962,7 +962,6 @@ function AffiliateDashboard({ user }: { user: any }) {
 
         </div>
       </main>
-
       {/* First-time welcome popup + interactive dashboard tour */}
       {!loading && dashboard && showWelcomeForSession && !welcomeDismissed && (
         <WelcomeOnboarding
@@ -990,7 +989,6 @@ function AffiliateDashboard({ user }: { user: any }) {
           }}
         />
       )}
-
       {/* Manual replay tour — mounts a fresh WelcomeOnboarding in tour-only
           mode whenever the user clicks "Replay tour" in the sidebar. Resets
           its own state on finish so the user can replay as many times as they
