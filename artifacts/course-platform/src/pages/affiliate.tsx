@@ -471,8 +471,16 @@ function AffiliateDashboard({ user }: { user: any }) {
       <div className="p-3 border-t border-border space-y-2">
         {/* User chip — elevated card */}
         <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-foreground/[0.03] border border-foreground/[0.08]">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center text-primary text-xs font-bold flex-shrink-0 border border-primary/20">
-            {user?.name?.charAt(0)?.toUpperCase() ?? "U"}
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center text-primary text-xs font-bold flex-shrink-0 border border-primary/20 overflow-hidden">
+            {(user as any)?.avatarUrl ? (
+              <img
+                src={(user as any).avatarUrl}
+                alt={user?.name ?? ""}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              user?.name?.charAt(0)?.toUpperCase() ?? "U"
+            )}
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold text-foreground truncate leading-tight">{user?.name}</p>
