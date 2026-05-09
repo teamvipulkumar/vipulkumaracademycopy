@@ -164,6 +164,19 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Lock body scroll while the mobile drawer is open so the page behind
+  // the overlay doesn't scroll under the user's finger. Restores the
+  // previous overflow value on close/unmount to play nice with any other
+  // component that might also manage body overflow.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [mobileOpen]);
+
   const handleLogout = () => {
     logout.mutate(undefined, {
       onSuccess: () => {
