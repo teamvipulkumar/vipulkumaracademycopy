@@ -497,9 +497,12 @@ export function Navbar() {
                 </Button>
               </>
             ) : (
+              // Permanent red-tinted background — touch devices have no hover
+              // state, so the destructive intent must be visible at rest.
+              // Border + bg are always-on; hover just deepens them.
               <Button
                 variant="ghost"
-                className="w-full h-11 text-red-400 hover:text-red-300 hover:bg-red-500/10 flex items-center gap-2 justify-center"
+                className="w-full h-11 text-red-400 bg-red-500/10 border border-red-500/20 hover:text-red-300 hover:bg-red-500/15 hover:border-red-500/30 active:bg-red-500/20 flex items-center gap-2 justify-center font-semibold"
                 onClick={handleLogout}
               >
                 <LogOut className="w-4 h-4" />Sign Out
