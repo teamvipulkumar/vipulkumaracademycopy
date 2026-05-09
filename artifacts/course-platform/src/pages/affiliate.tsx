@@ -697,19 +697,22 @@ function AffiliateDashboard({ user }: { user: any }) {
               <div className="space-y-5">
                 <TabHeader title="My Sales" subtitle="All successful purchases made through your referral link." />
 
-                {/* Summary row */}
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-card border border-border rounded-xl p-4 text-center">
-                    <p className="text-xl font-bold text-foreground">{sales.length}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Total Sales</p>
+                {/* Summary row — mobile pe tighter padding (p-2.5), smaller
+                    typography (text-base), smaller gap (gap-2), aur values
+                    par `break-all` so big ₹ amounts wrap inside the card
+                    instead of overflowing. Desktop layout unchanged from sm:. */}
+                <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                  <div className="bg-card border border-border rounded-xl p-2.5 sm:p-4 text-center">
+                    <p className="text-base sm:text-xl font-bold text-foreground leading-tight break-all">{sales.length}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 leading-tight">Total Sales</p>
                   </div>
-                  <div className="bg-card border border-border rounded-xl p-4 text-center transition-colors hover:border-blue-500/40 hover:bg-blue-500/5 cursor-default">
-                    <p className="text-xl font-bold text-blue-400">₹{sales.reduce((s, r) => s + (r.saleAmount ?? 0), 0).toLocaleString("en-IN")}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Total Revenue</p>
+                  <div className="bg-card border border-border rounded-xl p-2.5 sm:p-4 text-center transition-colors hover:border-blue-500/40 hover:bg-blue-500/5 cursor-default">
+                    <p className="text-base sm:text-xl font-bold text-blue-400 leading-tight break-all">₹{sales.reduce((s, r) => s + (r.saleAmount ?? 0), 0).toLocaleString("en-IN")}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 leading-tight">Total Revenue</p>
                   </div>
-                  <div className="bg-card border border-border rounded-xl p-4 text-center">
-                    <p className="text-xl font-bold text-green-400">₹{sales.reduce((s, r) => s + r.commission, 0).toLocaleString("en-IN")}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Total Commission</p>
+                  <div className="bg-card border border-border rounded-xl p-2.5 sm:p-4 text-center">
+                    <p className="text-base sm:text-xl font-bold text-green-400 leading-tight break-all">₹{sales.reduce((s, r) => s + r.commission, 0).toLocaleString("en-IN")}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 leading-tight">Total Commission</p>
                   </div>
                 </div>
 
