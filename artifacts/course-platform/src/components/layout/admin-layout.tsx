@@ -235,10 +235,13 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             condensed wordmark + section subtitle pattern used by Linear,
             Stripe and Vercel back-offices, which read as far more "product
             grade" than centered marketing-style headers. */}
+        {/* Sidebar brand block — logo + panel label sit on a single row,
+            label slightly muted and divided from the mark by a thin border
+            so the eye reads "{Brand} · ADMIN PANEL" as one unit. */}
         <div className="px-4 py-3.5 border-b border-border">
-          <div className="flex flex-col items-start gap-1">
+          <div className="flex items-center gap-2.5 min-w-0">
             <AdminLogo variant="desktop" />
-            <span className="text-[9px] text-muted-foreground tracking-[0.22em] uppercase font-semibold leading-none">
+            <span className="text-[9px] text-muted-foreground tracking-[0.2em] uppercase font-semibold leading-none border-l border-border pl-2.5 truncate">
               {panelLabel}
             </span>
           </div>
@@ -246,18 +249,15 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         <NavContent location={location} />
       </aside>
 
-      {/* Mobile top bar — horizontal layout because the 56px strip can't
-          stack two rows. Logo + tiny pill label sit beside the menu button. */}
+      {/* Mobile top bar — same inline pattern: logo + label to the right. */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 h-14 bg-card border-b border-border flex items-center px-3 gap-2">
         <Button variant="ghost" size="sm" className="px-2" onClick={() => setMobileOpen(o => !o)}>
           {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </Button>
-        <div className="flex flex-col items-start gap-0.5 min-w-0">
-          <AdminLogo variant="mobile" />
-          <span className="text-[8px] text-muted-foreground tracking-[0.22em] uppercase font-semibold leading-none">
-            {panelLabel}
-          </span>
-        </div>
+        <AdminLogo variant="mobile" />
+        <span className="text-[9px] text-muted-foreground tracking-[0.2em] uppercase font-semibold leading-none border-l border-border pl-2 truncate">
+          {panelLabel}
+        </span>
       </div>
 
       {mobileOpen && (
@@ -266,9 +266,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           <aside className="absolute top-14 left-0 bottom-0 w-64 bg-card border-r border-border flex flex-col shadow-2xl">
             {/* Mobile drawer mirrors the desktop sidebar layout exactly. */}
             <div className="px-4 py-3.5 border-b border-border">
-              <div className="flex flex-col items-start gap-1">
+              <div className="flex items-center gap-2.5 min-w-0">
                 <AdminLogo variant="desktop" />
-                <span className="text-[9px] text-muted-foreground tracking-[0.22em] uppercase font-semibold leading-none">
+                <span className="text-[9px] text-muted-foreground tracking-[0.2em] uppercase font-semibold leading-none border-l border-border pl-2.5 truncate">
                   {panelLabel}
                 </span>
               </div>
