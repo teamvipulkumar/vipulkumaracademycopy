@@ -341,23 +341,72 @@ export function Navbar() {
         </div>
       </header>
 
-      {/* ── Mobile full-screen drawer ── */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-40 md:hidden">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-          <nav className="absolute top-14 left-0 right-0 border-b shadow-2xl max-h-[calc(100vh-3.5rem)] overflow-y-auto" style={{ backgroundColor: "var(--mobile-drawer-bg)", borderColor: "var(--nav-border)" }}>
+      {/* ── Mobile right-side drawer ──
+          Slides in from the RIGHT (native iOS/Android pattern when the menu
+          trigger sits on the right of the header). Uses an animated overlay
+          + translate transform so opening/closing feels native rather than
+          the previous abrupt top-down dropdown. The drawer is its own
+          scrollable column so long menus never push the close/CTA controls
+          off-screen on small phones. */}
+      <div
+        className={`fixed inset-0 z-40 md:hidden ${mobileOpen ? "pointer-events-auto" : "pointer-events-none"}`}
+        aria-hidden={!mobileOpen}
+      >
+        {/* Backdrop — fades in/out with the drawer for a smooth feel. */}
+        <div
+          className={`absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-300 ${
+            mobileOpen ? "opacity-100" : "opacity-0"
+          }`}
+          onClick={() => setMobileOpen(false)}
+        />
+        {/* Drawer panel — anchored to the right edge, slides in via
+            translate-x. Width caps at 320px so it never feels cramped on
+            tiny phones nor oversized on phablets. */}
+        <aside
+          className={`absolute top-0 right-0 h-full w-[85vw] max-w-[320px] flex flex-col shadow-2xl transition-transform duration-300 ease-out border-l ${
+            mobileOpen ? "translate-x-0" : "translate-x-full"
+          }`}
+          style={{ backgroundColor: "var(--mobile-drawer-bg)", borderColor: "var(--nav-border)" }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Main menu"
+        >
+          {/* Drawer header — brand on the left, close button on the right.
+              Mirrors the layout of the main app header so the user has a
+              consistent anchor while the menu is open. */}
+          <div
+            className="flex items-center justify-between px-4 h-14 border-b flex-shrink-0"
+            style={{ borderColor: "var(--nav-border)" }}
+          >
+            <span className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground/80">
+              Menu
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-9 h-9 p-0 rounded-lg hover:bg-white/5"
+              onClick={() => setMobileOpen(false)}
+              aria-label="Close menu"
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+
+          {/* Scrollable content area — keeps user/profile chip at top, nav
+              in the middle, CTAs pinned at the bottom by flex layout. */}
+          <div className="flex-1 overflow-y-auto overscroll-contain">
             {isAuthenticated && (
               <div className="flex items-center gap-3 px-5 py-4 border-b border-white/5">
-                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-sm font-bold text-white overflow-hidden flex-shrink-0">
+                <div className="w-11 h-11 rounded-full bg-primary flex items-center justify-center text-sm font-bold text-white overflow-hidden flex-shrink-0">
                   {(user as any)?.avatarUrl ? (
                     <img src={(user as any).avatarUrl} alt={user?.name ?? ""} className="w-full h-full object-cover" />
                   ) : (
                     user?.name?.charAt(0).toUpperCase()
                   )}
                 </div>
-                <div>
-                  <p className="font-semibold text-sm text-foreground">{user?.name}</p>
-                  <p className="text-xs text-muted-foreground">{user?.email}</p>
+                <div className="min-w-0">
+                  <p className="font-semibold text-sm text-foreground truncate">{user?.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                 </div>
               </div>
             )}
@@ -365,14 +414,14 @@ export function Navbar() {
             <div className="py-2">
               {navLinks.map(link => (
                 <Link key={link.href} href={link.href} onClick={() => setMobileOpen(false)}>
-                  <div className={`flex items-center gap-3 px-5 py-3.5 text-sm font-medium transition-colors ${
+                  <div className={`flex items-center gap-3 px-5 py-3.5 text-[15px] font-medium transition-colors ${
                     location === link.href
                       ? "text-primary bg-primary/8 border-l-2 border-primary"
-                      : "text-foreground/70 hover:text-foreground hover:bg-white/5"
+                      : "text-foreground/75 hover:text-foreground hover:bg-white/5 active:bg-white/10"
                   }`}>
-                    <link.icon className="w-4 h-4 flex-shrink-0" />
-                    {link.label}
-                    <ChevronRight className="w-4 h-4 ml-auto text-muted-foreground/50" />
+                    <link.icon className="w-[18px] h-[18px] flex-shrink-0" />
+                    <span className="flex-1 truncate">{link.label}</span>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground/50" />
                   </div>
                 </Link>
               ))}
@@ -381,52 +430,56 @@ export function Navbar() {
             {isAuthenticated && (
               <div className="border-t border-white/5 py-2">
                 <Link href="/profile" onClick={() => setMobileOpen(false)}>
-                  <div className={`flex items-center gap-3 px-5 py-3.5 text-sm font-medium transition-colors ${
+                  <div className={`flex items-center gap-3 px-5 py-3.5 text-[15px] font-medium transition-colors ${
                     location === "/profile"
                       ? "text-primary bg-primary/8 border-l-2 border-primary"
-                      : "text-foreground/70 hover:text-foreground hover:bg-white/5"
+                      : "text-foreground/75 hover:text-foreground hover:bg-white/5 active:bg-white/10"
                   }`}>
-                    <User className="w-4 h-4 flex-shrink-0" />
-                    My Profile
-                    <ChevronRight className="w-4 h-4 ml-auto text-muted-foreground/50" />
+                    <User className="w-[18px] h-[18px] flex-shrink-0" />
+                    <span className="flex-1 truncate">My Profile</span>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground/50" />
                   </div>
                 </Link>
                 <button
                   onClick={toggleTheme}
-                  className="w-full flex items-center gap-3 px-5 py-3.5 text-sm font-medium text-foreground/70 hover:text-foreground hover:bg-white/5 transition-colors cursor-pointer"
+                  className="w-full flex items-center gap-3 px-5 py-3.5 text-[15px] font-medium text-foreground/75 hover:text-foreground hover:bg-white/5 active:bg-white/10 transition-colors cursor-pointer"
                 >
-                  {theme === "dark" ? <Moon className="w-4 h-4 flex-shrink-0" /> : <Sun className="w-4 h-4 flex-shrink-0" />}
-                  {theme === "dark" ? "Dark Mode" : "Light Mode"}
-                  <span className={`ml-auto relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${theme === "dark" ? "bg-primary" : "bg-muted"}`}>
+                  {theme === "dark" ? <Moon className="w-[18px] h-[18px] flex-shrink-0" /> : <Sun className="w-[18px] h-[18px] flex-shrink-0" />}
+                  <span className="flex-1 text-left truncate">{theme === "dark" ? "Dark Mode" : "Light Mode"}</span>
+                  <span className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${theme === "dark" ? "bg-primary" : "bg-muted"}`}>
                     <span className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform ${theme === "dark" ? "translate-x-3.5" : "translate-x-0.5"}`} />
                   </span>
                 </button>
               </div>
             )}
+          </div>
 
-            <div className="px-4 py-4 border-t border-white/5 space-y-2">
-              {!isAuthenticated ? (
-                <>
-                  <Button className="w-full bg-primary hover:bg-primary/90 font-semibold" asChild onClick={() => setMobileOpen(false)}>
-                    <Link href="/register">Get Started Free</Link>
-                  </Button>
-                  <Button variant="outline" className="w-full border-white/10 hover:bg-white/5" asChild onClick={() => setMobileOpen(false)}>
-                    <Link href="/login">Log In</Link>
-                  </Button>
-                </>
-              ) : (
-                <Button
-                  variant="ghost"
-                  className="w-full text-red-400 hover:text-red-300 hover:bg-red-500/10 flex items-center gap-2 justify-center"
-                  onClick={handleLogout}
-                >
-                  <LogOut className="w-4 h-4" />Sign Out
+          {/* Pinned CTA footer — always visible without scrolling. */}
+          <div
+            className="px-4 py-4 border-t space-y-2 flex-shrink-0"
+            style={{ borderColor: "var(--nav-border)" }}
+          >
+            {!isAuthenticated ? (
+              <>
+                <Button className="w-full h-11 bg-primary hover:bg-primary/90 font-semibold" asChild onClick={() => setMobileOpen(false)}>
+                  <Link href="/register">Get Started Free</Link>
                 </Button>
-              )}
-            </div>
-          </nav>
-        </div>
-      )}
+                <Button variant="outline" className="w-full h-11 border-white/10 hover:bg-white/5" asChild onClick={() => setMobileOpen(false)}>
+                  <Link href="/login">Log In</Link>
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="ghost"
+                className="w-full h-11 text-red-400 hover:text-red-300 hover:bg-red-500/10 flex items-center gap-2 justify-center"
+                onClick={handleLogout}
+              >
+                <LogOut className="w-4 h-4" />Sign Out
+              </Button>
+            )}
+          </div>
+        </aside>
+      </div>
     </>
   );
 }
