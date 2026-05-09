@@ -51,7 +51,13 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
         link.rel = "icon";
         document.head.appendChild(link);
       }
+      link.removeAttribute("type");
       link.href = branding.favicon;
+    } else if (link) {
+      // No brand favicon configured — neutralize the tab icon so the browser
+      // does not fall back to /favicon.ico or any default mark.
+      link.removeAttribute("type");
+      link.href = "data:,";
     }
   }, [branding.favicon]);
 
