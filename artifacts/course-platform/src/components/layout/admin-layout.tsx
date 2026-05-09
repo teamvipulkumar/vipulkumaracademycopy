@@ -3,7 +3,6 @@ import { Link, useLocation } from "wouter";
 import { LayoutDashboard, Users, BookOpen, Share2, Tag, Settings, ArrowLeft, Menu, X, ShoppingCart, GraduationCap, Landmark, Mail, Layers, FileText, HardDrive, ShieldCheck, Megaphone, Sparkles, Wallet, Code2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth, getStaffLandingPath, useAdminBase, adminPathSuffix } from "@/lib/auth-context";
-import { UpcalifyLogo } from "@/components/upcalify-logo";
 import { useBranding, useThemedLogo } from "@/lib/branding-context";
 
 /**
@@ -35,7 +34,16 @@ function AdminLogo({ variant = "desktop" }: { variant?: "desktop" | "mobile" }) 
       />
     );
   }
-  return <UpcalifyLogo height={height} className="text-foreground" />;
+  // No admin-configured logo — show the site name as a plain wordmark so the
+  // brand block isn't empty, but never fall back to the built-in default mark.
+  if (siteName) {
+    return (
+      <span className="text-sm font-bold text-foreground tracking-tight whitespace-nowrap">
+        {siteName}
+      </span>
+    );
+  }
+  return null;
 }
 
 /**
