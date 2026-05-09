@@ -1,13 +1,17 @@
 /**
- * Upcalify wordmark — inline SVG so the fill follows `currentColor`,
- * making it adapt automatically to every theme (dark, light, midnight).
- * Drop it into any element with a desired text colour and the logo
- * will inherit it. Width derives from `height` to preserve the
- * 109 × 28 viewBox aspect ratio (~3.89:1).
+ * Upcalify wordmark + supporting icon mark — inline SVG so:
+ *   • the wordmark fills follow `currentColor` (adapts to every theme via
+ *     the parent's text colour: dark / light / midnight)
+ *   • the icon mark uses `hsl(var(--primary))` and `--primary-foreground`,
+ *     so its accent recolours automatically with each theme palette
+ *     (electric blue in Dark, blue on white in Light, emerald in Midnight).
  *
- * The original artwork from `attached_assets/Upcalify_(7)…svg` ships
- * with an empty icon mask on the left half of the canvas — we crop the
- * viewBox to just the wordmark so it sits flush, no dead space.
+ * The icon is a rounded primary-tinted square containing an upward
+ * "growth chart" arrow — a simple, scalable suggestion of "Up + scale"
+ * that pairs cleanly with the wordmark at small sizes (≥18px height).
+ *
+ * Width derives from `height` to preserve the 145 × 28 viewBox aspect
+ * ratio (~5.18:1). Original artwork: `attached_assets/Upcalify_(7)…svg`.
  */
 export function UpcalifyLogo({
   height = 32,
@@ -18,11 +22,11 @@ export function UpcalifyLogo({
   className?: string;
   title?: string;
 }) {
-  const ratio = 109 / 28;
+  const ratio = 145 / 28;
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="36 9 109 28"
+      viewBox="0 9 145 28"
       height={height}
       width={height * ratio}
       preserveAspectRatio="xMidYMid meet"
@@ -31,6 +35,29 @@ export function UpcalifyLogo({
       className={className}
     >
       <title>{title}</title>
+
+      {/* ── Icon mark: primary-tinted rounded square + upward growth arrow ── */}
+      <rect x="3.5" y="11" width="26" height="26" rx="6.5" fill="hsl(var(--primary))" />
+      {/* Growth chart line: low → spike up → small dip → peak top-right */}
+      <path
+        d="M 9 28.5 L 13.2 23.2 L 17.4 26 L 23.5 17.5"
+        stroke="hsl(var(--primary-foreground))"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+      {/* Arrow head at the peak */}
+      <path
+        d="M 19.8 17.5 L 23.8 17.5 L 23.8 21.5"
+        stroke="hsl(var(--primary-foreground))"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+
+      {/* ── Wordmark — inherits currentColor from the parent text colour ── */}
       <g fill="currentColor">
         <g transform="translate(38.273437, 29.999998)">
           <path d="M 9.484375 0.28125 C 7.078125 0.28125 5.203125 -0.378906 3.859375 -1.703125 C 2.523438 -3.035156 1.859375 -4.9375 1.859375 -7.40625 L 1.859375 -16.84375 L 5.75 -16.84375 L 5.75 -7.5625 C 5.75 -4.539062 7 -3.03125 9.5 -3.03125 C 10.71875 -3.03125 11.648438 -3.394531 12.296875 -4.125 C 12.941406 -4.851562 13.265625 -6 13.265625 -7.5625 L 13.265625 -16.84375 L 17.109375 -16.84375 L 17.109375 -7.40625 C 17.109375 -4.9375 16.4375 -3.035156 15.09375 -1.703125 C 13.757812 -0.378906 11.890625 0.28125 9.484375 0.28125 Z M 9.484375 0.28125" />
