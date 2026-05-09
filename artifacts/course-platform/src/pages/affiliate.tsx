@@ -430,7 +430,7 @@ function AffiliateDashboard({ user }: { user: any }) {
           nav rows with tinted icon tiles, active state uses a soft primary
           tint + left accent bar (no full-width border), inactive rows get
           a subtle hover background. */}
-      <nav className="flex-1 px-3 pt-4 pb-3">
+      <nav className="px-3 pt-4 pb-3">
         <p className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/70">
           Navigate
         </p>
