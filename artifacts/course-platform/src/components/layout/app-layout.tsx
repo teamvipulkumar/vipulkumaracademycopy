@@ -392,64 +392,92 @@ export function Navbar() {
             </Button>
           </div>
 
-          {/* Scrollable content area — keeps user/profile chip at top, nav
-              in the middle, CTAs pinned at the bottom by flex layout. */}
-          <div className="flex-1 overflow-y-auto overscroll-contain">
+          {/* Scrollable content area — clean SaaS drawer layout:
+              - User chip in a subtle elevated card (Linear / Notion pattern)
+              - Section headers in tiny uppercase tracking
+              - Nav rows are rounded pills with hover/active states; no
+                trailing chevrons (felt like a list-of-folders, not a nav)
+              - Icons sit in slightly-tinted square tiles for visual rhythm. */}
+          <div className="flex-1 overflow-y-auto overscroll-contain px-3 py-4 space-y-5">
             {isAuthenticated && (
-              <div className="flex items-center gap-3 px-5 py-4 border-b border-white/5">
-                <div className="w-11 h-11 rounded-full bg-primary flex items-center justify-center text-sm font-bold text-white overflow-hidden flex-shrink-0">
+              <div
+                className="flex items-center gap-3 p-3 rounded-xl border"
+                style={{ backgroundColor: "var(--elevate-1)", borderColor: "var(--button-outline)" }}
+              >
+                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-sm font-bold text-white overflow-hidden flex-shrink-0 ring-2 ring-primary/20">
                   {(user as any)?.avatarUrl ? (
                     <img src={(user as any).avatarUrl} alt={user?.name ?? ""} className="w-full h-full object-cover" />
                   ) : (
                     user?.name?.charAt(0).toUpperCase()
                   )}
                 </div>
-                <div className="min-w-0">
-                  <p className="font-semibold text-sm text-foreground truncate">{user?.name}</p>
-                  <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-sm text-foreground truncate leading-tight">{user?.name}</p>
+                  <p className="text-[11px] text-muted-foreground truncate mt-0.5">{user?.email}</p>
                 </div>
               </div>
             )}
 
-            <div className="py-2">
-              {navLinks.map(link => (
-                <Link key={link.href} href={link.href} onClick={() => setMobileOpen(false)}>
-                  <div className={`flex items-center gap-3 px-5 py-3.5 text-[15px] font-medium transition-colors ${
-                    location === link.href
-                      ? "text-primary bg-primary/8 border-l-2 border-primary"
-                      : "text-foreground/75 hover:text-foreground hover:bg-white/5 active:bg-white/10"
-                  }`}>
-                    <link.icon className="w-[18px] h-[18px] flex-shrink-0" />
-                    <span className="flex-1 truncate">{link.label}</span>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground/50" />
-                  </div>
-                </Link>
-              ))}
+            <div>
+              <p className="px-2 mb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/70">
+                Navigate
+              </p>
+              <div className="space-y-0.5">
+                {navLinks.map(link => {
+                  const active = location === link.href;
+                  return (
+                    <Link key={link.href} href={link.href} onClick={() => setMobileOpen(false)}>
+                      <div className={`flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-[14px] font-medium transition-colors ${
+                        active
+                          ? "bg-primary/10 text-primary"
+                          : "text-foreground/80 hover:bg-white/5 active:bg-white/10"
+                      }`}>
+                        <span className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 ${
+                          active ? "bg-primary/15 text-primary" : "bg-white/5 text-foreground/70"
+                        }`}>
+                          <link.icon className="w-[15px] h-[15px]" />
+                        </span>
+                        <span className="flex-1 truncate">{link.label}</span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
 
             {isAuthenticated && (
-              <div className="border-t border-white/5 py-2">
-                <Link href="/profile" onClick={() => setMobileOpen(false)}>
-                  <div className={`flex items-center gap-3 px-5 py-3.5 text-[15px] font-medium transition-colors ${
-                    location === "/profile"
-                      ? "text-primary bg-primary/8 border-l-2 border-primary"
-                      : "text-foreground/75 hover:text-foreground hover:bg-white/5 active:bg-white/10"
-                  }`}>
-                    <User className="w-[18px] h-[18px] flex-shrink-0" />
-                    <span className="flex-1 truncate">My Profile</span>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground/50" />
-                  </div>
-                </Link>
-                <button
-                  onClick={toggleTheme}
-                  className="w-full flex items-center gap-3 px-5 py-3.5 text-[15px] font-medium text-foreground/75 hover:text-foreground hover:bg-white/5 active:bg-white/10 transition-colors cursor-pointer"
-                >
-                  {theme === "dark" ? <Moon className="w-[18px] h-[18px] flex-shrink-0" /> : <Sun className="w-[18px] h-[18px] flex-shrink-0" />}
-                  <span className="flex-1 text-left truncate">{theme === "dark" ? "Dark Mode" : "Light Mode"}</span>
-                  <span className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${theme === "dark" ? "bg-primary" : "bg-muted"}`}>
-                    <span className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform ${theme === "dark" ? "translate-x-3.5" : "translate-x-0.5"}`} />
-                  </span>
-                </button>
+              <div>
+                <p className="px-2 mb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/70">
+                  Account
+                </p>
+                <div className="space-y-0.5">
+                  <Link href="/profile" onClick={() => setMobileOpen(false)}>
+                    <div className={`flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-[14px] font-medium transition-colors ${
+                      location === "/profile"
+                        ? "bg-primary/10 text-primary"
+                        : "text-foreground/80 hover:bg-white/5 active:bg-white/10"
+                    }`}>
+                      <span className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 ${
+                        location === "/profile" ? "bg-primary/15 text-primary" : "bg-white/5 text-foreground/70"
+                      }`}>
+                        <User className="w-[15px] h-[15px]" />
+                      </span>
+                      <span className="flex-1 truncate">My Profile</span>
+                    </div>
+                  </Link>
+                  <button
+                    onClick={toggleTheme}
+                    className="w-full flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-[14px] font-medium text-foreground/80 hover:bg-white/5 active:bg-white/10 transition-colors cursor-pointer"
+                  >
+                    <span className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 bg-white/5 text-foreground/70">
+                      {theme === "dark" ? <Moon className="w-[15px] h-[15px]" /> : <Sun className="w-[15px] h-[15px]" />}
+                    </span>
+                    <span className="flex-1 text-left truncate">{theme === "dark" ? "Dark Mode" : "Light Mode"}</span>
+                    <span className={`relative inline-flex h-[18px] w-8 items-center rounded-full transition-colors flex-shrink-0 ${theme === "dark" ? "bg-primary" : "bg-muted"}`}>
+                      <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${theme === "dark" ? "translate-x-[18px]" : "translate-x-0.5"}`} />
+                    </span>
+                  </button>
+                </div>
               </div>
             )}
           </div>
