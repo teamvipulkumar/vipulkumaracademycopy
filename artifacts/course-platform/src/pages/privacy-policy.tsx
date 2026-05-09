@@ -17,7 +17,7 @@ export default function PrivacyPolicyPage() {
 
           <section>
             <h2 className="text-xl font-bold text-foreground mb-3">1. Introduction</h2>
-            <p>ClickOcean ("we", "our", or "us") is committed to protecting your personal information and your right to privacy. This Privacy Policy describes how we collect, use, and share information about you when you use our platform, website, and services.</p>
+            <p>Upcalify ("we", "our", or "us") is committed to protecting your personal information and your right to privacy. This Privacy Policy describes how we collect, use, and share information about you when you use our platform, website, and services.</p>
             <p className="mt-3">By accessing or using our services, you agree to the terms of this Privacy Policy. If you do not agree, please discontinue use of our services.</p>
           </section>
 
@@ -101,7 +101,7 @@ export default function PrivacyPolicyPage() {
             <h2 className="text-xl font-bold text-foreground mb-3">11. Contact Us</h2>
             <p>If you have questions about this Privacy Policy, please contact us at:</p>
             <address className="mt-3 not-italic border border-border rounded-xl p-5 bg-card/50 text-sm space-y-1">
-              <p className="font-semibold text-foreground">ClickOcean</p>
+              <p className="font-semibold text-foreground">Upcalify</p>
               <p>Email: <a href="mailto:privacy@vipulkumaracademy.com" className="text-primary hover:underline">privacy@vipulkumaracademy.com</a></p>
               <p>Website: <a href="https://vipulkumaracademy.com" className="text-primary hover:underline">vipulkumaracademy.com</a></p>
             </address>

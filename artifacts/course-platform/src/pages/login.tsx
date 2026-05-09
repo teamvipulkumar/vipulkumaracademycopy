@@ -71,7 +71,7 @@ export default function Login() {
       <Card className="w-full max-w-md bg-card border-border">
         <CardHeader className="space-y-1 text-center">
           <CardTitle className="text-2xl font-bold tracking-tight">
-            Sign in to ClickOcean
+            Sign in to Upcalify
           </CardTitle>
           <CardDescription>
             Enter your email and password to access your account

@@ -1246,7 +1246,7 @@ router.get("/public/branding", async (_req, res): Promise<void> => {
     metaDescription: platformSettingsTable.metaDescription,
   }).from(platformSettingsTable).limit(1);
   if (settings.length === 0) {
-    res.json({ siteName: "Academy", siteLogo: null, siteLogoLight: null, logoSize: 34, logoSizeMobile: 28, favicon: null, metaTitle: null, metaDescription: null });
+    res.json({ siteName: "Upcalify", siteLogo: null, siteLogoLight: null, logoSize: 34, logoSizeMobile: 28, favicon: null, metaTitle: null, metaDescription: null });
     return;
   }
   res.json(settings[0]);

@@ -479,21 +479,21 @@ router.post("/smtp/test", requireAdmin, async (req, res): Promise<void> => {
     const smtpTestHtml = `<div style="font-family:sans-serif;max-width:480px;margin:auto;padding:24px;background:#0a0f1e;color:#e2e8f0;border-radius:12px;">
         <h2 style="color:#2563eb;">✅ SMTP Test Successful</h2>
         <p>Your SMTP configuration is working correctly.</p>
-        <p style="color:#64748b;font-size:12px;">Sent from VK Academy CRM · Host: ${smtp.host}:${smtp.port}</p>
+        <p style="color:#64748b;font-size:12px;">Sent from Upcalify CRM · Host: ${smtp.host}:${smtp.port}</p>
       </div>`;
     const info = await transporter.sendMail({
       from: buildFrom(smtp),
       to,
-      subject: "VK Academy — SMTP Test",
+      subject: "Upcalify — SMTP Test",
       html: smtpTestHtml,
     });
     console.log("[SMTP test] Sent OK — messageId:", info.messageId);
-    await db.insert(emailSendsTable).values({ type: "test", email: to, subject: "VK Academy — SMTP Test", htmlBody: smtpTestHtml, status: "sent" });
+    await db.insert(emailSendsTable).values({ type: "test", email: to, subject: "Upcalify — SMTP Test", htmlBody: smtpTestHtml, status: "sent" });
     res.json({ success: true, message: "Test email sent successfully" });
   } catch (err: any) {
     const msg = err?.message ?? "Unknown error";
     console.error("[SMTP test] Failed —", msg, "| host:", smtp.host, "port:", smtp.port, "user:", smtp.username);
-    await db.insert(emailSendsTable).values({ type: "test", email: to, subject: "VK Academy — SMTP Test", status: "failed", failReason: msg }).catch(() => {});
+    await db.insert(emailSendsTable).values({ type: "test", email: to, subject: "Upcalify — SMTP Test", status: "failed", failReason: msg }).catch(() => {});
     res.status(500).json({ error: msg });
   }
 });
@@ -516,7 +516,7 @@ router.post("/smtp/test-live", requireAdmin, async (req, res): Promise<void> => 
   const cfg = {
     host, port: parseInt(String(port)) || 587, secure: !!secure,
     username, password: resolvedPassword,
-    fromName: fromName || "VK Academy", fromEmail: fromEmail || username,
+    fromName: fromName || "Upcalify", fromEmail: fromEmail || username,
   } as typeof smtpSettingsTable.$inferSelect;
 
   try {
@@ -529,16 +529,16 @@ router.post("/smtp/test-live", requireAdmin, async (req, res): Promise<void> => 
     const info = await transporter.sendMail({
       from: buildFrom(cfg),
       to,
-      subject: "VK Academy — SMTP Live Test",
+      subject: "Upcalify — SMTP Live Test",
       html: smtpLiveTestHtml,
     });
     console.log("[SMTP live-test] Sent OK — messageId:", info.messageId);
-    await db.insert(emailSendsTable).values({ type: "test", email: to, subject: "VK Academy — SMTP Live Test", htmlBody: smtpLiveTestHtml, status: "sent" });
+    await db.insert(emailSendsTable).values({ type: "test", email: to, subject: "Upcalify — SMTP Live Test", htmlBody: smtpLiveTestHtml, status: "sent" });
     res.json({ success: true, message: "Test email sent with current form settings" });
   } catch (err: any) {
     const msg = err?.message ?? "Unknown error";
     console.error("[SMTP live-test] Failed —", msg, "| host:", host, "port:", port, "user:", username);
-    await db.insert(emailSendsTable).values({ type: "test", email: to, subject: "VK Academy — SMTP Live Test", status: "failed", failReason: msg }).catch(() => {});
+    await db.insert(emailSendsTable).values({ type: "test", email: to, subject: "Upcalify — SMTP Live Test", status: "failed", failReason: msg }).catch(() => {});
     res.status(500).json({ error: msg });
   }
 });
@@ -556,7 +556,7 @@ router.post("/smtp/accounts", requireAdmin, async (req, res): Promise<void> => {
     name: name || "Backup SMTP",
     host, port: parseInt(String(port)) || 587,
     secure: !!secure, username, password,
-    fromName: fromName || "VK Academy",
+    fromName: fromName || "Upcalify",
     fromEmail: fromEmail || username,
     priority: parseInt(String(priority)) || 1,
     isActive: isActive !== false,
@@ -658,7 +658,7 @@ const SAMPLE_VARIABLES_STATIC: Record<string, string> = {
   amount: "4,999.00",
   commission_amount: "999.80",
   payout_amount: "4,998.00",
-  site_name: "VK Academy",
+  site_name: "Upcalify",
   rejection_reason: "We weren't able to verify an active audience or content channel. Please share your social media or YouTube link when you reapply.",
 };
 
@@ -736,7 +736,7 @@ function emailWrap(body: string): string {
       <td style="padding:0 5px;"><a href="{{site_url}}" style="text-decoration:none;display:inline-block;width:30px;height:30px;background:#e2e8f0;border-radius:5px;text-align:center;line-height:30px;font-size:13px;color:#475569;">▶</a></td>
       <td style="padding:0 5px;"><a href="{{site_url}}" style="text-decoration:none;display:inline-block;width:30px;height:30px;background:#e2e8f0;border-radius:5px;text-align:center;line-height:30px;font-size:13px;color:#475569;">◎</a></td>
     </tr></table>
-    <p style="margin:0 0 3px;font-size:12px;color:#94a3b8;font-family:Arial,Helvetica,sans-serif;">Sent by <strong>Vipul Kumar Academy</strong></p>
+    <p style="margin:0 0 3px;font-size:12px;color:#94a3b8;font-family:Arial,Helvetica,sans-serif;">Sent by <strong>Upcalify</strong></p>
     <p style="margin:0 0 10px;font-size:11px;color:#94a3b8;font-family:Arial,Helvetica,sans-serif;">
       <a href="mailto:support@vipulkumaracademy.com" style="color:#94a3b8;text-decoration:none;">support@vipulkumaracademy.com</a>
       &nbsp;·&nbsp; WhatsApp: <a href="https://wa.me/15557485582" style="color:#94a3b8;text-decoration:none;">+15557485582</a>
@@ -763,10 +763,10 @@ const DEFAULT_TEMPLATES = [
   {
     name: "Welcome Email",
     type: "welcome" as const,
-    subject: "Welcome to Vipul Kumar Academy, {{name}}! 🎉",
+    subject: "Welcome to Upcalify, {{name}}! 🎉",
     htmlBody: emailWrap(`
       <p style="margin:0 0 6px;font-size:15px;color:#111827;line-height:1.5;">Hi <strong>{{name}}</strong>,</p>
-      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">Welcome to <strong>Vipul Kumar Academy</strong>! 🎉 We're thrilled to have you join India's premier business education platform.</p>
+      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">Welcome to <strong>Upcalify</strong>! 🎉 We're thrilled to have you join India's premier business education platform.</p>
       <p style="margin:0 0 14px;font-size:15px;color:#374151;line-height:1.7;">Here's what you now have access to:</p>
       <ul style="margin:0 0 22px;padding-left:20px;color:#374151;font-size:14px;line-height:2.1;">
         <li>In-depth courses on <strong>Affiliate Marketing, E-commerce &amp; Dropshipping</strong></li>
@@ -782,7 +782,7 @@ const DEFAULT_TEMPLATES = [
       </table>
       <p style="margin:0 0 8px;font-size:14px;color:#374151;line-height:1.7;">Once verified, browse our course catalog and take your first step toward financial independence.</p>
       <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0 16px;" />
-      <p style="margin:0;font-size:14px;color:#6b7280;">Happy learning,<br><strong style="color:#374151;">The VKA Team</strong></p>
+      <p style="margin:0;font-size:14px;color:#6b7280;">Happy learning,<br><strong style="color:#374151;">The Upcalify Team</strong></p>
     `),
   },
   {
@@ -856,7 +856,7 @@ const DEFAULT_TEMPLATES = [
   {
     name: "Password Reset",
     type: "forgot_password" as const,
-    subject: "Reset Your Vipul Kumar Academy Password 🔐",
+    subject: "Reset Your Upcalify Password 🔐",
     htmlBody: emailWrap(`
       <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:24px;">
         <tr><td align="center" style="background:#eff6ff;border-radius:12px;padding:20px;">
@@ -865,7 +865,7 @@ const DEFAULT_TEMPLATES = [
         </td></tr>
       </table>
       <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">Hi <strong>{{name}}</strong>,</p>
-      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">We received a request to reset the password for your Vipul Kumar Academy account associated with <strong>{{email}}</strong>.</p>
+      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">We received a request to reset the password for your Upcalify account associated with <strong>{{email}}</strong>.</p>
       <p style="margin:0 0 18px;font-size:14px;color:#374151;">Click the button below to set a new password:</p>
       <table cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
         <tr><td style="background:#2563eb;border-radius:8px;padding:13px 30px;">
@@ -962,7 +962,7 @@ const DEFAULT_TEMPLATES = [
         </td></tr>
       </table>
       <p style="margin:0 0 14px;font-size:15px;color:#374151;line-height:1.7;">Hi <strong>{{name}}</strong>,</p>
-      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">Thank you for applying to the <strong>Vipul Kumar Academy Affiliate Program</strong>! 🎉 We've successfully received your application and our team will review it shortly.</p>
+      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">Thank you for applying to the <strong>Upcalify Affiliate Program</strong>! 🎉 We've successfully received your application and our team will review it shortly.</p>
       <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:22px;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;font-size:14px;font-family:Arial,Helvetica,sans-serif;">
         <tr style="background:#f9fafb;">
           <td style="padding:11px 16px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Applicant Name</td>
@@ -1001,7 +1001,7 @@ const DEFAULT_TEMPLATES = [
   {
     name: "Affiliate Application Approved",
     type: "affiliate_application_approved" as const,
-    subject: "🎉 You're approved! Welcome to the VKA Affiliate Program",
+    subject: "🎉 You're approved! Welcome to the Upcalify Affiliate Program",
     htmlBody: emailWrap(`
       <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:24px;">
         <tr><td align="center" style="background:#f0fdf4;border-radius:12px;padding:24px 20px;">
@@ -1010,7 +1010,7 @@ const DEFAULT_TEMPLATES = [
         </td></tr>
       </table>
       <p style="margin:0 0 14px;font-size:15px;color:#374151;line-height:1.7;">Hi <strong>{{name}}</strong>,</p>
-      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">Congratulations! 🚀 Your application to the <strong>Vipul Kumar Academy Affiliate Program</strong> has been <strong style="color:#15803d;">approved</strong>. You're now an official VKA affiliate and can start earning commissions right away.</p>
+      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">Congratulations! 🚀 Your application to the <strong>Upcalify Affiliate Program</strong> has been <strong style="color:#15803d;">approved</strong>. You're now an official Upcalify affiliate and can start earning commissions right away.</p>
       <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:22px;border:1px solid #bbf7d0;border-radius:10px;overflow:hidden;font-size:14px;font-family:Arial,Helvetica,sans-serif;">
         <tr style="background:#f0fdf4;">
           <td style="padding:11px 16px;color:#15803d;font-weight:600;border-bottom:1px solid #bbf7d0;">✅ Status</td>
@@ -1040,14 +1040,14 @@ const DEFAULT_TEMPLATES = [
         </td></tr>
       </table>
       <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0 16px;" />
-      <p style="margin:0;font-size:13px;color:#6b7280;">Welcome aboard! 🤝<br><strong style="color:#374151;">The VKA Affiliate Team</strong></p>
+      <p style="margin:0;font-size:13px;color:#6b7280;">Welcome aboard! 🤝<br><strong style="color:#374151;">The Upcalify Affiliate Team</strong></p>
       <p style="margin:8px 0 0;font-size:13px;color:#6b7280;">Need help getting started? Email <a href="mailto:support@vipulkumaracademy.com" style="color:#2563eb;text-decoration:none;">support@vipulkumaracademy.com</a> or WhatsApp: <a href="https://wa.me/15557485582" style="color:#2563eb;text-decoration:none;">+15557485582</a></p>
     `),
   },
   {
     name: "Affiliate Application Rejected",
     type: "affiliate_application_rejected" as const,
-    subject: "Update on your VKA affiliate application",
+    subject: "Update on your Upcalify affiliate application",
     htmlBody: emailWrap(`
       <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:24px;">
         <tr><td align="center" style="background:#fef2f2;border-radius:12px;padding:20px;">
@@ -1056,7 +1056,7 @@ const DEFAULT_TEMPLATES = [
         </td></tr>
       </table>
       <p style="margin:0 0 14px;font-size:15px;color:#374151;line-height:1.7;">Hi <strong>{{name}}</strong>,</p>
-      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">Thank you for your interest in the <strong>Vipul Kumar Academy Affiliate Program</strong>. After careful review, we're unable to approve your application at this time.</p>
+      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">Thank you for your interest in the <strong>Upcalify Affiliate Program</strong>. After careful review, we're unable to approve your application at this time.</p>
       <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:22px;">
         <tr><td style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:16px;">
           <p style="margin:0 0 6px;font-size:12px;color:#991b1b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;font-family:Arial,Helvetica,sans-serif;">Reason from our team</p>
@@ -1079,23 +1079,23 @@ const DEFAULT_TEMPLATES = [
       <p style="margin:0 0 22px;font-size:13px;color:#6b7280;line-height:1.7;">Want to learn more first? Check out our <a href="{{site_url}}/courses" style="color:#2563eb;text-decoration:none;">course catalog</a> to find what fits your audience.</p>
       <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0 16px;" />
       <p style="margin:0;font-size:13px;color:#6b7280;">Questions about this decision? We're happy to help — email <a href="mailto:support@vipulkumaracademy.com" style="color:#2563eb;text-decoration:none;">support@vipulkumaracademy.com</a> or WhatsApp: <a href="https://wa.me/15557485582" style="color:#2563eb;text-decoration:none;">+15557485582</a></p>
-      <p style="margin:8px 0 0;font-size:13px;color:#6b7280;">Wishing you all the best,<br><strong style="color:#374151;">The VKA Team</strong></p>
+      <p style="margin:8px 0 0;font-size:13px;color:#6b7280;">Wishing you all the best,<br><strong style="color:#374151;">The Upcalify Team</strong></p>
     `),
   },
   {
     name: "Staff Welcome Email",
     type: "staff_welcome" as const,
-    subject: "Welcome to the team, {{name}} — Your VKA Staff Access 🎉",
+    subject: "Welcome to the team, {{name}} — Your Upcalify Staff Access 🎉",
     htmlBody: emailWrap(`
       <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:24px;">
         <tr><td align="center" style="background:#eef2ff;border-radius:12px;padding:26px 20px;">
           <p style="margin:0 0 6px;font-size:48px;line-height:1;">🎉</p>
           <h1 style="margin:8px 0 4px;font-size:22px;font-weight:700;color:#4338ca;font-family:Arial,Helvetica,sans-serif;">Welcome to the Team!</h1>
-          <p style="margin:6px 0 0;font-size:13px;color:#4f46e5;font-family:Arial,Helvetica,sans-serif;">You've been added as a staff member at Vipul Kumar Academy</p>
+          <p style="margin:6px 0 0;font-size:13px;color:#4f46e5;font-family:Arial,Helvetica,sans-serif;">You've been added as a staff member at Upcalify</p>
         </td></tr>
       </table>
       <p style="margin:0 0 14px;font-size:15px;color:#374151;line-height:1.7;">Hi <strong>{{name}}</strong>,</p>
-      <p style="margin:0 0 18px;font-size:15px;color:#374151;line-height:1.7;">Great news — you now have staff access to the <strong>Vipul Kumar Academy</strong> platform as <strong>{{role_name}}</strong>. Below are your account details. Please keep them safe and do not share them with anyone.</p>
+      <p style="margin:0 0 18px;font-size:15px;color:#374151;line-height:1.7;">Great news — you now have staff access to the <strong>Upcalify</strong> platform as <strong>{{role_name}}</strong>. Below are your account details. Please keep them safe and do not share them with anyone.</p>
 
       <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:22px;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;font-size:14px;font-family:Arial,Helvetica,sans-serif;">
         <tr style="background:#f9fafb;">
@@ -1133,23 +1133,23 @@ const DEFAULT_TEMPLATES = [
 
       <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0 16px;" />
       <p style="margin:0 0 6px;font-size:13px;color:#6b7280;line-height:1.7;">If you have any questions, please reach out to the admin who invited you, or email <a href="mailto:support@vipulkumaracademy.com" style="color:#2563eb;text-decoration:none;">support@vipulkumaracademy.com</a>.</p>
-      <p style="margin:8px 0 0;font-size:14px;color:#6b7280;">Welcome aboard,<br><strong style="color:#374151;">The VKA Team</strong></p>
+      <p style="margin:8px 0 0;font-size:14px;color:#6b7280;">Welcome aboard,<br><strong style="color:#374151;">The Upcalify Team</strong></p>
     `),
   },
   {
     name: "Creator Welcome",
     type: "creator_joined" as const,
-    subject: "🚀 You're now a VKA Creator, {{name}}!",
+    subject: "🚀 You're now a Upcalify Creator, {{name}}!",
     htmlBody: emailWrap(`
       <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:24px;">
         <tr><td align="center" style="background:#fdf4ff;border-radius:12px;padding:26px 20px;">
           <p style="margin:0 0 6px;font-size:48px;line-height:1;">🚀</p>
           <h1 style="margin:8px 0 4px;font-size:22px;font-weight:700;color:#a21caf;font-family:Arial,Helvetica,sans-serif;">Welcome to the Creator Program</h1>
-          <p style="margin:6px 0 0;font-size:13px;color:#a21caf;font-family:Arial,Helvetica,sans-serif;">Build, publish and earn — at Vipul Kumar Academy</p>
+          <p style="margin:6px 0 0;font-size:13px;color:#a21caf;font-family:Arial,Helvetica,sans-serif;">Build, publish and earn — at Upcalify</p>
         </td></tr>
       </table>
       <p style="margin:0 0 14px;font-size:15px;color:#374151;line-height:1.7;">Hi <strong>{{name}}</strong>,</p>
-      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">Congratulations! 🎉 You have been granted <strong style="color:#a21caf;">Creator</strong> access on Vipul Kumar Academy. You can now publish your own courses and earn commissions on every sale.</p>
+      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">Congratulations! 🎉 You have been granted <strong style="color:#a21caf;">Creator</strong> access on Upcalify. You can now publish your own courses and earn commissions on every sale.</p>
       <p style="margin:0 0 14px;font-size:15px;color:#374151;line-height:1.7;"><strong>Here's what you can do as a Creator:</strong></p>
       <ul style="margin:0 0 22px;padding-left:20px;color:#374151;font-size:14px;line-height:2.1;">
         <li>Create and publish unlimited courses with our easy course builder</li>
@@ -1168,7 +1168,7 @@ const DEFAULT_TEMPLATES = [
         </td></tr>
       </table>
       <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0 16px;" />
-      <p style="margin:0;font-size:14px;color:#6b7280;">Excited to see what you create,<br><strong style="color:#374151;">The VKA Creator Team</strong></p>
+      <p style="margin:0;font-size:14px;color:#6b7280;">Excited to see what you create,<br><strong style="color:#374151;">The Upcalify Creator Team</strong></p>
       <p style="margin:8px 0 0;font-size:13px;color:#6b7280;">Need help getting started? Email <a href="mailto:support@vipulkumaracademy.com" style="color:#2563eb;text-decoration:none;">support@vipulkumaracademy.com</a> or WhatsApp: <a href="https://wa.me/15557485582" style="color:#2563eb;text-decoration:none;">+15557485582</a></p>
     `),
   },
@@ -1262,7 +1262,7 @@ const DEFAULT_TEMPLATES = [
         </td></tr>
       </table>
       <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0 16px;" />
-      <p style="margin:0;font-size:14px;color:#6b7280;">Thank you for being a VKA Creator! 🙌<br><strong style="color:#374151;">The VKA Creator Team</strong></p>
+      <p style="margin:0;font-size:14px;color:#6b7280;">Thank you for being a Upcalify Creator! 🙌<br><strong style="color:#374151;">The Upcalify Creator Team</strong></p>
       <p style="margin:8px 0 0;font-size:13px;color:#6b7280;">Questions? Email <a href="mailto:support@vipulkumaracademy.com" style="color:#2563eb;text-decoration:none;">support@vipulkumaracademy.com</a> or WhatsApp: <a href="https://wa.me/15557485582" style="color:#2563eb;text-decoration:none;">+15557485582</a></p>
     `),
   },
@@ -1363,7 +1363,7 @@ const DEFAULT_TEMPLATES = [
         </td></tr>
       </table>
       <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0 16px;" />
-      <p style="margin:0;font-size:14px;color:#6b7280;">Welcome to the verified creators club! 🎊<br><strong style="color:#374151;">The VKA Creator Team</strong></p>
+      <p style="margin:0;font-size:14px;color:#6b7280;">Welcome to the verified creators club! 🎊<br><strong style="color:#374151;">The Upcalify Creator Team</strong></p>
       <p style="margin:8px 0 0;font-size:13px;color:#6b7280;">Questions? Email <a href="mailto:support@vipulkumaracademy.com" style="color:#2563eb;text-decoration:none;">support@vipulkumaracademy.com</a> or WhatsApp: <a href="https://wa.me/15557485582" style="color:#2563eb;text-decoration:none;">+15557485582</a></p>
     `),
   },
@@ -1407,7 +1407,7 @@ const DEFAULT_TEMPLATES = [
       </table>
       <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0 16px;" />
       <p style="margin:0;font-size:13px;color:#6b7280;">Need help? We're here for you — email <a href="mailto:support@vipulkumaracademy.com" style="color:#2563eb;text-decoration:none;">support@vipulkumaracademy.com</a> or WhatsApp: <a href="https://wa.me/15557485582" style="color:#2563eb;text-decoration:none;">+15557485582</a></p>
-      <p style="margin:8px 0 0;font-size:13px;color:#6b7280;"><strong style="color:#374151;">The VKA Creator Team</strong></p>
+      <p style="margin:8px 0 0;font-size:13px;color:#6b7280;"><strong style="color:#374151;">The Upcalify Creator Team</strong></p>
     `),
   },
   {
@@ -1511,7 +1511,7 @@ const DEFAULT_TEMPLATES = [
         </td></tr>
       </table>
       <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0 16px;" />
-      <p style="margin:0;font-size:14px;color:#6b7280;">Welcome to the verified affiliates club! 🎊<br><strong style="color:#374151;">The VKA Affiliate Team</strong></p>
+      <p style="margin:0;font-size:14px;color:#6b7280;">Welcome to the verified affiliates club! 🎊<br><strong style="color:#374151;">The Upcalify Affiliate Team</strong></p>
       <p style="margin:8px 0 0;font-size:13px;color:#6b7280;">Questions? Email <a href="mailto:support@vipulkumaracademy.com" style="color:#2563eb;text-decoration:none;">support@vipulkumaracademy.com</a> or WhatsApp: <a href="https://wa.me/15557485582" style="color:#2563eb;text-decoration:none;">+15557485582</a></p>
     `),
   },
@@ -1555,7 +1555,7 @@ const DEFAULT_TEMPLATES = [
       </table>
       <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0 16px;" />
       <p style="margin:0;font-size:13px;color:#6b7280;">Need help? We're here for you — email <a href="mailto:support@vipulkumaracademy.com" style="color:#2563eb;text-decoration:none;">support@vipulkumaracademy.com</a> or WhatsApp: <a href="https://wa.me/15557485582" style="color:#2563eb;text-decoration:none;">+15557485582</a></p>
-      <p style="margin:8px 0 0;font-size:13px;color:#6b7280;"><strong style="color:#374151;">The VKA Affiliate Team</strong></p>
+      <p style="margin:8px 0 0;font-size:13px;color:#6b7280;"><strong style="color:#374151;">The Upcalify Affiliate Team</strong></p>
     `),
   },
   {
@@ -1606,7 +1606,7 @@ const DEFAULT_TEMPLATES = [
         </td></tr>
       </table>
       <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0 16px;" />
-      <p style="margin:0;font-size:14px;color:#6b7280;">Thank you for being a VKA Affiliate! 🙌<br><strong style="color:#374151;">The VKA Affiliate Team</strong></p>
+      <p style="margin:0;font-size:14px;color:#6b7280;">Thank you for being a Upcalify Affiliate! 🙌<br><strong style="color:#374151;">The Upcalify Affiliate Team</strong></p>
       <p style="margin:8px 0 0;font-size:13px;color:#6b7280;">Questions? Email <a href="mailto:support@vipulkumaracademy.com" style="color:#2563eb;text-decoration:none;">support@vipulkumaracademy.com</a> or WhatsApp: <a href="https://wa.me/15557485582" style="color:#2563eb;text-decoration:none;">+15557485582</a></p>
     `),
   },

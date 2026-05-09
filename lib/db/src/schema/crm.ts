@@ -11,7 +11,7 @@ export const smtpSettingsTable = pgTable("smtp_settings", {
   secure: boolean("secure").notNull().default(false),
   username: text("username").notNull().default(""),
   password: text("password").notNull().default(""),
-  fromName: text("from_name").notNull().default("VK Academy"),
+  fromName: text("from_name").notNull().default("Upcalify"),
   fromEmail: text("from_email").notNull().default(""),
   isActive: boolean("is_active").notNull().default(false),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),

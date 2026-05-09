@@ -53,7 +53,7 @@ export default function Register() {
       onSuccess: async (data) => {
         queryClient.setQueryData(getGetMeQueryKey(), data);
         await queryClient.refetchQueries({ queryKey: getGetMeQueryKey() });
-        toast({ title: "Account created", description: "Welcome to ClickOcean!" });
+        toast({ title: "Account created", description: "Welcome to Upcalify!" });
         setLocation("/my-courses");
       },
       onError: (error: any) => {
@@ -71,7 +71,7 @@ export default function Register() {
             Create an account
           </CardTitle>
           <CardDescription className="text-center">
-            Enter your details to get started with ClickOcean
+            Enter your details to get started with Upcalify
           </CardDescription>
         </CardHeader>
         <CardContent>

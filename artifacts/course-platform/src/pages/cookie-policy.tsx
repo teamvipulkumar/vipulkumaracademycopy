@@ -22,7 +22,7 @@ export default function CookiePolicyPage() {
 
           <section>
             <h2 className="text-xl font-bold text-foreground mb-3">2. How We Use Cookies</h2>
-            <p>ClickOcean uses cookies and similar tracking technologies to:</p>
+            <p>Upcalify uses cookies and similar tracking technologies to:</p>
             <ul className="list-disc pl-5 mt-3 space-y-1.5">
               <li>Keep you signed in and maintain your session security.</li>
               <li>Remember your preferences (language, display settings).</li>
@@ -91,7 +91,7 @@ export default function CookiePolicyPage() {
           <section>
             <h2 className="text-xl font-bold text-foreground mb-3">8. Contact Us</h2>
             <address className="mt-3 not-italic border border-border rounded-xl p-5 bg-card/50 text-sm space-y-1">
-              <p className="font-semibold text-foreground">ClickOcean</p>
+              <p className="font-semibold text-foreground">Upcalify</p>
               <p>Email: <a href="mailto:privacy@vipulkumaracademy.com" className="text-primary hover:underline">privacy@vipulkumaracademy.com</a></p>
             </address>
           </section>

@@ -17,7 +17,7 @@ export interface Branding {
 }
 
 const DEFAULT: Branding = {
-  siteName: "ClickOcean",
+  siteName: "Upcalify",
   siteLogo: null,
   siteLogoLight: null,
   logoSize: 34,
@@ -69,7 +69,7 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
   }, [branding.favicon, branding.siteLogo, branding.siteLogoLight]);
 
   useEffect(() => {
-    document.title = branding.metaTitle || branding.siteName || "Academy";
+    document.title = branding.metaTitle || branding.siteName || "Upcalify";
   }, [branding.metaTitle, branding.siteName]);
 
   return (

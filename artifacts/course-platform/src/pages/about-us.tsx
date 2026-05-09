@@ -62,7 +62,7 @@ export default function AboutUsPage() {
           </div>
           <span className="text-xs font-semibold text-primary uppercase tracking-widest">Our Story</span>
         </div>
-        <h1 className="text-4xl font-extrabold tracking-tight mb-4">About ClickOcean</h1>
+        <h1 className="text-4xl font-extrabold tracking-tight mb-4">About Upcalify</h1>
         <p className="text-lg text-muted-foreground leading-relaxed mb-8">
           We're on a mission to make high-income digital skills accessible to every ambitious person in India and beyond — regardless of their background, degree, or starting capital.
         </p>
@@ -70,13 +70,13 @@ export default function AboutUsPage() {
         {/* Origin story */}
         <div className="prose prose-invert max-w-none space-y-5 text-muted-foreground leading-relaxed mb-14">
           <p>
-            ClickOcean was founded with a single frustration: the gap between what business schools teach and what actually works online. The founders started their entrepreneurial journey with almost nothing — a laptop, a Wi-Fi connection, and a relentless drive to figure things out through trial and error.
+            Upcalify was founded with a single frustration: the gap between what business schools teach and what actually works online. The founders started their entrepreneurial journey with almost nothing — a laptop, a Wi-Fi connection, and a relentless drive to figure things out through trial and error.
           </p>
           <p>
             After building multiple revenue streams through affiliate marketing, dropshipping, and e-commerce, the team realized that the real playbooks — the ones that actually work — weren't being taught anywhere. Most online courses were either too generic, already outdated, or taught by people who had never actually run a business.
           </p>
           <p>
-            So they built the school they wished they had. ClickOcean was born from real campaigns, real failures, and real wins. Every module, every case study, and every strategy comes directly from active business operations — not theory.
+            So they built the school they wished they had. Upcalify was born from real campaigns, real failures, and real wins. Every module, every case study, and every strategy comes directly from active business operations — not theory.
           </p>
         </div>
 

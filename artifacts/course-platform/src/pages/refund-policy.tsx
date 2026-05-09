@@ -23,7 +23,7 @@ export default function RefundPolicyPage() {
 
           <section>
             <h2 className="text-xl font-bold text-foreground mb-3">1. Our Commitment</h2>
-            <p>At ClickOcean, we stand behind the quality of our courses. If you are not satisfied with your purchase, we want to make it right. This policy outlines the conditions under which you may request a refund.</p>
+            <p>At Upcalify, we stand behind the quality of our courses. If you are not satisfied with your purchase, we want to make it right. This policy outlines the conditions under which you may request a refund.</p>
           </section>
 
           <section>
@@ -89,7 +89,7 @@ export default function RefundPolicyPage() {
             <h2 className="text-xl font-bold text-foreground mb-3">8. Contact Us</h2>
             <p>For refund requests or questions about this policy:</p>
             <address className="mt-3 not-italic border border-border rounded-xl p-5 bg-card/50 text-sm space-y-1">
-              <p className="font-semibold text-foreground">ClickOcean — Support</p>
+              <p className="font-semibold text-foreground">Upcalify — Support</p>
               <p>Email: <a href="mailto:support@vipulkumaracademy.com" className="text-primary hover:underline">support@vipulkumaracademy.com</a></p>
               <p>Response time: Within 2 business days</p>
             </address>

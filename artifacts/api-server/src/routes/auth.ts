@@ -50,7 +50,7 @@ function buildVerificationEmailHtml(name: string, verifyLink: string): string {
   <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111827;">Verify your email address</h1>
   <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#374151;">Hi ${name},</p>
   <p style="margin:0 0 28px;font-size:15px;line-height:1.6;color:#374151;">
-    Thanks for signing up for <strong>Vipul Kumar Academy</strong>! Please verify your email address to activate your account.
+    Thanks for signing up for <strong>Upcalify</strong>! Please verify your email address to activate your account.
   </p>
   <p style="text-align:center;margin:0 0 28px;">
     <a href="${verifyLink}" style="display:inline-block;background:#2563eb;color:#ffffff;font-weight:600;font-size:15px;padding:14px 36px;border-radius:8px;text-decoration:none;">
@@ -110,7 +110,7 @@ router.post("/register", async (req, res): Promise<void> => {
   triggerFunnel("user_signup", user.id, { verify_link: verifyLink, site_url: origin, name: user.name, email: user.email }).catch(e => console.error("[register] triggerFunnel error:", e));
   sendTransactionalEmail(
     user.email,
-    "Please verify your email — Vipul Kumar Academy",
+    "Please verify your email — Upcalify",
     buildVerificationEmailHtml(user.name, verifyLink),
   ).catch(() => {});
 });
@@ -220,7 +220,7 @@ router.post("/resend-verify-email", requireAuth, async (req, res): Promise<void>
   const verifyLink = `${origin}/verify-email?token=${verifyToken}`;
   sendTransactionalEmail(
     user.email,
-    "Please verify your email — Vipul Kumar Academy",
+    "Please verify your email — Upcalify",
     buildVerificationEmailHtml(user.name, verifyLink),
   ).catch(() => {});
   res.json({ message: "Verification email sent. Please check your inbox." });

@@ -1282,7 +1282,7 @@ export default function AdminGstInvoicingPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <Label>Company / Business Name</Label>
-                  <Input value={settings.companyName} onChange={e => setSettings(s => ({ ...s, companyName: e.target.value }))} placeholder="ClickOcean" />
+                  <Input value={settings.companyName} onChange={e => setSettings(s => ({ ...s, companyName: e.target.value }))} placeholder="Upcalify" />
                 </div>
                 <div>
                   <Label>GSTIN</Label>

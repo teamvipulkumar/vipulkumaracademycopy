@@ -1270,7 +1270,7 @@ router.post("/admin/settings", requireAdmin, async (req, res): Promise<void> => 
   if (existing) {
     await db.update(platformSettingsTable).set(updates).where(eq(platformSettingsTable.id, existing.id));
   } else {
-    await db.insert(platformSettingsTable).values({ siteName: "Vipul Kumar Academy", siteDescription: "", ...updates });
+    await db.insert(platformSettingsTable).values({ siteName: "Upcalify", siteDescription: "", ...updates });
   }
   res.json({ message: "Settings saved" });
 });

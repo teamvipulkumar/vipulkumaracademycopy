@@ -266,7 +266,7 @@ function WelcomeModal({
               Congratulations, {firstName}! 🎉
             </h2>
             <p className="text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
-              Your affiliate account has been approved. You can now promote ClickOcean courses and earn commission on every sale.
+              Your affiliate account has been approved. You can now promote Upcalify courses and earn commission on every sale.
             </p>
           </div>
         </div>

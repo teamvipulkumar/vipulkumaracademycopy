@@ -40,7 +40,7 @@ const DEFAULT_SETTINGS: EmailSettings = {
   cardBgColor: "#fcfcfc",
   cardPadding: 40,
   logoUrl: "",
-  companyName: "ClickOcean",
+  companyName: "Upcalify",
   fontFamily: "Arial, Helvetica, sans-serif",
 };
 
@@ -72,7 +72,7 @@ const DEFAULT_BLOCK_DATA: Record<BlockType, () => Record<string, any>> = {
     iconColor: "#6b7280",
   }),
   footer: () => ({
-    address: "ClickOcean, India",
+    address: "Upcalify, India",
     unsubscribeUrl: "{{unsubscribe_url}}",
     textColor: "#9ca3af",
   }),
@@ -229,11 +229,11 @@ function defaultWelcomeBlocks(): Block[] {
   return [
     { id: uid(), type: "logo", data: DEFAULT_BLOCK_DATA.logo() },
     { id: uid(), type: "heading", data: { ...DEFAULT_BLOCK_DATA.heading(), text: "Hi {{name}}," } },
-    { id: uid(), type: "text", data: { ...DEFAULT_BLOCK_DATA.text(), content: "Welcome to ClickOcean! We're excited to have you join our community of learners.\n\nYour account is ready. Here's what you can do:" } },
+    { id: uid(), type: "text", data: { ...DEFAULT_BLOCK_DATA.text(), content: "Welcome to Upcalify! We're excited to have you join our community of learners.\n\nYour account is ready. Here's what you can do:" } },
     { id: uid(), type: "bulletList", data: DEFAULT_BLOCK_DATA.bulletList() },
     { id: uid(), type: "button", data: { ...DEFAULT_BLOCK_DATA.button(), text: "Start Learning" } },
     { id: uid(), type: "divider", data: DEFAULT_BLOCK_DATA.divider() },
-    { id: uid(), type: "text", data: { ...DEFAULT_BLOCK_DATA.text(), content: "Happy learning,\nThe ClickOcean Team" } },
+    { id: uid(), type: "text", data: { ...DEFAULT_BLOCK_DATA.text(), content: "Happy learning,\nThe Upcalify Team" } },
     { id: uid(), type: "social", data: DEFAULT_BLOCK_DATA.social() },
     { id: uid(), type: "footer", data: DEFAULT_BLOCK_DATA.footer() },
   ];
