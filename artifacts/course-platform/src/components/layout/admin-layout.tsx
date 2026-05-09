@@ -245,11 +245,11 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             always shows fully (flex-shrink-0 on the label, min-w-0 + shrink
             on the logo wrapper). */}
         <div className="px-3 py-3.5 border-b border-border">
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-1.5 min-w-0">
             <div className="min-w-0 flex-shrink overflow-hidden">
               <AdminLogo variant="desktop" />
             </div>
-            <span className="flex-shrink-0 text-[9px] text-muted-foreground tracking-[0.18em] uppercase font-semibold leading-none border-l border-border pl-2 whitespace-nowrap">
+            <span className="flex-shrink-0 text-[9px] text-foreground/80 tracking-[0.18em] uppercase font-bold leading-none border-l border-border pl-1.5 whitespace-nowrap">
               {panelLabel}
             </span>
           </div>
@@ -258,14 +258,14 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Mobile top bar — same inline pattern: logo + label to the right. */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 h-14 bg-card border-b border-border flex items-center px-3 gap-2">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 h-14 bg-card border-b border-border flex items-center px-3 gap-1.5">
         <Button variant="ghost" size="sm" className="px-2 flex-shrink-0" onClick={() => setMobileOpen(o => !o)}>
           {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </Button>
         <div className="min-w-0 flex-shrink overflow-hidden">
           <AdminLogo variant="mobile" />
         </div>
-        <span className="flex-shrink-0 text-[9px] text-muted-foreground tracking-[0.18em] uppercase font-semibold leading-none border-l border-border pl-2 whitespace-nowrap">
+        <span className="flex-shrink-0 text-[9px] text-foreground/80 tracking-[0.18em] uppercase font-bold leading-none border-l border-border pl-1.5 whitespace-nowrap">
           {panelLabel}
         </span>
       </div>
@@ -276,11 +276,11 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           <aside className="absolute top-14 left-0 bottom-0 w-64 bg-card border-r border-border flex flex-col shadow-2xl">
             {/* Mobile drawer mirrors the desktop sidebar layout exactly. */}
             <div className="px-3 py-3.5 border-b border-border">
-              <div className="flex items-center gap-2 min-w-0">
+              <div className="flex items-center gap-1.5 min-w-0">
                 <div className="min-w-0 flex-shrink overflow-hidden">
                   <AdminLogo variant="desktop" />
                 </div>
-                <span className="flex-shrink-0 text-[9px] text-muted-foreground tracking-[0.18em] uppercase font-semibold leading-none border-l border-border pl-2 whitespace-nowrap">
+                <span className="flex-shrink-0 text-[9px] text-foreground/80 tracking-[0.18em] uppercase font-bold leading-none border-l border-border pl-1.5 whitespace-nowrap">
                   {panelLabel}
                 </span>
               </div>
