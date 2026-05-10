@@ -8,7 +8,7 @@ const SECTIONS = [
     content: [
       {
         heading: "1.1 Acceptance of Terms",
-        body: `By registering for, accessing, or participating in the Vipul Kumar Academy Affiliate Program ("Program"), you ("Affiliate") agree to be legally bound by these Affiliate Terms & Conditions ("Agreement"). This Agreement forms a binding contract between you and Vipul Kumar Academy ("Company", "we", "us", or "our"). If you do not agree to any part of this Agreement, you must not participate in the Program.`,
+        body: `By registering for, accessing, or participating in the Upcalify Affiliate Program ("Program"), you ("Affiliate") agree to be legally bound by these Affiliate Terms & Conditions ("Agreement"). This Agreement forms a binding contract between you and Upcalify ("Company", "we", "us", or "our"). If you do not agree to any part of this Agreement, you must not participate in the Program.`,
       },
       {
         heading: "1.2 Eligibility Requirements",
@@ -226,7 +226,7 @@ export default function AffiliateTermsPage() {
             Affiliate Terms &amp; Conditions
           </h1>
           <p className="text-muted-foreground text-sm mb-6 leading-relaxed max-w-2xl">
-            These terms govern participation in the Vipul Kumar Academy Affiliate Program. Please read them carefully before registering. By joining the program, you agree to be legally bound by these terms.
+            These terms govern participation in the Upcalify Affiliate Program. Please read them carefully before registering. By joining the program, you agree to be legally bound by these terms.
           </p>
           <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">
@@ -301,7 +301,7 @@ export default function AffiliateTermsPage() {
                   If you have any questions about these Affiliate Terms &amp; Conditions, wish to report a violation, or need to resolve a dispute, please contact us:
                 </p>
                 <address className="not-italic space-y-2 text-sm">
-                  <p className="font-semibold text-foreground text-base">Vipul Kumar Academy</p>
+                  <p className="font-semibold text-foreground text-base">Upcalify</p>
                   <p className="text-muted-foreground">
                     Affiliate Support:{" "}
                     <a href="mailto:affiliate@vipulkumaracademy.com" className="text-primary hover:underline">
@@ -328,7 +328,7 @@ export default function AffiliateTermsPage() {
               <div>
                 <p className="text-sm font-semibold text-foreground mb-1">Your Agreement</p>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  By registering for or continuing to participate in the Vipul Kumar Academy Affiliate Program, you acknowledge that you have read, understood, and agree to be bound by these Affiliate Terms &amp; Conditions in their entirety. These terms constitute the entire agreement between you and Vipul Kumar Academy with respect to the Affiliate Program and supersede all prior agreements, representations, or understandings.
+                  By registering for or continuing to participate in the Upcalify Affiliate Program, you acknowledge that you have read, understood, and agree to be bound by these Affiliate Terms &amp; Conditions in their entirety. These terms constitute the entire agreement between you and Upcalify with respect to the Affiliate Program and supersede all prior agreements, representations, or understandings.
                 </p>
               </div>
             </div>
