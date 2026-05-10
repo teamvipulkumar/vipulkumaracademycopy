@@ -126,6 +126,8 @@ type AffSettings = {
   affiliateMinPayout: number;
   payoutPeriodDays: number;
   payoutWeekDay: number | null;
+  affiliateFeeEnabled: boolean;
+  affiliateFeeAmount: number;
 };
 
 type ScheduledPayout = {
@@ -1947,7 +1949,7 @@ function SalesTab() {
 }
 
 function SettingsTab() {
-  const [settings, setSettings] = useState<AffSettings>({ commissionRate: 20, affiliateEnabled: true, affiliateCookieDays: 30, affiliateMinPayout: 500, payoutPeriodDays: 7, payoutWeekDay: null });
+  const [settings, setSettings] = useState<AffSettings>({ commissionRate: 20, affiliateEnabled: true, affiliateCookieDays: 30, affiliateMinPayout: 500, payoutPeriodDays: 7, payoutWeekDay: null, affiliateFeeEnabled: false, affiliateFeeAmount: 99 });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
@@ -2119,6 +2121,36 @@ function SettingsTab() {
                 Payouts due every {["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][settings.payoutWeekDay]}
               </p>
             )}
+          </div>
+        )}
+      </div>
+
+      {/* Application Fee */}
+      <div className="bg-card border border-border rounded-xl p-5 space-y-4">
+        <div>
+          <h3 className="font-semibold text-sm mb-1 flex items-center gap-2"><BadgeIndianRupee className="w-4 h-4 text-primary" />Application Fee</h3>
+          <p className="text-[11px] text-muted-foreground">Charge a one-time fee before users can submit an affiliate application. Helps prevent spam and maintain quality.</p>
+        </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium">Enable Application Fee</p>
+            <p className="text-xs text-muted-foreground">Require payment before applying</p>
+          </div>
+          <Switch
+            checked={settings.affiliateFeeEnabled}
+            onCheckedChange={v => setSettings(s => ({ ...s, affiliateFeeEnabled: v }))}
+          />
+        </div>
+        {settings.affiliateFeeEnabled && (
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Fee Amount (₹)</Label>
+            <Input
+              type="number" min={1}
+              value={settings.affiliateFeeAmount}
+              onChange={e => setSettings(s => ({ ...s, affiliateFeeAmount: parseInt(e.target.value) || 99 }))}
+              className="bg-background border-border h-9 text-sm max-w-[200px]"
+            />
+            <p className="text-[10px] text-muted-foreground">Applicants will pay this amount once via the configured payment gateway</p>
           </div>
         )}
       </div>

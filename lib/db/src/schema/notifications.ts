@@ -62,6 +62,8 @@ export const platformSettingsTable = pgTable("platform_settings", {
   // setup can dedupe the cycle: only the first server to see "today is
   // Saturday IST AND lastCreatorPayoutCycleAt < today-IST 00:00" runs it.
   lastCreatorPayoutCycleAt: timestamp("last_creator_payout_cycle_at", { withTimezone: true }),
+  affiliateFeeEnabled: boolean("affiliate_fee_enabled").notNull().default(false),
+  affiliateFeeAmount: integer("affiliate_fee_amount").notNull().default(99),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
 

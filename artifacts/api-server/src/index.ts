@@ -181,6 +181,11 @@ async function runMigrations() {
         error_message text
       )
     `);
+    // Affiliate application fee — one-time payment gate before applying
+    await db.execute(sql`ALTER TABLE platform_settings ADD COLUMN IF NOT EXISTS affiliate_fee_enabled boolean NOT NULL DEFAULT false`);
+    await db.execute(sql`ALTER TABLE platform_settings ADD COLUMN IF NOT EXISTS affiliate_fee_amount integer NOT NULL DEFAULT 99`);
+    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS affiliate_fee_paid_at timestamptz`);
+
     logger.info("DB migrations OK");
   } catch (e) {
     logger.warn({ e }, "Migration warning (non-fatal)");

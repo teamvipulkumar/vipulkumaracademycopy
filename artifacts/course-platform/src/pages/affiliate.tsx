@@ -69,6 +69,121 @@ function ApplyForm({ user, onSubmitted }: { user: any; onSubmitted: () => void }
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Fee state
+  const [feeConfig, setFeeConfig] = useState<{ enabled: boolean; amount: number; currency: string } | null>(null);
+  const [feePaid, setFeePaid] = useState(false);
+  const [feeLoading, setFeeLoading] = useState(true);
+  const [feeProcessing, setFeeProcessing] = useState(false);
+
+  useEffect(() => {
+    Promise.all([
+      apiFetch("/api/affiliate/fee").then(r => r.json()),
+      apiFetch("/api/affiliate/fee/status").then(r => r.ok ? r.json() : { paid: false }),
+    ]).then(async ([config, status]) => {
+      setFeeConfig(config);
+      let paid = status.paid as boolean;
+
+      // Auto-verify after Cashfree redirect (URL has ?fee_order_id=...&fee_gateway=...)
+      if (!paid && config.enabled) {
+        const params = new URLSearchParams(window.location.search);
+        const feeOrderId = params.get("fee_order_id");
+        const feeGateway = params.get("fee_gateway");
+        if (feeOrderId && feeGateway) {
+          try {
+            const vRes = await apiFetch("/api/affiliate/fee/verify", {
+              method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ orderId: feeOrderId, gateway: feeGateway }),
+            });
+            if (vRes.ok) {
+              paid = true;
+              toast({ title: "Fee paid!", description: "You can now submit your application." });
+              window.history.replaceState({}, "", window.location.pathname);
+            }
+          } catch { /* ignore */ }
+        }
+      }
+
+      setFeePaid(paid);
+    }).finally(() => setFeeLoading(false));
+  }, []);
+
+  const handlePayFee = async () => {
+    setFeeProcessing(true);
+    try {
+      const res = await apiFetch("/api/affiliate/fee/create-order", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to create payment order");
+
+      if (data.gateway === "cashfree") {
+        // Load Cashfree SDK if needed
+        if (!document.getElementById("cashfree-sdk")) {
+          await new Promise<void>((resolve, reject) => {
+            const script = document.createElement("script");
+            script.id = "cashfree-sdk";
+            script.src = "https://sdk.cashfree.com/js/v3/cashfree.js";
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error("Failed to load Cashfree SDK"));
+            document.head.appendChild(script);
+          });
+        }
+        const cashfree = (window as any).Cashfree({ mode: data.isTestMode ? "sandbox" : "production" });
+        const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+        const returnUrl = `${window.location.origin}${base}/affiliate?fee_order_id={order_id}&fee_gateway=cashfree`;
+        cashfree.checkout({ paymentSessionId: data.paymentSessionId, returnUrl, redirectTarget: "_self" });
+        // Don't set feeProcessing false — page will redirect
+        return;
+      }
+
+      if (data.gateway === "razorpay") {
+        if (!document.getElementById("razorpay-sdk")) {
+          await new Promise<void>((resolve, reject) => {
+            const script = document.createElement("script");
+            script.id = "razorpay-sdk";
+            script.src = "https://checkout.razorpay.com/v1/checkout.js";
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error("Failed to load Razorpay SDK"));
+            document.head.appendChild(script);
+          });
+        }
+        const rzp = new (window as any).Razorpay({
+          key: data.keyId,
+          amount: data.amount * 100,
+          currency: "INR",
+          name: "Affiliate Application Fee",
+          description: "One-time account maintenance fee",
+          order_id: data.orderId,
+          prefill: { name: data.user?.name ?? "", email: data.user?.email ?? "" },
+          handler: async (response: any) => {
+            try {
+              const vRes = await apiFetch("/api/affiliate/fee/verify", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  orderId: data.orderId, gateway: "razorpay",
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_signature: response.razorpay_signature,
+                }),
+              });
+              if (vRes.ok) {
+                setFeePaid(true);
+                toast({ title: "Fee paid!", description: "You can now submit your application." });
+              } else {
+                const d = await vRes.json();
+                toast({ title: "Payment verification failed", description: d.error, variant: "destructive" });
+              }
+            } finally { setFeeProcessing(false); }
+          },
+          modal: { ondismiss: () => setFeeProcessing(false) },
+        });
+        rzp.open();
+        return;
+      }
+    } catch (e: any) {
+      toast({ title: "Payment failed", description: e.message, variant: "destructive" });
+      setFeeProcessing(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!agreed) { toast({ title: "Please agree to the terms", variant: "destructive" }); return; }
     if (!form.promoteDescription.trim()) { toast({ title: "Please describe how you'll promote", variant: "destructive" }); return; }
@@ -85,6 +200,8 @@ function ApplyForm({ user, onSubmitted }: { user: any; onSubmitted: () => void }
       toast({ title: "Failed to submit", description: e.message, variant: "destructive" });
     } finally { setLoading(false); }
   };
+
+  const feeRequired = feeConfig?.enabled && !feePaid;
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
@@ -115,8 +232,53 @@ function ApplyForm({ user, onSubmitted }: { user: any; onSubmitted: () => void }
           ))}
         </div>
 
-        {/* Form */}
-        <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
+        {/* Fee payment step */}
+        {!feeLoading && feeConfig?.enabled && (
+          <div className={`mb-5 rounded-2xl border p-5 ${feePaid ? "border-green-500/30 bg-green-500/5" : "border-amber-500/30 bg-amber-500/5"}`}>
+            <div className="flex items-start gap-3">
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${feePaid ? "bg-green-500/15" : "bg-amber-500/15"}`}>
+                {feePaid
+                  ? <CheckCircle2 className="w-5 h-5 text-green-400" />
+                  : <BadgeIndianRupee className="w-5 h-5 text-amber-400" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <p className="text-sm font-semibold text-foreground">
+                    {feePaid ? "Account Maintenance Fee Paid" : `Account Maintenance Fee — ₹${feeConfig.amount}`}
+                  </p>
+                  {feePaid && <Badge className="text-[10px] bg-green-500/15 text-green-400 border-green-500/20">Paid</Badge>}
+                </div>
+                {feePaid ? (
+                  <p className="text-xs text-muted-foreground">Your fee has been received. You can now submit your application below.</p>
+                ) : (
+                  <>
+                    <p className="text-xs text-muted-foreground leading-relaxed mb-3">
+                      This one-time fee helps us maintain a high-quality affiliate ecosystem, prevent spam &amp; fake applications, and provide dedicated affiliate tools &amp; tracking support.
+                    </p>
+                    <Button
+                      onClick={handlePayFee}
+                      disabled={feeProcessing}
+                      size="sm"
+                      className="bg-amber-500 hover:bg-amber-600 text-white gap-2"
+                    >
+                      {feeProcessing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BadgeIndianRupee className="w-3.5 h-3.5" />}
+                      {feeProcessing ? "Redirecting to payment…" : `Pay ₹${feeConfig.amount} & Continue`}
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Form — locked behind fee if required */}
+        <div className={`bg-card border border-border rounded-2xl p-6 space-y-4 transition-opacity ${feeRequired ? "opacity-40 pointer-events-none select-none" : ""}`}>
+          {feeRequired && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+              <Lock className="w-3.5 h-3.5" />
+              Pay the account maintenance fee above to unlock the application form.
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Full Name</Label>
@@ -148,7 +310,7 @@ function ApplyForm({ user, onSubmitted }: { user: any; onSubmitted: () => void }
               I agree to the <span className="text-primary underline cursor-pointer">Affiliate Terms & Conditions</span>, including promoting ethically and not engaging in fraudulent activity.
             </span>
           </label>
-          <Button onClick={handleSubmit} disabled={loading} className="w-full bg-primary hover:bg-primary/90 gap-2">
+          <Button onClick={handleSubmit} disabled={loading || feeRequired} className="w-full bg-primary hover:bg-primary/90 gap-2">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             {loading ? "Submitting…" : "Submit Application"}
           </Button>

@@ -5,6 +5,7 @@ import {
   affiliateApplicationsTable, affiliateClicksTable, affiliateKycTable,
   affiliateBankDetailsTable, affiliateCreativesTable, affiliatePixelTable,
   coursesTable, paymentsTable, bundlesTable, commissionGroupsTable, enrollmentsTable,
+  paymentGatewaysTable,
 } from "@workspace/db";
 import { eq, and, sum, count, sql, desc, gte, lt, lte, ne, isNotNull, isNull, or } from "drizzle-orm";
 import { requireAuth, requireAdmin, type JwtPayload } from "../middlewares/auth";
@@ -39,6 +40,135 @@ function istDateKey(d: Date): string {
   return new Date(d.getTime() + IST_OFFSET_MS).toISOString().substring(0, 10);
 }
 
+/* ── Affiliate Fee ── */
+router.get("/fee", async (_req, res): Promise<void> => {
+  const [settings] = await db.select({
+    affiliateFeeEnabled: platformSettingsTable.affiliateFeeEnabled,
+    affiliateFeeAmount: platformSettingsTable.affiliateFeeAmount,
+    currency: platformSettingsTable.currency,
+  }).from(platformSettingsTable).limit(1);
+  res.json({
+    enabled: settings?.affiliateFeeEnabled ?? false,
+    amount: settings?.affiliateFeeAmount ?? 99,
+    currency: settings?.currency ?? "INR",
+  });
+});
+
+router.get("/fee/status", requireAuth, async (req, res): Promise<void> => {
+  const authedReq = req as AuthedRequest;
+  const [user] = await db.select({ affiliateFeePaidAt: usersTable.affiliateFeePaidAt })
+    .from(usersTable).where(eq(usersTable.id, authedReq.user.userId)).limit(1);
+  res.json({ paid: !!user?.affiliateFeePaidAt });
+});
+
+router.post("/fee/create-order", requireAuth, async (req, res): Promise<void> => {
+  const authedReq = req as AuthedRequest;
+  const [settings] = await db.select({
+    affiliateFeeEnabled: platformSettingsTable.affiliateFeeEnabled,
+    affiliateFeeAmount: platformSettingsTable.affiliateFeeAmount,
+  }).from(platformSettingsTable).limit(1);
+  if (!settings?.affiliateFeeEnabled) {
+    res.status(400).json({ error: "Affiliate fee is not enabled" }); return;
+  }
+  const amount = settings.affiliateFeeAmount;
+  const [user] = await db.select({ name: usersTable.name, email: usersTable.email })
+    .from(usersTable).where(eq(usersTable.id, authedReq.user.userId)).limit(1);
+
+  // Try Cashfree first
+  const [cfGw] = await db.select().from(paymentGatewaysTable)
+    .where(and(eq(paymentGatewaysTable.name, "cashfree"), eq(paymentGatewaysTable.isActive, true))).limit(1);
+  if (cfGw?.apiKey && cfGw?.secretKey) {
+    const host = cfGw.isTestMode ? "https://sandbox.cashfree.com" : "https://api.cashfree.com";
+    const orderId = `AFFFEE${authedReq.user.userId}T${Date.now()}`;
+    let cfResp: { payment_session_id?: string; message?: string };
+    try {
+      const r = await fetch(`${host}/pg/orders`, {
+        method: "POST",
+        headers: { "x-api-version": "2023-08-01", "x-client-id": cfGw.apiKey, "x-client-secret": cfGw.secretKey, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          order_id: orderId, order_amount: amount, order_currency: "INR",
+          customer_details: {
+            customer_id: `uid_${authedReq.user.userId}`,
+            customer_email: user?.email ?? "user@example.com",
+            customer_name: user?.name ?? "User",
+            customer_phone: "9999999999",
+          },
+          order_meta: { notify_url: null },
+        }),
+      });
+      cfResp = await r.json();
+      if (!r.ok) throw new Error(cfResp.message ?? "Cashfree order failed");
+    } catch (e) {
+      res.status(500).json({ error: (e as Error).message }); return;
+    }
+    res.json({ gateway: "cashfree", orderId, paymentSessionId: cfResp.payment_session_id, isTestMode: cfGw.isTestMode });
+    return;
+  }
+
+  // Fallback: Razorpay
+  const [rzpGw] = await db.select().from(paymentGatewaysTable)
+    .where(and(eq(paymentGatewaysTable.name, "razorpay"), eq(paymentGatewaysTable.isActive, true))).limit(1);
+  if (rzpGw?.apiKey && rzpGw?.secretKey) {
+    const creds = Buffer.from(`${rzpGw.apiKey}:${rzpGw.secretKey}`).toString("base64");
+    let rzpData: { id?: string; error?: { description?: string } };
+    try {
+      const r = await fetch("https://api.razorpay.com/v1/orders", {
+        method: "POST",
+        headers: { Authorization: `Basic ${creds}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: amount * 100, currency: "INR", receipt: `AFFFEE_${authedReq.user.userId}` }),
+      });
+      rzpData = await r.json();
+      if (!r.ok) throw new Error(rzpData.error?.description ?? "Razorpay order failed");
+    } catch (e) {
+      res.status(500).json({ error: (e as Error).message }); return;
+    }
+    res.json({ gateway: "razorpay", orderId: rzpData.id, keyId: rzpGw.apiKey, amount, user: { name: user?.name, email: user?.email } });
+    return;
+  }
+
+  res.status(400).json({ error: "No active payment gateway configured. Please contact support." });
+});
+
+router.post("/fee/verify", requireAuth, async (req, res): Promise<void> => {
+  const authedReq = req as AuthedRequest;
+  const { orderId, gateway, razorpay_payment_id, razorpay_order_id, razorpay_signature } = req.body;
+  if (!orderId || !gateway) { res.status(400).json({ error: "orderId and gateway are required" }); return; }
+
+  if (gateway === "cashfree") {
+    const [gw] = await db.select().from(paymentGatewaysTable)
+      .where(eq(paymentGatewaysTable.name, "cashfree")).limit(1);
+    if (!gw?.apiKey || !gw?.secretKey) { res.status(400).json({ error: "Gateway not configured" }); return; }
+    const host = gw.isTestMode ? "https://sandbox.cashfree.com" : "https://api.cashfree.com";
+    let orderData: { order_status?: string };
+    try {
+      const r = await fetch(`${host}/pg/orders/${orderId}`, {
+        headers: { "x-api-version": "2023-08-01", "x-client-id": gw.apiKey, "x-client-secret": gw.secretKey },
+      });
+      orderData = await r.json();
+    } catch (e) {
+      res.status(500).json({ error: "Failed to verify payment with gateway" }); return;
+    }
+    if (orderData.order_status !== "PAID") {
+      res.status(400).json({ error: "Payment not completed", status: orderData.order_status }); return;
+    }
+  } else if (gateway === "razorpay") {
+    const [gw] = await db.select().from(paymentGatewaysTable)
+      .where(eq(paymentGatewaysTable.name, "razorpay")).limit(1);
+    if (!gw?.secretKey) { res.status(400).json({ error: "Gateway not configured" }); return; }
+    const body = `${razorpay_order_id}|${razorpay_payment_id}`;
+    const expectedSig = crypto.createHmac("sha256", gw.secretKey).update(body).digest("hex");
+    if (expectedSig !== razorpay_signature) {
+      res.status(400).json({ error: "Invalid payment signature" }); return;
+    }
+  } else {
+    res.status(400).json({ error: "Unsupported gateway" }); return;
+  }
+
+  await db.update(usersTable).set({ affiliateFeePaidAt: new Date() })
+    .where(eq(usersTable.id, authedReq.user.userId));
+  res.json({ paid: true });
+});
+
 /* ── Application ── */
 router.post("/apply", requireAuth, async (req, res): Promise<void> => {
   const authedReq = req as AuthedRequest;
@@ -46,6 +176,19 @@ router.post("/apply", requireAuth, async (req, res): Promise<void> => {
   if (!fullName || !email || !promoteDescription) {
     res.status(400).json({ error: "All fields are required" }); return;
   }
+
+  // Check if affiliate fee is required
+  const [feeSettings] = await db.select({
+    affiliateFeeEnabled: platformSettingsTable.affiliateFeeEnabled,
+  }).from(platformSettingsTable).limit(1);
+  if (feeSettings?.affiliateFeeEnabled) {
+    const [userRow] = await db.select({ affiliateFeePaidAt: usersTable.affiliateFeePaidAt })
+      .from(usersTable).where(eq(usersTable.id, authedReq.user.userId)).limit(1);
+    if (!userRow?.affiliateFeePaidAt) {
+      res.status(402).json({ error: "Please pay the account maintenance fee before applying" }); return;
+    }
+  }
+
   const existing = await db.select().from(affiliateApplicationsTable)
     .where(eq(affiliateApplicationsTable.userId, authedReq.user.userId)).limit(1);
   const fireSubmittedEvents = async (userIdForEvent: number, emailForEvent: string, nameForEvent: string) => {
@@ -1245,7 +1388,7 @@ router.get("/admin/all-kyc", requireAdmin, async (req, res): Promise<void> => {
 /* ── Admin: affiliate program settings ── */
 router.get("/admin/settings", requireAdmin, async (req, res): Promise<void> => {
   const [settings] = await db.select().from(platformSettingsTable).limit(1);
-  if (!settings) { res.json({ commissionRate: 20, affiliateEnabled: true, affiliateCookieDays: 30, affiliateMinPayout: 500, payoutPeriodDays: 7, payoutWeekDay: null }); return; }
+  if (!settings) { res.json({ commissionRate: 20, affiliateEnabled: true, affiliateCookieDays: 30, affiliateMinPayout: 500, payoutPeriodDays: 7, payoutWeekDay: null, affiliateFeeEnabled: false, affiliateFeeAmount: 99 }); return; }
   res.json({
     commissionRate: settings.commissionRate,
     affiliateEnabled: settings.affiliateEnabled,
@@ -1253,11 +1396,13 @@ router.get("/admin/settings", requireAdmin, async (req, res): Promise<void> => {
     affiliateMinPayout: settings.affiliateMinPayout,
     payoutPeriodDays: settings.payoutPeriodDays,
     payoutWeekDay: settings.payoutWeekDay ?? null,
+    affiliateFeeEnabled: settings.affiliateFeeEnabled,
+    affiliateFeeAmount: settings.affiliateFeeAmount,
   });
 });
 
 router.post("/admin/settings", requireAdmin, async (req, res): Promise<void> => {
-  const { commissionRate, affiliateEnabled, affiliateCookieDays, affiliateMinPayout, payoutPeriodDays, payoutWeekDay } = req.body;
+  const { commissionRate, affiliateEnabled, affiliateCookieDays, affiliateMinPayout, payoutPeriodDays, payoutWeekDay, affiliateFeeEnabled, affiliateFeeAmount } = req.body;
   const [existing] = await db.select().from(platformSettingsTable).limit(1);
   const updates = {
     ...(commissionRate !== undefined && { commissionRate: parseInt(String(commissionRate)) }),
@@ -1266,6 +1411,8 @@ router.post("/admin/settings", requireAdmin, async (req, res): Promise<void> => 
     ...(affiliateMinPayout !== undefined && { affiliateMinPayout: parseInt(String(affiliateMinPayout)) }),
     ...(payoutPeriodDays !== undefined && { payoutPeriodDays: parseInt(String(payoutPeriodDays)) }),
     ...(payoutWeekDay !== undefined && { payoutWeekDay: payoutWeekDay === null ? null : parseInt(String(payoutWeekDay)) }),
+    ...(affiliateFeeEnabled !== undefined && { affiliateFeeEnabled: Boolean(affiliateFeeEnabled) }),
+    ...(affiliateFeeAmount !== undefined && { affiliateFeeAmount: parseInt(String(affiliateFeeAmount)) }),
   };
   if (existing) {
     await db.update(platformSettingsTable).set(updates).where(eq(platformSettingsTable.id, existing.id));
