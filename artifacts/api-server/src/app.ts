@@ -141,6 +141,7 @@ const CSRF_BYPASS_ROUTES = new Set([
   "/api/payments/stripe/webhook",
   "/api/payments/paytm/webhook",
   "/api/payments/paytm/callback",
+  "/api/affiliate/fee/paytm/callback",
 ]);
 
 function safeOriginFromHeader(value: string | undefined): string | null {

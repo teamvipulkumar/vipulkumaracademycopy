@@ -13,6 +13,9 @@ import type { Request } from "express";
 import crypto from "crypto";
 import { sendFbEvent, sendFbTestEvent } from "../lib/facebook-pixel";
 import { triggerAutomation, triggerFunnel, getPublicBaseUrl } from "./crm";
+import { gatewayFetch } from "./payments";
+
+const PaytmChecksum = require("paytmchecksum");
 
 const router = Router();
 type AuthedRequest = Request & { user: JwtPayload };
@@ -138,7 +141,125 @@ router.post("/fee/create-order", requireAuth, async (req, res): Promise<void> =>
     }
   }
 
+  // Paytm
+  if (!requestedGateway || requestedGateway === "paytm") {
+    const [ptGw] = await db.select().from(paymentGatewaysTable)
+      .where(and(eq(paymentGatewaysTable.name, "paytm"), eq(paymentGatewaysTable.isActive, true))).limit(1);
+    if (ptGw?.apiKey && ptGw?.secretKey) {
+      const mid = ptGw.apiKey;
+      const merchantKey = ptGw.secretKey;
+      const orderId = `PTFEE${authedReq.user.userId}T${Date.now()}`;
+      const host = ptGw.isTestMode ? "https://securestage.paytmpayments.com" : "https://secure.paytmpayments.com";
+
+      const forwardedProto = req.get("x-forwarded-proto") || req.protocol;
+      const origin = `${forwardedProto}://${req.get("host")}`;
+      const wsOverride = ptGw.webhookSecret?.startsWith("WS:") ? ptGw.webhookSecret.slice(3).trim() : "";
+      const websiteName = wsOverride || (ptGw.isTestMode ? "WEBSTAGING" : "DEFAULT");
+      const callbackUrl = `${origin}/api/affiliate/fee/paytm/callback`;
+
+      const initBody = {
+        requestType: "Payment",
+        mid,
+        websiteName,
+        orderId,
+        txnAmount: { value: amount.toFixed(2), currency: "INR" },
+        userInfo: {
+          custId: `uid_${authedReq.user.userId}`,
+          email: user?.email ?? "user@example.com",
+          firstName: user?.name ?? "User",
+        },
+        callbackUrl,
+      };
+
+      let txnToken: string;
+      try {
+        const sig = await PaytmChecksum.generateSignature(JSON.stringify(initBody), merchantKey);
+        const head = { version: "v1", channelId: "WEB", requestTimestamp: Date.now().toString(), signature: sig };
+        const initUrl = `${host}/theia/api/v1/initiateTransaction?mid=${mid}&orderId=${encodeURIComponent(orderId)}`;
+        const r = await gatewayFetch(initUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ body: initBody, head }),
+        });
+        const data = await r.json() as { body?: { txnToken?: string; resultInfo?: { resultCode?: string; resultMsg?: string } } };
+        const token = data?.body?.txnToken;
+        if (!token) {
+          const info = data?.body?.resultInfo;
+          res.status(502).json({ error: "Paytm initiate failed", message: info?.resultMsg ?? "Unknown error" }); return;
+        }
+        txnToken = token;
+      } catch (e) {
+        res.status(500).json({ error: (e as Error).message }); return;
+      }
+
+      res.json({
+        gateway: "paytm",
+        paytmParams: { mid, orderId, txnToken },
+        actionUrl: `${host}/theia/api/v1/showPaymentPage?mid=${mid}&orderId=${encodeURIComponent(orderId)}`,
+        orderId,
+        isTestMode: ptGw.isTestMode,
+      });
+      return;
+    }
+    if (requestedGateway === "paytm") {
+      res.status(400).json({ error: "Paytm is not configured or inactive" }); return;
+    }
+  }
+
   res.status(400).json({ error: "No active payment gateway configured. Please contact support." });
+});
+
+// ── Affiliate Fee: Paytm Callback (Paytm redirects here after payment) ────────
+router.post("/fee/paytm/callback", async (req, res): Promise<void> => {
+  const params: Record<string, string> = {};
+  for (const [k, v] of Object.entries(req.body || {})) {
+    params[k] = String(v ?? "");
+  }
+  const receivedChecksum = params.CHECKSUMHASH || "";
+  delete params.CHECKSUMHASH;
+
+  const orderId = params.ORDERID || "";
+  const status = params.STATUS || "";
+  const txnId = params.TXNID || "";
+
+  const forwardedProto = req.get("x-forwarded-proto") || req.protocol;
+  const origin = `${forwardedProto}://${req.get("host")}`;
+
+  // Determine the base path for the affiliate page (from any registered origin)
+  const publicBase = await getPublicBaseUrl().catch(() => origin);
+  const affiliateBase = publicBase || origin;
+
+  const successRedirect = `${affiliateBase}/affiliate?fee_order_id=${encodeURIComponent(orderId)}&fee_gateway=paytm&fee_paytm_status=TXN_SUCCESS`;
+  const failRedirect = `${affiliateBase}/affiliate?fee_gateway=paytm&fee_paytm_status=FAILED`;
+
+  try {
+    const [ptGw] = await db.select().from(paymentGatewaysTable)
+      .where(eq(paymentGatewaysTable.name, "paytm")).limit(1);
+
+    if (!ptGw?.secretKey) {
+      res.redirect(303, failRedirect); return;
+    }
+
+    const isVerified: boolean = receivedChecksum
+      ? PaytmChecksum.verifySignature(params, ptGw.secretKey, receivedChecksum)
+      : false;
+
+    if (isVerified && status === "TXN_SUCCESS") {
+      // Find the user by orderId pattern: PTFEE{userId}T{timestamp}
+      const match = orderId.match(/^PTFEE(\d+)T/);
+      if (match) {
+        const userId = parseInt(match[1]);
+        await db.update(usersTable)
+          .set({ affiliateFeePaidAt: new Date() })
+          .where(and(eq(usersTable.id, userId), isNull(usersTable.affiliateFeePaidAt)));
+      }
+      res.redirect(303, successRedirect); return;
+    }
+  } catch (err) {
+    console.error("[affiliate fee paytm callback] error:", err);
+  }
+
+  res.redirect(303, failRedirect);
 });
 
 router.post("/fee/verify", requireAuth, async (req, res): Promise<void> => {

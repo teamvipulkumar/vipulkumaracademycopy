@@ -99,12 +99,26 @@ function ApplyForm({ user, onSubmitted }: { user: any; onSubmitted: () => void }
       setFeeConfig(config);
       let paid = status.paid as boolean;
 
-      // Auto-verify after Cashfree redirect (?fee_order_id=...&fee_gateway=...)
+      // Auto-verify after gateway redirect
       if (!paid && config.enabled) {
-        const params = new URLSearchParams(window.location.search);
-        const feeOrderId = params.get("fee_order_id");
-        const feeGateway = params.get("fee_gateway");
-        if (feeOrderId && feeGateway) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const feeOrderId = urlParams.get("fee_order_id");
+        const feeGateway = urlParams.get("fee_gateway");
+        const feePaytmStatus = urlParams.get("fee_paytm_status");
+
+        if (feeGateway === "paytm" && feePaytmStatus === "TXN_SUCCESS") {
+          // Paytm: server already marked fee as paid in callback — re-fetch status
+          try {
+            const sRes = await apiFetch("/api/affiliate/fee/status");
+            if (sRes.ok) {
+              const s = await sRes.json();
+              paid = s.paid as boolean;
+              if (paid) toast({ title: "Fee paid!", description: "You can now submit your application." });
+            }
+          } catch { /* ignore */ }
+          window.history.replaceState({}, "", window.location.pathname);
+        } else if (feeOrderId && feeGateway) {
+          // Cashfree / Razorpay: verify via backend
           try {
             const vRes = await apiFetch("/api/affiliate/fee/verify", {
               method: "POST", headers: { "Content-Type": "application/json" },
@@ -116,6 +130,9 @@ function ApplyForm({ user, onSubmitted }: { user: any; onSubmitted: () => void }
               window.history.replaceState({}, "", window.location.pathname);
             }
           } catch { /* ignore */ }
+        } else if (feeGateway === "paytm" && feePaytmStatus === "FAILED") {
+          toast({ title: "Payment failed", description: "Paytm payment was not successful. Please try again.", variant: "destructive" });
+          window.history.replaceState({}, "", window.location.pathname);
         }
       }
 
@@ -213,6 +230,24 @@ function ApplyForm({ user, onSubmitted }: { user: any; onSubmitted: () => void }
         });
         rzp.open();
         return;
+      }
+
+      if (data.gateway === "paytm") {
+        // Build hidden form and submit to Paytm hosted checkout (same as main checkout.tsx)
+        const paytmForm = document.createElement("form");
+        paytmForm.method = "POST";
+        paytmForm.action = data.actionUrl;
+        paytmForm.style.display = "none";
+        for (const [name, value] of Object.entries(data.paytmParams as Record<string, string>)) {
+          const input = document.createElement("input");
+          input.type = "hidden";
+          input.name = name;
+          input.value = String(value ?? "");
+          paytmForm.appendChild(input);
+        }
+        document.body.appendChild(paytmForm);
+        paytmForm.submit();
+        return; // page will navigate to Paytm
       }
     } catch (e: any) {
       toast({ title: "Payment failed", description: e.message, variant: "destructive" });
