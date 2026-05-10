@@ -446,7 +446,7 @@ function ApplyForm({ user, onSubmitted }: { user: any; onSubmitted: () => void }
               className="mt-0.5 accent-primary w-4 h-4"
             />
             <span className="text-xs text-muted-foreground leading-relaxed">
-              I agree to the <span className="text-primary underline cursor-pointer">Affiliate Terms & Conditions</span>, including promoting ethically and not engaging in fraudulent activity.
+              I agree to the <Link href="/affiliate-terms" className="text-primary underline hover:text-primary/80" target="_blank">Affiliate Terms & Conditions</Link>, including promoting ethically and not engaging in fraudulent activity.
             </span>
           </label>
           <Button onClick={handleSubmit} disabled={loading || feeRequired} className="w-full bg-primary hover:bg-primary/90 gap-2">

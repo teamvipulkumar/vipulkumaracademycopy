@@ -154,6 +154,7 @@ import PrivacyPolicyPage from "@/pages/privacy-policy";
 import TermsOfServicePage from "@/pages/terms-of-service";
 import CookiePolicyPage from "@/pages/cookie-policy";
 import RefundPolicyPage from "@/pages/refund-policy";
+import AffiliateTermsPage from "@/pages/affiliate-terms";
 import AboutUsPage from "@/pages/about-us";
 import CareersPage from "@/pages/careers";
 import ContactUsPage from "@/pages/contact-us";
@@ -205,6 +206,7 @@ function Router() {
       <Route path="/terms-of-service" component={() => <AppLayout><TermsOfServicePage /></AppLayout>} />
       <Route path="/cookie-policy" component={() => <AppLayout><CookiePolicyPage /></AppLayout>} />
       <Route path="/refund-policy" component={() => <AppLayout><RefundPolicyPage /></AppLayout>} />
+      <Route path="/affiliate-terms" component={() => <AppLayout><AffiliateTermsPage /></AppLayout>} />
       <Route path="/about-us" component={() => <AppLayout><AboutUsPage /></AppLayout>} />
       <Route path="/careers" component={() => <AppLayout><CareersPage /></AppLayout>} />
       <Route path="/contact-us" component={() => <AppLayout><ContactUsPage /></AppLayout>} />

@@ -567,6 +567,7 @@ export function SiteFooter() {
       { label: "Terms of Service", href: "/terms-of-service" },
       { label: "Cookie Policy", href: "/cookie-policy" },
       { label: "Refund Policy", href: "/refund-policy" },
+      { label: "Affiliate Terms", href: "/affiliate-terms" },
     ],
   };
 
