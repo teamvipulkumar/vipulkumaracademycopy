@@ -63,6 +63,8 @@ router.get("/fee/status", requireAuth, async (req, res): Promise<void> => {
 
 router.post("/fee/create-order", requireAuth, async (req, res): Promise<void> => {
   const authedReq = req as AuthedRequest;
+  const { gateway: requestedGateway } = req.body;
+
   const [settings] = await db.select({
     affiliateFeeEnabled: platformSettingsTable.affiliateFeeEnabled,
     affiliateFeeAmount: platformSettingsTable.affiliateFeeAmount,
@@ -74,56 +76,66 @@ router.post("/fee/create-order", requireAuth, async (req, res): Promise<void> =>
   const [user] = await db.select({ name: usersTable.name, email: usersTable.email })
     .from(usersTable).where(eq(usersTable.id, authedReq.user.userId)).limit(1);
 
-  // Try Cashfree first
-  const [cfGw] = await db.select().from(paymentGatewaysTable)
-    .where(and(eq(paymentGatewaysTable.name, "cashfree"), eq(paymentGatewaysTable.isActive, true))).limit(1);
-  if (cfGw?.apiKey && cfGw?.secretKey) {
-    const host = cfGw.isTestMode ? "https://sandbox.cashfree.com" : "https://api.cashfree.com";
-    const orderId = `AFFFEE${authedReq.user.userId}T${Date.now()}`;
-    let cfResp: { payment_session_id?: string; message?: string };
-    try {
-      const r = await fetch(`${host}/pg/orders`, {
-        method: "POST",
-        headers: { "x-api-version": "2023-08-01", "x-client-id": cfGw.apiKey, "x-client-secret": cfGw.secretKey, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          order_id: orderId, order_amount: amount, order_currency: "INR",
-          customer_details: {
-            customer_id: `uid_${authedReq.user.userId}`,
-            customer_email: user?.email ?? "user@example.com",
-            customer_name: user?.name ?? "User",
-            customer_phone: "9999999999",
-          },
-          order_meta: { notify_url: null },
-        }),
-      });
-      cfResp = await r.json();
-      if (!r.ok) throw new Error(cfResp.message ?? "Cashfree order failed");
-    } catch (e) {
-      res.status(500).json({ error: (e as Error).message }); return;
+  // Cashfree
+  if (!requestedGateway || requestedGateway === "cashfree") {
+    const [cfGw] = await db.select().from(paymentGatewaysTable)
+      .where(and(eq(paymentGatewaysTable.name, "cashfree"), eq(paymentGatewaysTable.isActive, true))).limit(1);
+    if (cfGw?.apiKey && cfGw?.secretKey) {
+      const host = cfGw.isTestMode ? "https://sandbox.cashfree.com" : "https://api.cashfree.com";
+      const orderId = `AFFFEE${authedReq.user.userId}T${Date.now()}`;
+      let cfResp: { payment_session_id?: string; message?: string };
+      try {
+        const r = await fetch(`${host}/pg/orders`, {
+          method: "POST",
+          headers: { "x-api-version": "2023-08-01", "x-client-id": cfGw.apiKey, "x-client-secret": cfGw.secretKey, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            order_id: orderId, order_amount: amount, order_currency: "INR",
+            customer_details: {
+              customer_id: `uid_${authedReq.user.userId}`,
+              customer_email: user?.email ?? "user@example.com",
+              customer_name: user?.name ?? "User",
+              customer_phone: "9999999999",
+            },
+            order_meta: { notify_url: null },
+          }),
+        });
+        cfResp = await r.json();
+        if (!r.ok) throw new Error(cfResp.message ?? "Cashfree order failed");
+      } catch (e) {
+        res.status(500).json({ error: (e as Error).message }); return;
+      }
+      res.json({ gateway: "cashfree", orderId, paymentSessionId: cfResp.payment_session_id, isTestMode: cfGw.isTestMode });
+      return;
     }
-    res.json({ gateway: "cashfree", orderId, paymentSessionId: cfResp.payment_session_id, isTestMode: cfGw.isTestMode });
-    return;
+    if (requestedGateway === "cashfree") {
+      res.status(400).json({ error: "Cashfree is not configured or inactive" }); return;
+    }
   }
 
-  // Fallback: Razorpay
-  const [rzpGw] = await db.select().from(paymentGatewaysTable)
-    .where(and(eq(paymentGatewaysTable.name, "razorpay"), eq(paymentGatewaysTable.isActive, true))).limit(1);
-  if (rzpGw?.apiKey && rzpGw?.secretKey) {
-    const creds = Buffer.from(`${rzpGw.apiKey}:${rzpGw.secretKey}`).toString("base64");
-    let rzpData: { id?: string; error?: { description?: string } };
-    try {
-      const r = await fetch("https://api.razorpay.com/v1/orders", {
-        method: "POST",
-        headers: { Authorization: `Basic ${creds}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: amount * 100, currency: "INR", receipt: `AFFFEE_${authedReq.user.userId}` }),
-      });
-      rzpData = await r.json();
-      if (!r.ok) throw new Error(rzpData.error?.description ?? "Razorpay order failed");
-    } catch (e) {
-      res.status(500).json({ error: (e as Error).message }); return;
+  // Razorpay
+  if (!requestedGateway || requestedGateway === "razorpay") {
+    const [rzpGw] = await db.select().from(paymentGatewaysTable)
+      .where(and(eq(paymentGatewaysTable.name, "razorpay"), eq(paymentGatewaysTable.isActive, true))).limit(1);
+    if (rzpGw?.apiKey && rzpGw?.secretKey) {
+      const creds = Buffer.from(`${rzpGw.apiKey}:${rzpGw.secretKey}`).toString("base64");
+      let rzpData: { id?: string; error?: { description?: string } };
+      try {
+        const r = await fetch("https://api.razorpay.com/v1/orders", {
+          method: "POST",
+          headers: { Authorization: `Basic ${creds}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ amount: amount * 100, currency: "INR", receipt: `AFFFEE_${authedReq.user.userId}` }),
+        });
+        rzpData = await r.json();
+        if (!r.ok) throw new Error(rzpData.error?.description ?? "Razorpay order failed");
+      } catch (e) {
+        res.status(500).json({ error: (e as Error).message }); return;
+      }
+      res.json({ gateway: "razorpay", orderId: rzpData.id, keyId: rzpGw.apiKey, amount, user: { name: user?.name, email: user?.email } });
+      return;
     }
-    res.json({ gateway: "razorpay", orderId: rzpData.id, keyId: rzpGw.apiKey, amount, user: { name: user?.name, email: user?.email } });
-    return;
+    if (requestedGateway === "razorpay") {
+      res.status(400).json({ error: "Razorpay is not configured or inactive" }); return;
+    }
   }
 
   res.status(400).json({ error: "No active payment gateway configured. Please contact support." });

@@ -62,6 +62,16 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+type ActiveGateway = { name: string; displayName: string; isTestMode: boolean };
+
+const GATEWAY_META: Record<string, { label: string; tagline: string; logo?: string }> = {
+  cashfree: { label: "Cashfree", tagline: "UPI · Cards · Instant", logo: "cashfree-logo.png" },
+  razorpay: { label: "Razorpay", tagline: "UPI · Cards · Wallets", logo: "razorpay-logo.png" },
+  stripe:   { label: "Stripe",   tagline: "Cards · International", logo: "stripe-logo.png" },
+  paytm:    { label: "Paytm",    tagline: "Paytm Wallet · UPI", logo: "paytm-logo.png" },
+  payu:     { label: "PayU",     tagline: "UPI · Cards · EMI", logo: "payu-logo.png" },
+};
+
 /* ─── Apply Form ─── */
 function ApplyForm({ user, onSubmitted }: { user: any; onSubmitted: () => void }) {
   const { toast } = useToast();
@@ -75,6 +85,12 @@ function ApplyForm({ user, onSubmitted }: { user: any; onSubmitted: () => void }
   const [feeLoading, setFeeLoading] = useState(true);
   const [feeProcessing, setFeeProcessing] = useState(false);
 
+  // Gateway selection state
+  const [showGatewayPicker, setShowGatewayPicker] = useState(false);
+  const [activeGateways, setActiveGateways] = useState<ActiveGateway[]>([]);
+  const [gatewaysLoading, setGatewaysLoading] = useState(false);
+  const [selectedGateway, setSelectedGateway] = useState("");
+
   useEffect(() => {
     Promise.all([
       apiFetch("/api/affiliate/fee").then(r => r.json()),
@@ -83,7 +99,7 @@ function ApplyForm({ user, onSubmitted }: { user: any; onSubmitted: () => void }
       setFeeConfig(config);
       let paid = status.paid as boolean;
 
-      // Auto-verify after Cashfree redirect (URL has ?fee_order_id=...&fee_gateway=...)
+      // Auto-verify after Cashfree redirect (?fee_order_id=...&fee_gateway=...)
       if (!paid && config.enabled) {
         const params = new URLSearchParams(window.location.search);
         const feeOrderId = params.get("fee_order_id");
@@ -107,15 +123,35 @@ function ApplyForm({ user, onSubmitted }: { user: any; onSubmitted: () => void }
     }).finally(() => setFeeLoading(false));
   }, []);
 
+  // Load gateways when user opens the picker
+  const openGatewayPicker = () => {
+    setShowGatewayPicker(true);
+    if (activeGateways.length > 0) return;
+    setGatewaysLoading(true);
+    fetch(`${API_BASE}/api/payments/gateways/active`)
+      .then(r => r.json())
+      .then((data: ActiveGateway[]) => {
+        setActiveGateways(data);
+        if (data.length > 0) setSelectedGateway(data[0].name);
+      })
+      .catch(() => {})
+      .finally(() => setGatewaysLoading(false));
+  };
+
   const handlePayFee = async () => {
+    if (!selectedGateway) {
+      toast({ title: "Please select a payment method", variant: "destructive" }); return;
+    }
     setFeeProcessing(true);
     try {
-      const res = await apiFetch("/api/affiliate/fee/create-order", { method: "POST" });
+      const res = await apiFetch("/api/affiliate/fee/create-order", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gateway: selectedGateway }),
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to create payment order");
 
       if (data.gateway === "cashfree") {
-        // Load Cashfree SDK if needed
         if (!document.getElementById("cashfree-sdk")) {
           await new Promise<void>((resolve, reject) => {
             const script = document.createElement("script");
@@ -130,8 +166,7 @@ function ApplyForm({ user, onSubmitted }: { user: any; onSubmitted: () => void }
         const base = import.meta.env.BASE_URL.replace(/\/$/, "");
         const returnUrl = `${window.location.origin}${base}/affiliate?fee_order_id={order_id}&fee_gateway=cashfree`;
         cashfree.checkout({ paymentSessionId: data.paymentSessionId, returnUrl, redirectTarget: "_self" });
-        // Don't set feeProcessing false — page will redirect
-        return;
+        return; // page will redirect
       }
 
       if (data.gateway === "razorpay") {
@@ -166,6 +201,7 @@ function ApplyForm({ user, onSubmitted }: { user: any; onSubmitted: () => void }
               });
               if (vRes.ok) {
                 setFeePaid(true);
+                setShowGatewayPicker(false);
                 toast({ title: "Fee paid!", description: "You can now submit your application." });
               } else {
                 const d = await vRes.json();
@@ -234,8 +270,9 @@ function ApplyForm({ user, onSubmitted }: { user: any; onSubmitted: () => void }
 
         {/* Fee payment step */}
         {!feeLoading && feeConfig?.enabled && (
-          <div className={`mb-5 rounded-2xl border p-5 ${feePaid ? "border-green-500/30 bg-green-500/5" : "border-amber-500/30 bg-amber-500/5"}`}>
-            <div className="flex items-start gap-3">
+          <div className={`mb-5 rounded-2xl border overflow-hidden ${feePaid ? "border-green-500/30 bg-green-500/5" : "border-amber-500/30 bg-amber-500/5"}`}>
+            {/* Header */}
+            <div className="flex items-start gap-3 p-5">
               <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${feePaid ? "bg-green-500/15" : "bg-amber-500/15"}`}>
                 {feePaid
                   ? <CheckCircle2 className="w-5 h-5 text-green-400" />
@@ -255,23 +292,90 @@ function ApplyForm({ user, onSubmitted }: { user: any; onSubmitted: () => void }
                     <p className="text-xs text-muted-foreground leading-relaxed mb-3">
                       This one-time fee helps us maintain a high-quality affiliate ecosystem, prevent spam &amp; fake applications, and provide dedicated affiliate tools &amp; tracking support.
                     </p>
-                    <Button
-                      onClick={handlePayFee}
-                      disabled={feeProcessing}
-                      size="sm"
-                      className="bg-amber-500 hover:bg-amber-600 text-white gap-2"
-                    >
-                      {feeProcessing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BadgeIndianRupee className="w-3.5 h-3.5" />}
-                      {feeProcessing ? "Redirecting to payment…" : `Pay ₹${feeConfig.amount} & Continue`}
-                    </Button>
+                    {!showGatewayPicker && (
+                      <Button
+                        onClick={openGatewayPicker}
+                        size="sm"
+                        className="bg-amber-500 hover:bg-amber-600 text-white gap-2"
+                      >
+                        <BadgeIndianRupee className="w-3.5 h-3.5" />
+                        Pay ₹{feeConfig.amount} & Continue
+                      </Button>
+                    )}
                   </>
                 )}
               </div>
             </div>
+
+            {/* Gateway selector (expands when Pay clicked) */}
+            {!feePaid && showGatewayPicker && (
+              <div className="border-t border-amber-500/20 bg-background/60 p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-foreground">Select Payment Method</p>
+                  <button
+                    onClick={() => { setShowGatewayPicker(false); setFeeProcessing(false); }}
+                    className="text-muted-foreground hover:text-foreground cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {gatewaysLoading ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    {[0, 1].map(i => <div key={i} className="h-20 rounded-xl bg-muted animate-pulse" />)}
+                  </div>
+                ) : activeGateways.length === 0 ? (
+                  <div className="flex items-start gap-2.5 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <span>No payment methods are configured. Please contact support.</span>
+                  </div>
+                ) : (
+                  <div className={`grid gap-3 ${activeGateways.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+                    {activeGateways.map(g => {
+                      const m = GATEWAY_META[g.name] ?? { label: g.displayName, tagline: "Secure Payment" };
+                      const isSelected = selectedGateway === g.name;
+                      return (
+                        <button
+                          key={g.name}
+                          type="button"
+                          onClick={() => setSelectedGateway(g.name)}
+                          className={`py-3.5 px-4 rounded-xl border-2 transition-all text-sm font-semibold flex flex-col items-center gap-1.5 cursor-pointer ${
+                            isSelected
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border text-muted-foreground hover:border-border/80 bg-card"
+                          }`}
+                        >
+                          {m.logo
+                            ? <img src={`${import.meta.env.BASE_URL}${m.logo}`} alt={m.label} className="w-8 h-8 object-contain rounded" />
+                            : <BadgeIndianRupee className="w-6 h-6" />}
+                          <span>{m.label}</span>
+                          <span className="text-[10px] font-normal text-muted-foreground text-center leading-tight">{m.tagline}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <ShieldCheck className="w-3.5 h-3.5 text-green-400" />
+                  <span>256-bit SSL encryption · Your payment is secure</span>
+                </div>
+
+                <Button
+                  onClick={handlePayFee}
+                  disabled={feeProcessing || !selectedGateway || activeGateways.length === 0}
+                  className="w-full gap-2 bg-primary hover:bg-primary/90"
+                >
+                  {feeProcessing
+                    ? <><Loader2 className="w-4 h-4 animate-spin" />Processing…</>
+                    : <><BadgeIndianRupee className="w-4 h-4" />Pay ₹{feeConfig.amount}{selectedGateway ? ` via ${GATEWAY_META[selectedGateway]?.label ?? selectedGateway}` : ""}</>}
+                </Button>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Form — locked behind fee if required */}
+        {/* Application form — locked behind fee if required */}
         <div className={`bg-card border border-border rounded-2xl p-6 space-y-4 transition-opacity ${feeRequired ? "opacity-40 pointer-events-none select-none" : ""}`}>
           {feeRequired && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
