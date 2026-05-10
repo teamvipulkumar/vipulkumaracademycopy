@@ -297,6 +297,9 @@ router.post("/fee/verify", requireAuth, async (req, res): Promise<void> => {
     res.status(400).json({ error: "Unsupported gateway" }); return;
   }
 
+  // IMPORTANT: Only mark fee as paid on the user record.
+  // This payment MUST NOT be inserted into paymentsTable and MUST NOT
+  // trigger any affiliate commission — 100% of this fee goes to the platform.
   await db.update(usersTable).set({ affiliateFeePaidAt: new Date() })
     .where(eq(usersTable.id, authedReq.user.userId));
   res.json({ paid: true });
