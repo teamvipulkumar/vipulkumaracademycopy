@@ -1,16 +1,26 @@
 import { useId } from "react";
 
 /**
- * Vipul Kumar Academy default brand mark — inline SVG so:
- *   • the icon is a premium rounded-square "VK" monogram badge filled with
- *     a sky → indigo gradient (academic / EdTech feel). The fixed gradient
- *     pops cleanly on every theme background (dark / light / midnight).
- *   • the wordmark fills follow `currentColor` (adapts to every theme via
- *     the parent's text colour).
+ * Vipul Kumar Academy default brand mark.
  *
- * Layout: a rounded badge with stylised "VK" monogram on the left, paired
- * with a two-line wordmark — "VIPUL KUMAR" (bold) over "ACADEMY"
- * (letter-spaced caption) — for a refined, institutional feel.
+ * ── Design ────────────────────────────────────────────────────────────
+ *   • Icon — premium rounded-square badge with a stylised graduation cap
+ *     (mortarboard + cap + tassel) in white. Conveys education / academy
+ *     at a glance.
+ *   • Wordmark — two lines: "VIPUL KUMAR" (extra-bold) over "ACADEMY"
+ *     (letter-spaced caption).
+ *
+ * ── Theming ───────────────────────────────────────────────────────────
+ * The badge gradient adapts to the active theme so the mark stays
+ * vibrant on every background:
+ *   • dark / midnight → bold sky → indigo gradient (default)
+ *   • light           → emerald → teal gradient (fresh, academic feel —
+ *     much higher contrast than the deep-blue gradient on white paper)
+ * Theme detection uses the `.light` / `.dark` / `.midnight` classes the
+ * ThemeProvider sets on <html>, via the SVG's CSS sibling selectors.
+ *
+ * The wordmark uses `currentColor`, so it inherits the parent text
+ * colour and remains legible across every theme automatically.
  *
  * Width derives from `height` to preserve the 200 × 48 viewBox aspect
  * ratio (~4.17:1).
@@ -28,11 +38,13 @@ export function UpcalifyLogo({
   title?: string;
 }) {
   const ratio = 200 / 48;
-  // Per-instance gradient ID so multiple logos on a page never collide.
+  // Per-instance IDs so multiple logos on a page never collide.
   const uid = useId().replace(/:/g, "");
-  const gradId = `vka-grad-${uid}`;
+  const darkGradId = `vka-grad-dark-${uid}`;
+  const lightGradId = `vka-grad-light-${uid}`;
   const innerGradId = `vka-grad-inner-${uid}`;
-  const fillRef = `url(#${gradId})`;
+  const ringGradId = `vka-grad-ring-${uid}`;
+
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -47,39 +59,89 @@ export function UpcalifyLogo({
       <title>{title}</title>
 
       <defs>
-        {/* Premium sky → indigo gradient drives the badge fill. */}
-        <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="1">
+        {/* Dark / midnight theme gradient (sky → indigo). */}
+        <linearGradient id={darkGradId} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#38BDF8" />
           <stop offset="55%" stopColor="#2563EB" />
           <stop offset="100%" stopColor="#1E3A8A" />
         </linearGradient>
-        {/* Subtle inner highlight for the badge top edge. */}
-        <linearGradient id={innerGradId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.18" />
-          <stop offset="60%" stopColor="#FFFFFF" stopOpacity="0" />
+        {/* Light theme gradient (emerald → teal — fresh academic feel). */}
+        <linearGradient id={lightGradId} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#34D399" />
+          <stop offset="55%" stopColor="#10B981" />
+          <stop offset="100%" stopColor="#047857" />
         </linearGradient>
+        {/* Subtle inner highlight on the badge top edge for depth. */}
+        <linearGradient id={innerGradId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.22" />
+          <stop offset="55%" stopColor="#FFFFFF" stopOpacity="0" />
+        </linearGradient>
+        {/* Soft outer ring used only on light theme to give the badge
+            a defined edge against pale page backgrounds. */}
+        <linearGradient id={ringGradId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#000000" stopOpacity="0.06" />
+          <stop offset="100%" stopColor="#000000" stopOpacity="0.14" />
+        </linearGradient>
+
+        {/* Theme-aware badge fill driven by the <html> theme class.
+            Default (dark / midnight) uses the sky→indigo gradient; the
+            `.light` ancestor swaps it to the emerald→teal gradient. */}
+        <style>{`
+          .vka-badge-fill-${uid} { fill: url(#${darkGradId}); }
+          :where(.light) .vka-badge-fill-${uid} { fill: url(#${lightGradId}); }
+
+          .vka-badge-ring-${uid} { stroke: transparent; }
+          :where(.light) .vka-badge-ring-${uid} { stroke: url(#${ringGradId}); }
+        `}</style>
       </defs>
 
-      {/* ── Badge — rounded square with VK monogram ── */}
+      {/* ── Badge ── */}
       <g>
-        {/* Main badge body */}
-        <rect x="2" y="2" width="44" height="44" rx="11" ry="11" fill={fillRef} />
-        {/* Top-edge inner highlight for depth */}
+        {/* Main badge body (theme-aware fill). */}
+        <rect
+          className={`vka-badge-fill-${uid}`}
+          x="2"
+          y="2"
+          width="44"
+          height="44"
+          rx="11"
+          ry="11"
+        />
+        {/* Inner top highlight for depth. */}
         <rect x="2" y="2" width="44" height="44" rx="11" ry="11" fill={`url(#${innerGradId})`} />
-
-        {/* "V" stroke — bold geometric chevron */}
-        <path
-          d="M 11.5 14 L 19.5 34 L 24 34 L 16 14 Z"
-          fill="#FFFFFF"
+        {/* Outer ring only renders in light theme (transparent otherwise)
+            to give the badge a soft definition against white pages. */}
+        <rect
+          className={`vka-badge-ring-${uid}`}
+          x="2.5"
+          y="2.5"
+          width="43"
+          height="43"
+          rx="10.5"
+          ry="10.5"
+          fill="none"
+          strokeWidth="1"
         />
-        {/* "K" — vertical bar + two angled strokes */}
-        <path
-          d="M 26 14 L 30.5 14 L 30.5 22.5 L 36.5 14 L 41.6 14 L 35 23 L 41.8 34 L 36.5 34 L 31.7 26 L 30.5 27.6 L 30.5 34 L 26 34 Z"
-          fill="#FFFFFF"
-        />
 
-        {/* Tiny graduation tassel detail above the badge for an academic touch */}
-        <circle cx="42" cy="7" r="1.6" fill="#FFFFFF" opacity="0.9" />
+        {/* ─ Graduation cap icon (white) ─ */}
+        <g fill="#FFFFFF">
+          {/* Mortarboard — diamond/rhombus seen in slight perspective. */}
+          <path d="M 24 11 L 40 19 L 24 27 L 8 19 Z" />
+          {/* Cap base — arched trapezoid sitting under the mortarboard. */}
+          <path d="M 14.5 21.5 L 16 30 Q 16 32.2 18.2 32.2 L 29.8 32.2 Q 32 32.2 32 30 L 33.5 21.5 L 24 26.4 Z" />
+        </g>
+        {/* Center button stud on the mortarboard for definition. */}
+        <circle cx="24" cy="19" r="1.4" fill="rgba(15,23,42,0.32)" />
+        {/* Tassel cord — curves from the centre stud out to the right edge. */}
+        <path
+          d="M 24 19 C 32.5 19 36 21 36 23.5 L 36 28.5"
+          stroke="#FFFFFF"
+          strokeWidth="1.4"
+          fill="none"
+          strokeLinecap="round"
+        />
+        {/* Tassel bead at the end of the cord. */}
+        <ellipse cx="36" cy="30.4" rx="1.7" ry="2.2" fill="#FFFFFF" />
       </g>
 
       {/* ── Wordmark — inherits currentColor from parent text colour ── */}
