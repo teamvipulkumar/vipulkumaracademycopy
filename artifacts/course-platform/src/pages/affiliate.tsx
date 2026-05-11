@@ -429,9 +429,9 @@ function ApplyForm({ user, onSubmitted }: { user: any; onSubmitted: () => void }
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">How will you promote our courses?</Label>
+            <Label className="text-xs text-muted-foreground">How will you promote us?</Label>
             <Textarea
-              placeholder="Describe your audience, channels (YouTube, blog, Instagram, etc.), and how you plan to promote..."
+              placeholder="Example: Paid Ads, Organic Content, or Other Methods"
               value={form.promoteDescription}
               onChange={e => setForm(f => ({ ...f, promoteDescription: e.target.value }))}
               rows={4}
