@@ -571,46 +571,95 @@ router.get("/clicks", requireAuth, async (req, res): Promise<void> => {
   res.json({ total, unique, conversions, dailyChart });
 });
 
-/* ── Sales list ── */
+/* ── Sales list ──
+ * IMPORTANT: We must NOT do a single SQL JOIN of referrals × payments matched
+ * only by (userId, courseId). When the same buyer purchases the same course
+ * twice through the same affiliate, two referrals exist and two payments
+ * exist — the cartesian join would emit 2×2 = 4 duplicate rows.
+ *
+ * Instead we fetch referrals and payments separately, then in JS match each
+ * referral to ONE specific payment by closest createdAt, consuming each
+ * payment so it can never match a second referral.
+ */
 router.get("/sales", requireAuth, async (req, res): Promise<void> => {
   const authedReq = req as AuthedRequest;
   const userId = authedReq.user.userId;
 
-  const rows = await db
+  // 1. Get this affiliate's referral code so we can pull their attributable payments.
+  const [me] = await db.select({ refCode: usersTable.referralCode })
+    .from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+
+  // 2. All purchase referrals for this affiliate (1 row per recorded sale).
+  const referrals = await db
     .select({
       id: referralsTable.id,
       commission: referralsTable.commission,
       createdAt: referralsTable.createdAt,
       courseId: referralsTable.courseId,
+      referredUserId: referralsTable.referredUserId,
       courseTitle: coursesTable.title,
-      bundleTitle: bundlesTable.name,
-      saleAmount: paymentsTable.amount,
     })
     .from(referralsTable)
     .leftJoin(coursesTable, eq(coursesTable.id, referralsTable.courseId))
-    .leftJoin(
-      paymentsTable,
-      and(
-        eq(paymentsTable.userId, referralsTable.referredUserId),
-        or(
-          eq(paymentsTable.courseId, referralsTable.courseId),
-          and(isNull(paymentsTable.courseId), isNull(referralsTable.courseId)),
-        ),
-        eq(paymentsTable.status, "completed"),
-      ),
-    )
-    .leftJoin(bundlesTable, eq(bundlesTable.id, paymentsTable.bundleId))
     .where(and(eq(referralsTable.referrerId, userId), eq(referralsTable.status, "purchase")))
     .orderBy(desc(referralsTable.createdAt));
 
-  res.json(rows.map(r => ({
-    id: r.id,
-    courseTitle: r.courseTitle ?? r.bundleTitle ?? "Unknown",
-    isBundle: r.courseId == null && r.bundleTitle != null,
-    saleAmount: r.saleAmount != null ? parseFloat(String(r.saleAmount)) : null,
-    commission: parseFloat(String(r.commission ?? 0)),
-    createdAt: r.createdAt,
-  })));
+  // 3. All completed payments attributed to this affiliate (via affiliate_ref).
+  const payments = me?.refCode
+    ? await db
+        .select({
+          id: paymentsTable.id,
+          userId: paymentsTable.userId,
+          courseId: paymentsTable.courseId,
+          bundleId: paymentsTable.bundleId,
+          amount: paymentsTable.amount,
+          createdAt: paymentsTable.createdAt,
+          bundleTitle: bundlesTable.name,
+        })
+        .from(paymentsTable)
+        .leftJoin(bundlesTable, eq(bundlesTable.id, paymentsTable.bundleId))
+        .where(and(
+          eq(paymentsTable.affiliateRef, me.refCode),
+          eq(paymentsTable.status, "completed"),
+        ))
+    : [];
+
+  // 4. For each referral, pick the closest-in-time matching payment (one each).
+  // Match key: same buyer + (same courseId OR both bundle/null). Among matches
+  // pick the one whose createdAt is nearest the referral's createdAt.
+  const usedPayments = new Set<number>();
+  const results = referrals.map(r => {
+    let best: typeof payments[number] | null = null;
+    let bestDelta = Infinity;
+    for (const p of payments) {
+      if (usedPayments.has(p.id)) continue;
+      if (p.userId !== r.referredUserId) continue;
+      const courseMatch =
+        r.courseId != null
+          ? p.courseId === r.courseId
+          : p.courseId == null;
+      if (!courseMatch) continue;
+      const delta = Math.abs(
+        new Date(p.createdAt).getTime() - new Date(r.createdAt).getTime(),
+      );
+      if (delta < bestDelta) {
+        bestDelta = delta;
+        best = p;
+      }
+    }
+    if (best) usedPayments.add(best.id);
+
+    return {
+      id: r.id,
+      courseTitle: r.courseTitle ?? best?.bundleTitle ?? "Unknown",
+      isBundle: r.courseId == null && best?.bundleTitle != null,
+      saleAmount: best?.amount != null ? parseFloat(String(best.amount)) : null,
+      commission: parseFloat(String(r.commission ?? 0)),
+      createdAt: r.createdAt,
+    };
+  });
+
+  res.json(results);
 });
 
 /* ── Upcoming payout (affiliate's own scheduled info) ── */
