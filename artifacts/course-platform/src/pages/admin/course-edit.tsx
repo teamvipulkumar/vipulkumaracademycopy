@@ -38,6 +38,45 @@ function useCreatorsList() {
 
 type LessonType = "video" | "text" | "pdf" | "link" | "quiz" | "embed";
 
+// External-link lessons can hold MULTIPLE links (e.g. Telegram + YouTube +
+// Website). We persist this as a JSON array in the existing `resource_url`
+// text column to avoid a schema change. A non-JSON / plain-URL value is
+// treated as a single legacy entry so old lessons keep working.
+type LinkEntry = { title: string; url: string };
+function parseLinks(raw: string | null | undefined): LinkEntry[] {
+  if (!raw) return [];
+  const trimmed = raw.trim();
+  if (trimmed.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed
+          .filter((x): x is LinkEntry => x && typeof x === "object" && typeof x.url === "string")
+          .map(x => ({ title: typeof x.title === "string" ? x.title : "", url: x.url }));
+      }
+    } catch { /* fall through to legacy */ }
+  }
+  return [{ title: "", url: trimmed }];
+}
+// SECURITY: only allow safe URL schemes — reject `javascript:`, `data:`,
+// `vbscript:` etc. so an admin can't (intentionally or otherwise) persist a
+// stored-XSS payload that executes in students' browsers when rendered as
+// an <a href> on the learner page.
+function isSafeLinkUrl(url: string): boolean {
+  const u = url.trim().toLowerCase();
+  if (!u) return false;
+  if (u.startsWith("http://") || u.startsWith("https://")) return true;
+  if (u.startsWith("mailto:") || u.startsWith("tel:")) return true;
+  return !/^[a-z][a-z0-9+.-]*:/.test(u);
+}
+function serializeLinks(links: LinkEntry[]): string | null {
+  const cleaned = links
+    .map(l => ({ title: (l.title ?? "").trim(), url: (l.url ?? "").trim() }))
+    .filter(l => l.url.length > 0 && isSafeLinkUrl(l.url));
+  if (cleaned.length === 0) return null;
+  return JSON.stringify(cleaned);
+}
+
 const LESSON_ICONS: Record<LessonType, React.ReactNode> = {
   video: <Play className="w-3.5 h-3.5 text-blue-400" />,
   text: <FileText className="w-3.5 h-3.5 text-green-400" />,
@@ -99,7 +138,7 @@ export default function AdminCourseEditPage() {
 
   // Lesson editor
   const [lessonEditorOpen, setLessonEditorOpen] = useState(false);
-  const [editingLesson, setEditingLesson] = useState<{ id: number; moduleId: number; data: UpdateLessonBody & { title: string; type: LessonType } } | null>(null);
+  const [editingLesson, setEditingLesson] = useState<{ id: number; moduleId: number; data: UpdateLessonBody & { title: string; type: LessonType; links?: LinkEntry[] } } | null>(null);
   const [addLessonModuleId, setAddLessonModuleId] = useState<number | null>(null);
   const [newLessonTitle, setNewLessonTitle] = useState("");
   const [newLessonType, setNewLessonType] = useState<LessonType>("video");
@@ -177,6 +216,7 @@ export default function AdminCourseEditPage() {
         videoUrl: lesson.videoUrl ?? "",
         content: lesson.content ?? "",
         resourceUrl: lesson.resourceUrl ?? "",
+        links: parseLinks(lesson.resourceUrl),
         durationMinutes: lesson.durationMinutes ?? null,
         isFree: lesson.isFree ?? false,
         description: lesson.description ?? "",
@@ -188,12 +228,17 @@ export default function AdminCourseEditPage() {
   const handleSaveLesson = () => {
     if (!editingLesson) return;
     const { id, moduleId, data } = editingLesson;
+    // For link-type lessons, serialize the multi-link array into resourceUrl.
+    // For all other types, fall back to the single resourceUrl field as before.
+    const resourceUrl = data.type === "link"
+      ? serializeLinks(data.links ?? [])
+      : (data.resourceUrl || null);
     const body: UpdateLessonBody = {
       title: data.title,
       type: data.type as any,
       videoUrl: data.videoUrl || null,
       content: data.content || null,
-      resourceUrl: data.resourceUrl || null,
+      resourceUrl,
       durationMinutes: data.durationMinutes || null,
       isFree: data.isFree,
       description: data.description || null,
@@ -606,21 +651,84 @@ export default function AdminCourseEditPage() {
               {editingLesson.data.type === "link" && (
                 <div className="space-y-3">
                   <div>
-                    <label className="text-sm font-medium mb-1.5 block">Resource URL</label>
-                    <Input
-                      value={editingLesson.data.resourceUrl ?? ""}
-                      onChange={e => setEditingLesson(l => l ? { ...l, data: { ...l.data, resourceUrl: e.target.value } } : l)}
-                      className="bg-background font-mono text-sm"
-                      placeholder="https://example.com/resource"
-                    />
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-sm font-medium">External Links</label>
+                      <span className="text-xs text-muted-foreground">
+                        {(editingLesson.data.links?.length ?? 0)} link{(editingLesson.data.links?.length ?? 0) === 1 ? "" : "s"}
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      {(editingLesson.data.links ?? []).map((link: LinkEntry, idx: number) => (
+                        <div key={idx} className="flex gap-2 items-start p-2.5 bg-background border border-border rounded-lg">
+                          <div className="w-6 h-6 rounded-md bg-purple-500/15 text-purple-400 text-xs font-semibold flex items-center justify-center flex-shrink-0 mt-1">
+                            {idx + 1}
+                          </div>
+                          <div className="flex-1 space-y-1.5">
+                            <Input
+                              value={link.title}
+                              onChange={e => setEditingLesson(l => {
+                                if (!l) return l;
+                                const next = [...(l.data.links ?? [])];
+                                next[idx] = { ...next[idx], title: e.target.value };
+                                return { ...l, data: { ...l.data, links: next } };
+                              })}
+                              className="bg-card text-sm h-9"
+                              placeholder="Link title (e.g. YouTube Channel)"
+                            />
+                            <Input
+                              value={link.url}
+                              onChange={e => setEditingLesson(l => {
+                                if (!l) return l;
+                                const next = [...(l.data.links ?? [])];
+                                next[idx] = { ...next[idx], url: e.target.value };
+                                return { ...l, data: { ...l.data, links: next } };
+                              })}
+                              className="bg-card font-mono text-xs h-9"
+                              placeholder="https://example.com/..."
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setEditingLesson(l => {
+                              if (!l) return l;
+                              const next = (l.data.links ?? []).filter((_: LinkEntry, i: number) => i !== idx);
+                              return { ...l, data: { ...l.data, links: next } };
+                            })}
+                            className="w-8 h-8 rounded-md text-muted-foreground hover:text-red-400 hover:bg-red-500/10 flex items-center justify-center flex-shrink-0 mt-0.5"
+                            title="Remove link"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                      {(editingLesson.data.links?.length ?? 0) === 0 && (
+                        <p className="text-xs text-muted-foreground italic px-1">No links yet — add one below.</p>
+                      )}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="mt-2 gap-1.5"
+                      onClick={() => setEditingLesson(l => {
+                        if (!l) return l;
+                        const next = [...(l.data.links ?? []), { title: "", url: "" }];
+                        return { ...l, data: { ...l.data, links: next } };
+                      })}
+                    >
+                      <Plus className="w-3.5 h-3.5" />Add Link
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Add multiple links like Telegram, YouTube, Website etc. Each link will appear as its own card with its title.
+                    </p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium mb-1.5 block">Description</label>
+                    <label className="text-sm font-medium mb-1.5 block">Description <span className="text-muted-foreground font-normal">(optional)</span></label>
                     <Textarea
                       value={editingLesson.data.description ?? ""}
                       onChange={e => setEditingLesson(l => l ? { ...l, data: { ...l.data, description: e.target.value } } : l)}
-                      className="bg-background min-h-[80px] resize-none text-sm"
-                      placeholder="Describe what this link contains..."
+                      className="bg-background min-h-[60px] resize-none text-sm"
+                      placeholder="Describe what these links contain..."
                     />
                   </div>
                 </div>

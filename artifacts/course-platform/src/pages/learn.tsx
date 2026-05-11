@@ -29,6 +29,48 @@ type LessonEntry = {
   isFree: boolean;
 };
 
+// ─── External-link parser ────────────────────────────────────────────────────
+// Link-type lessons store multiple {title,url} entries as a JSON array in the
+// existing `resource_url` text column (no schema change needed). Old lessons
+// have a plain URL string — surface those as a single untitled entry.
+type LinkEntry = { title: string; url: string };
+// SECURITY: only allow safe URL schemes in href attributes. Without this an
+// admin (or anyone with write access to lessons) could persist a
+// `javascript:` / `data:` / `vbscript:` URL that executes in students'
+// browsers when they click "Open Link" — classic stored XSS.
+function isSafeUrl(url: string): boolean {
+  const u = url.trim().toLowerCase();
+  if (!u) return false;
+  // Allow only absolute http(s), mailto: and tel:. Relative URLs (no scheme)
+  // are also safe — the browser resolves them against the current origin.
+  if (u.startsWith("http://") || u.startsWith("https://")) return true;
+  if (u.startsWith("mailto:") || u.startsWith("tel:")) return true;
+  // Reject anything with a scheme we don't explicitly allow.
+  return !/^[a-z][a-z0-9+.-]*:/.test(u);
+}
+function parseLessonLinks(raw: string | null | undefined): LinkEntry[] {
+  if (!raw) return [];
+  const trimmed = raw.trim();
+  let entries: LinkEntry[];
+  if (trimmed.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        entries = parsed
+          .filter((x): x is LinkEntry => x && typeof x === "object" && typeof x.url === "string" && x.url.trim().length > 0)
+          .map(x => ({ title: typeof x.title === "string" ? x.title : "", url: x.url }));
+      } else {
+        entries = [{ title: "", url: trimmed }];
+      }
+    } catch {
+      entries = [{ title: "", url: trimmed }];
+    }
+  } else {
+    entries = [{ title: "", url: trimmed }];
+  }
+  return entries.filter(e => isSafeUrl(e.url));
+}
+
 // ─── Smart embed URL resolver ─────────────────────────────────────────────────
 function resolveEmbedUrl(url: string): { type: "iframe" | "video"; url: string; platform: string } {
   // YouTube
@@ -464,41 +506,52 @@ export default function LearnPage() {
                     </div>
                   )}
 
-                  {/* Link lesson */}
-                  {selectedLesson.type === "link" && (
-                    <div className="mb-6">
-                      {selectedLesson.resourceUrl ? (
-                        <div className="p-6 bg-gradient-to-br from-purple-500/10 to-blue-500/10 border border-purple-500/20 rounded-2xl">
-                          <div className="flex items-start gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center flex-shrink-0">
-                              <Link2 className="w-6 h-6 text-purple-400" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-foreground mb-1">External Resource</h3>
-                              {selectedLesson.description && (
-                                <p className="text-sm text-muted-foreground mb-3">{selectedLesson.description}</p>
-                              )}
-                              <p className="text-xs text-muted-foreground/70 font-mono truncate mb-4">{selectedLesson.resourceUrl}</p>
-                              <a
-                                href={selectedLesson.resourceUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                <Button className="gap-2 bg-purple-600 hover:bg-purple-500">
-                                  <ExternalLink className="w-4 h-4" />Open Resource
-                                </Button>
-                              </a>
-                            </div>
+                  {/* Link lesson — supports multiple links stored as a JSON
+                      array in resourceUrl. Falls back to a single legacy URL
+                      string for older lessons. */}
+                  {selectedLesson.type === "link" && (() => {
+                    const links = parseLessonLinks(selectedLesson.resourceUrl);
+                    if (links.length === 0) {
+                      return (
+                        <div className="mb-6">
+                          <div className="p-8 bg-card rounded-xl border border-border text-center">
+                            <Link2 className="w-12 h-12 text-purple-400/50 mx-auto mb-3" />
+                            <p className="text-muted-foreground text-sm">No resource URL configured for this lesson.</p>
                           </div>
                         </div>
-                      ) : (
-                        <div className="p-8 bg-card rounded-xl border border-border text-center mb-6">
-                          <Link2 className="w-12 h-12 text-purple-400/50 mx-auto mb-3" />
-                          <p className="text-muted-foreground text-sm">No resource URL configured for this lesson.</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                      );
+                    }
+                    return (
+                      <div className="mb-6 space-y-3">
+                        {selectedLesson.description && (
+                          <p className="text-sm text-muted-foreground mb-2">{selectedLesson.description}</p>
+                        )}
+                        {links.map((link, idx) => (
+                          <div
+                            key={idx}
+                            className="p-5 bg-gradient-to-br from-purple-500/10 to-blue-500/10 border border-purple-500/20 rounded-2xl"
+                          >
+                            <div className="flex items-start gap-4">
+                              <div className="w-12 h-12 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center flex-shrink-0">
+                                <Link2 className="w-6 h-6 text-purple-400" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-semibold text-foreground mb-1">
+                                  {link.title || "External Resource"}
+                                </h3>
+                                <p className="text-xs text-muted-foreground/70 font-mono truncate mb-4">{link.url}</p>
+                                <a href={link.url} target="_blank" rel="noopener noreferrer">
+                                  <Button className="gap-2 bg-purple-600 hover:bg-purple-500">
+                                    <ExternalLink className="w-4 h-4" />Open Link
+                                  </Button>
+                                </a>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
 
                   {/* Embed lesson — rendered inside a sandboxed srcdoc iframe so scripts and
                       platform-specific players (Bunny Stream, Vidalytics, etc.) run correctly */}
