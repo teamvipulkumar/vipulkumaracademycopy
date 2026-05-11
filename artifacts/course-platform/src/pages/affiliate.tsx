@@ -316,7 +316,7 @@ function ApplyForm({ user, onSubmitted }: { user: any; onSubmitted: () => void }
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
                   <p className="text-sm font-semibold text-foreground">
-                    {feePaid ? "Account Maintenance Fee Paid" : `Account Maintenance Fee — ₹${feeConfig.amount}`}
+                    {feePaid ? "Lifetime Account Maintenance Fee Paid" : `Lifetime Account Maintenance Fee — ₹${feeConfig.amount}`}
                   </p>
                   {feePaid && <Badge className="text-[10px] bg-green-500/15 text-green-400 border-green-500/20">Paid</Badge>}
                 </div>
