@@ -1,20 +1,22 @@
 import { useId } from "react";
 
 /**
- * Vipul Kumar Academy wordmark + minimalist icon mark — inline SVG so:
- *   • the icon is a sleek geometric "U + mortarboard" glyph filled with a
- *     premium sky→deep-blue gradient (EdTech startup feel). The fixed
- *     gradient pops cleanly on every theme background (dark / light /
- *     midnight) so the brand mark stays recognisable across palettes.
+ * Vipul Kumar Academy default brand mark — inline SVG so:
+ *   • the icon is a premium rounded-square "VK" monogram badge filled with
+ *     a sky → indigo gradient (academic / EdTech feel). The fixed gradient
+ *     pops cleanly on every theme background (dark / light / midnight).
  *   • the wordmark fills follow `currentColor` (adapts to every theme via
  *     the parent's text colour).
  *
- * The mark composes a flat mortarboard (parallelogram) sitting on top of a
- * thick rounded "U" stroke, with a small tassel hanging from the right
- * corner — minimal, no chrome/background plate. Reads down to ~18px tall.
+ * Layout: a rounded badge with stylised "VK" monogram on the left, paired
+ * with a two-line wordmark — "VIPUL KUMAR" (bold) over "ACADEMY"
+ * (letter-spaced caption) — for a refined, institutional feel.
  *
- * Width derives from `height` to preserve the 145 × 28 viewBox aspect
- * ratio (~5.18:1). Reference: `attached_assets/image_1778316656550.png`.
+ * Width derives from `height` to preserve the 200 × 48 viewBox aspect
+ * ratio (~4.17:1).
+ *
+ * NOTE: Component name kept as `UpcalifyLogo` purely to avoid touching
+ * every existing import — the rendered mark is fully Vipul Kumar Academy.
  */
 export function UpcalifyLogo({
   height = 32,
@@ -25,15 +27,16 @@ export function UpcalifyLogo({
   className?: string;
   title?: string;
 }) {
-  const ratio = 145 / 28;
+  const ratio = 200 / 48;
   // Per-instance gradient ID so multiple logos on a page never collide.
   const uid = useId().replace(/:/g, "");
-  const gradId = `upcalify-grad-${uid}`;
+  const gradId = `vka-grad-${uid}`;
+  const innerGradId = `vka-grad-inner-${uid}`;
   const fillRef = `url(#${gradId})`;
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 9 145 28"
+      viewBox="0 0 200 48"
       height={height}
       width={height * ratio}
       preserveAspectRatio="xMidYMid meet"
@@ -44,66 +47,64 @@ export function UpcalifyLogo({
       <title>{title}</title>
 
       <defs>
-        {/* Premium sky → deep-blue gradient drives every icon stroke/fill. */}
-        <linearGradient id={gradId} x1="0" y1="0.05" x2="1" y2="1">
+        {/* Premium sky → indigo gradient drives the badge fill. */}
+        <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#38BDF8" />
           <stop offset="55%" stopColor="#2563EB" />
           <stop offset="100%" stopColor="#1E3A8A" />
         </linearGradient>
+        {/* Subtle inner highlight for the badge top edge. */}
+        <linearGradient id={innerGradId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.18" />
+          <stop offset="60%" stopColor="#FFFFFF" stopOpacity="0" />
+        </linearGradient>
       </defs>
 
-      {/* ── Icon mark — modern minimalist "U + graduation cap" ── */}
+      {/* ── Badge — rounded square with VK monogram ── */}
+      <g>
+        {/* Main badge body */}
+        <rect x="2" y="2" width="44" height="44" rx="11" ry="11" fill={fillRef} />
+        {/* Top-edge inner highlight for depth */}
+        <rect x="2" y="2" width="44" height="44" rx="11" ry="11" fill={`url(#${innerGradId})`} />
 
-      {/* Mortarboard plate sitting across the top of the U opening */}
-      <path
-        d="M 16.5 11.2 L 27.6 14.2 L 16.5 17.2 L 5.4 14.2 Z"
-        fill={fillRef}
-      />
-      {/* Tassel — short stroke + small bead hanging off the right corner */}
-      <path
-        d="M 26.4 14.5 L 27.1 19.5"
-        stroke={fillRef}
-        strokeWidth="1"
-        strokeLinecap="round"
-        fill="none"
-      />
-      <circle cx="27.1" cy="20.2" r="1.1" fill={fillRef} />
-      {/* Thick rounded "U" glyph — hangs cleanly from under the mortarboard */}
-      <path
-        d="M 8.5 18.2 L 8.5 25.5 Q 8.5 32.2 16.5 32.2 Q 24.5 32.2 24.5 25.5 L 24.5 18.2"
-        stroke={fillRef}
-        strokeWidth="4.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-      />
+        {/* "V" stroke — bold geometric chevron */}
+        <path
+          d="M 11.5 14 L 19.5 34 L 24 34 L 16 14 Z"
+          fill="#FFFFFF"
+        />
+        {/* "K" — vertical bar + two angled strokes */}
+        <path
+          d="M 26 14 L 30.5 14 L 30.5 22.5 L 36.5 14 L 41.6 14 L 35 23 L 41.8 34 L 36.5 34 L 31.7 26 L 30.5 27.6 L 30.5 34 L 26 34 Z"
+          fill="#FFFFFF"
+        />
 
-      {/* ── Wordmark — inherits currentColor from the parent text colour ── */}
+        {/* Tiny graduation tassel detail above the badge for an academic touch */}
+        <circle cx="42" cy="7" r="1.6" fill="#FFFFFF" opacity="0.9" />
+      </g>
+
+      {/* ── Wordmark — inherits currentColor from parent text colour ── */}
       <g fill="currentColor">
-        <g transform="translate(38.273437, 29.999998)">
-          <path d="M 9.484375 0.28125 C 7.078125 0.28125 5.203125 -0.378906 3.859375 -1.703125 C 2.523438 -3.035156 1.859375 -4.9375 1.859375 -7.40625 L 1.859375 -16.84375 L 5.75 -16.84375 L 5.75 -7.5625 C 5.75 -4.539062 7 -3.03125 9.5 -3.03125 C 10.71875 -3.03125 11.648438 -3.394531 12.296875 -4.125 C 12.941406 -4.851562 13.265625 -6 13.265625 -7.5625 L 13.265625 -16.84375 L 17.109375 -16.84375 L 17.109375 -7.40625 C 17.109375 -4.9375 16.4375 -3.035156 15.09375 -1.703125 C 13.757812 -0.378906 11.890625 0.28125 9.484375 0.28125 Z M 9.484375 0.28125" />
-        </g>
-        <g transform="translate(57.231546, 29.999998)">
-          <path d="M 9.390625 -13.140625 C 10.585938 -13.140625 11.679688 -12.863281 12.671875 -12.3125 C 13.660156 -11.757812 14.429688 -10.976562 14.984375 -9.96875 C 15.546875 -8.96875 15.828125 -7.800781 15.828125 -6.46875 C 15.828125 -5.132812 15.546875 -3.96875 14.984375 -2.96875 C 14.429688 -1.96875 13.660156 -1.191406 12.671875 -0.640625 C 11.679688 -0.0859375 10.585938 0.1875 9.390625 0.1875 C 7.734375 0.1875 6.429688 -0.332031 5.484375 -1.375 L 5.484375 4.671875 L 1.734375 4.671875 L 1.734375 -12.953125 L 5.3125 -12.953125 L 5.3125 -11.453125 C 6.25 -12.578125 7.609375 -13.140625 9.390625 -13.140625 Z M 8.734375 -2.890625 C 9.691406 -2.890625 10.476562 -3.210938 11.09375 -3.859375 C 11.71875 -4.515625 12.03125 -5.382812 12.03125 -6.46875 C 12.03125 -7.5625 11.71875 -8.429688 11.09375 -9.078125 C 10.476562 -9.734375 9.691406 -10.0625 8.734375 -10.0625 C 7.773438 -10.0625 6.984375 -9.734375 6.359375 -9.078125 C 5.742188 -8.429688 5.4375 -7.5625 5.4375 -6.46875 C 5.4375 -5.382812 5.742188 -4.515625 6.359375 -3.859375 C 6.984375 -3.210938 7.773438 -2.890625 8.734375 -2.890625 Z M 8.734375 -2.890625" />
-        </g>
-        <g transform="translate(73.831921, 29.999998)">
-          <path d="M 7.984375 0.1875 C 6.609375 0.1875 5.367188 -0.09375 4.265625 -0.65625 C 3.171875 -1.226562 2.3125 -2.019531 1.6875 -3.03125 C 1.070312 -4.039062 0.765625 -5.1875 0.765625 -6.46875 C 0.765625 -7.75 1.070312 -8.894531 1.6875 -9.90625 C 2.3125 -10.914062 3.171875 -11.707031 4.265625 -12.28125 C 5.367188 -12.851562 6.609375 -13.140625 7.984375 -13.140625 C 9.347656 -13.140625 10.539062 -12.851562 11.5625 -12.28125 C 12.582031 -11.707031 13.320312 -10.894531 13.78125 -9.84375 L 10.875 -8.28125 C 10.195312 -9.46875 9.226562 -10.0625 7.96875 -10.0625 C 6.988281 -10.0625 6.175781 -9.738281 5.53125 -9.09375 C 4.894531 -8.457031 4.578125 -7.582031 4.578125 -6.46875 C 4.578125 -5.363281 4.894531 -4.488281 5.53125 -3.84375 C 6.175781 -3.207031 6.988281 -2.890625 7.96875 -2.890625 C 9.25 -2.890625 10.21875 -3.484375 10.875 -4.671875 L 13.78125 -3.078125 C 13.320312 -2.054688 12.582031 -1.253906 11.5625 -0.671875 C 10.539062 -0.0976562 9.347656 0.1875 7.984375 0.1875 Z M 7.984375 0.1875" />
-        </g>
-        <g transform="translate(88.050507, 29.999998)">
-          <path d="M 6.953125 -13.140625 C 8.960938 -13.140625 10.503906 -12.660156 11.578125 -11.703125 C 12.648438 -10.753906 13.1875 -9.316406 13.1875 -7.390625 L 13.1875 0 L 9.671875 0 L 9.671875 -1.609375 C 8.960938 -0.410156 7.648438 0.1875 5.734375 0.1875 C 4.734375 0.1875 3.867188 0.0195312 3.140625 -0.3125 C 2.410156 -0.644531 1.851562 -1.109375 1.46875 -1.703125 C 1.082031 -2.296875 0.890625 -2.972656 0.890625 -3.734375 C 0.890625 -4.929688 1.34375 -5.875 2.25 -6.5625 C 3.15625 -7.257812 4.554688 -7.609375 6.453125 -7.609375 L 9.4375 -7.609375 C 9.4375 -8.421875 9.1875 -9.046875 8.6875 -9.484375 C 8.1875 -9.929688 7.441406 -10.15625 6.453125 -10.15625 C 5.753906 -10.15625 5.070312 -10.046875 4.40625 -9.828125 C 3.75 -9.609375 3.1875 -9.316406 2.71875 -8.953125 L 1.375 -11.578125 C 2.082031 -12.066406 2.925781 -12.445312 3.90625 -12.71875 C 4.894531 -13 5.910156 -13.140625 6.953125 -13.140625 Z M 6.671875 -2.328125 C 7.304688 -2.328125 7.875 -2.472656 8.375 -2.765625 C 8.875 -3.066406 9.226562 -3.507812 9.4375 -4.09375 L 9.4375 -5.40625 L 6.859375 -5.40625 C 5.316406 -5.40625 4.546875 -4.898438 4.546875 -3.890625 C 4.546875 -3.410156 4.734375 -3.03125 5.109375 -2.75 C 5.484375 -2.46875 6.003906 -2.328125 6.671875 -2.328125 Z M 6.671875 -2.328125" />
-        </g>
-        <g transform="translate(102.894615, 29.999998)">
-          <path d="M 1.734375 -17.859375 L 5.484375 -17.859375 L 5.484375 0 L 1.734375 0 Z M 1.734375 -17.859375" />
-        </g>
-        <g transform="translate(110.136229, 29.999998)">
-          <path d="M 1.734375 -12.953125 L 5.484375 -12.953125 L 5.484375 0 L 1.734375 0 Z M 3.609375 -14.75 C 2.921875 -14.75 2.359375 -14.945312 1.921875 -15.34375 C 1.492188 -15.75 1.28125 -16.25 1.28125 -16.84375 C 1.28125 -17.4375 1.492188 -17.929688 1.921875 -18.328125 C 2.359375 -18.734375 2.921875 -18.9375 3.609375 -18.9375 C 4.296875 -18.9375 4.851562 -18.742188 5.28125 -18.359375 C 5.71875 -17.972656 5.9375 -17.492188 5.9375 -16.921875 C 5.9375 -16.296875 5.71875 -15.773438 5.28125 -15.359375 C 4.851562 -14.953125 4.296875 -14.75 3.609375 -14.75 Z M 3.609375 -14.75" />
-        </g>
-        <g transform="translate(117.377844, 29.999998)">
-          <path d="M 5.84375 -12.65625 L 9.171875 -12.65625 L 9.171875 -9.765625 L 5.9375 -9.765625 L 5.9375 0 L 2.1875 0 L 2.1875 -9.765625 L 0.1875 -9.765625 L 0.1875 -12.65625 L 2.1875 -12.65625 L 2.1875 -13.234375 C 2.1875 -14.710938 2.625 -15.882812 3.5 -16.75 C 4.375 -17.613281 5.601562 -18.046875 7.1875 -18.046875 C 7.75 -18.046875 8.28125 -17.984375 8.78125 -17.859375 C 9.289062 -17.742188 9.71875 -17.570312 10.0625 -17.34375 L 9.078125 -14.625 C 8.640625 -14.9375 8.132812 -15.09375 7.5625 -15.09375 C 6.414062 -15.09375 5.84375 -14.460938 5.84375 -13.203125 Z M 5.84375 -12.65625" />
-        </g>
-        <g transform="translate(126.929094, 29.999998)">
-          <path d="M 14.578125 -12.953125 L 8.734375 0.796875 C 8.140625 2.285156 7.40625 3.332031 6.53125 3.9375 C 5.65625 4.550781 4.601562 4.859375 3.375 4.859375 C 2.695312 4.859375 2.03125 4.753906 1.375 4.546875 C 0.71875 4.335938 0.179688 4.050781 -0.234375 3.6875 L 1.125 1.015625 C 1.414062 1.265625 1.75 1.460938 2.125 1.609375 C 2.5 1.753906 2.875 1.828125 3.25 1.828125 C 3.757812 1.828125 4.175781 1.703125 4.5 1.453125 C 4.820312 1.203125 5.109375 0.789062 5.359375 0.21875 L 5.40625 0.09375 L -0.1875 -12.953125 L 3.6875 -12.953125 L 7.3125 -4.15625 L 10.96875 -12.953125 Z M 14.578125 -12.953125" />
-        </g>
+        <text
+          x="58"
+          y="23"
+          fontFamily="ui-sans-serif, -apple-system, 'Segoe UI', Inter, system-ui, Roboto, Arial, sans-serif"
+          fontSize="15"
+          fontWeight="800"
+          letterSpacing="0.2"
+        >
+          VIPUL KUMAR
+        </text>
+        <text
+          x="58"
+          y="38"
+          fontFamily="ui-sans-serif, -apple-system, 'Segoe UI', Inter, system-ui, Roboto, Arial, sans-serif"
+          fontSize="9.5"
+          fontWeight="600"
+          letterSpacing="3.4"
+          opacity="0.72"
+        >
+          ACADEMY
+        </text>
       </g>
     </svg>
   );
