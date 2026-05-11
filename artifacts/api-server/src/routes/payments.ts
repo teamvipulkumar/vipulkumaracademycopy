@@ -389,6 +389,17 @@ router.post("/verify", requireAuth, async (req, res): Promise<void> => {
   const [payment] = await db.select().from(paymentsTable).where(and(eq(paymentsTable.sessionId, sessionId), eq(paymentsTable.userId, authedReq.user.userId))).limit(1);
   if (!payment) { res.status(404).json({ error: "Payment session not found" }); return; }
 
+  // Idempotency: this exact payment session was already processed (commission,
+  // enrollment, notifications all done). Returning early prevents double-recording
+  // commission / sending duplicate emails on accidental re-verifies.
+  if (payment.status === "completed") {
+    const [ex] = await db.select().from(enrollmentsTable)
+      .where(and(eq(enrollmentsTable.userId, authedReq.user.userId), eq(enrollmentsTable.courseId, payment.courseId)))
+      .limit(1);
+    res.json({ success: true, enrollmentId: ex?.id ?? null, message: "Payment already verified" });
+    return;
+  }
+
   await db.update(paymentsTable).set({ status: "completed", paymentId: `sim_${nanoid(12)}` }).where(eq(paymentsTable.id, payment.id));
   generateGstInvoice(payment.id).catch(() => {});
 
@@ -404,11 +415,14 @@ router.post("/verify", requireAuth, async (req, res): Promise<void> => {
       triggerAutomation("purchase", buyer.id, buyer.email, { name: buyer.name, email: buyer.email, course_name: course?.title ?? "", amount: String(parseFloat(String(payment.amount)).toFixed(2)) }).catch(() => {});
       triggerFunnel("new_purchase", buyer.id, { course_name: course?.title ?? "", amount: String(parseFloat(String(payment.amount)).toFixed(2)) }).catch(() => {});
     }
-    await recordAffiliateCommission(payment.affiliateRef, authedReq.user.userId, payment.courseId, parseFloat(String(payment.amount)));
-    if (payment.courseId) await recordCreatorCommissions(payment, [payment.courseId]);
   } else {
     enrollmentId = existing[0].id;
   }
+  // Affiliate + creator commissions must run on EVERY successful payment, even
+  // when the buyer is already enrolled (e.g. re-purchasing the same course).
+  // Outer status==="completed" guard above prevents double-recording on retries.
+  await recordAffiliateCommission(payment.affiliateRef, authedReq.user.userId, payment.courseId, parseFloat(String(payment.amount)));
+  if (payment.courseId) await recordCreatorCommissions(payment, [payment.courseId]);
 
   if (payment.couponCode) {
     const [coupon] = await db.select().from(couponsTable).where(eq(couponsTable.code, payment.couponCode)).limit(1);
@@ -850,20 +864,23 @@ router.post("/cashfree/verify", async (req, res): Promise<void> => {
       const [existing] = await db.select().from(enrollmentsTable).where(and(eq(enrollmentsTable.userId, payment.userId), eq(enrollmentsTable.courseId, payment.courseId))).limit(1);
       if (!existing) {
         await db.insert(enrollmentsTable).values({ userId: payment.userId, courseId: payment.courseId });
-        const [course] = await db.select().from(coursesTable).where(eq(coursesTable.id, payment.courseId)).limit(1);
-        await db.insert(notificationsTable).values({ userId: payment.userId, title: "Enrollment Confirmed!", message: `You are now enrolled in ${course?.title ?? "the course"}`, type: "success" });
+        const [c0] = await db.select().from(coursesTable).where(eq(coursesTable.id, payment.courseId)).limit(1);
+        await db.insert(notificationsTable).values({ userId: payment.userId, title: "Enrollment Confirmed!", message: `You are now enrolled in ${c0?.title ?? "the course"}`, type: "success" });
         if (payment.couponCode) {
           const [coupon] = await db.select().from(couponsTable).where(eq(couponsTable.code, payment.couponCode)).limit(1);
           if (coupon) await db.update(couponsTable).set({ usedCount: coupon.usedCount + 1 }).where(eq(couponsTable.id, coupon.id));
         }
         const [buyer] = await db.select().from(usersTable).where(eq(usersTable.id, payment.userId)).limit(1);
-        if (buyer && course) {
-          triggerAutomation("purchase", buyer.id, buyer.email, { name: buyer.name, email: buyer.email, course_name: course.title, amount: String(parseFloat(String(payment.amount)).toFixed(2)) }).catch(() => {});
-          triggerFunnel("new_purchase", buyer.id, { course_name: course.title, amount: String(parseFloat(String(payment.amount)).toFixed(2)) }).catch(() => {});
+        if (buyer && c0) {
+          triggerAutomation("purchase", buyer.id, buyer.email, { name: buyer.name, email: buyer.email, course_name: c0.title, amount: String(parseFloat(String(payment.amount)).toFixed(2)) }).catch(() => {});
+          triggerFunnel("new_purchase", buyer.id, { course_name: c0.title, amount: String(parseFloat(String(payment.amount)).toFixed(2)) }).catch(() => {});
         }
-        await recordAffiliateCommission(payment.affiliateRef, payment.userId, payment.courseId, parseFloat(String(payment.amount)));
-        if (payment.courseId) await recordCreatorCommissions(payment, [payment.courseId]);
       }
+      // Commissions run on EVERY successful payment, even repeat purchases of
+      // the same course. The outer "payment already completed" check at the
+      // top of this handler prevents double-recording on duplicate callbacks.
+      await recordAffiliateCommission(payment.affiliateRef, payment.userId, payment.courseId, parseFloat(String(payment.amount)));
+      if (payment.courseId) await recordCreatorCommissions(payment, [payment.courseId]);
 
       const [course] = await db.select().from(coursesTable).where(eq(coursesTable.id, payment.courseId)).limit(1);
       res.json({ success: true, enrolled: true, courseId: payment.courseId, courseTitle: course?.title, amount: parseFloat(String(payment.amount)), currency: "INR" });
@@ -978,9 +995,12 @@ router.post("/cashfree/webhook", async (req, res): Promise<void> => {
         const [coupon] = await db.select().from(couponsTable).where(eq(couponsTable.code, payment.couponCode)).limit(1);
         if (coupon) await db.update(couponsTable).set({ usedCount: coupon.usedCount + 1 }).where(eq(couponsTable.id, coupon.id));
       }
-      await recordAffiliateCommission(payment.affiliateRef, payment.userId, payment.courseId, parseFloat(String(payment.amount)));
-      if (payment.courseId) await recordCreatorCommissions(payment, [payment.courseId]);
     }
+    // Commissions run on EVERY successful payment, even repeat purchases of
+    // the same course. The "payment.status === completed" guard at the top of
+    // this webhook handler prevents double-recording on duplicate webhooks.
+    await recordAffiliateCommission(payment.affiliateRef, payment.userId, payment.courseId, parseFloat(String(payment.amount)));
+    if (payment.courseId) await recordCreatorCommissions(payment, [payment.courseId]);
   }
   res.json({ received: true });
 });
@@ -1345,9 +1365,12 @@ async function completePaytmPayment(payment: typeof paymentsTable.$inferSelect, 
       triggerAutomation("purchase", buyer.id, buyer.email, { name: buyer.name, email: buyer.email, course_name: course.title, amount: String(parseFloat(String(payment.amount)).toFixed(2)) }).catch(() => {});
       triggerFunnel("new_purchase", buyer.id, { course_name: course.title, amount: String(parseFloat(String(payment.amount)).toFixed(2)) }).catch(() => {});
     }
-    await recordAffiliateCommission(payment.affiliateRef, payment.userId, payment.courseId, parseFloat(String(payment.amount)));
-    if (payment.courseId) await recordCreatorCommissions(payment, [payment.courseId]);
   }
+  // Commissions run on EVERY successful payment, even repeat purchases of
+  // the same course. completePaytmPayment is only invoked after the outer
+  // verify/callback guards confirm this payment wasn't already completed.
+  await recordAffiliateCommission(payment.affiliateRef, payment.userId, payment.courseId, parseFloat(String(payment.amount)));
+  if (payment.courseId) await recordCreatorCommissions(payment, [payment.courseId]);
 }
 
 // ── Paytm: Verify Payment status (called by frontend after redirect) ──────────
@@ -1881,10 +1904,13 @@ router.post("/stripe/verify", async (req, res): Promise<void> => {
         amount: String(parseFloat(String(payment.amount)).toFixed(2)),
       }).catch(() => {});
       triggerFunnel("new_purchase", buyer.id, { course_name: course?.title ?? "", amount: String(parseFloat(String(payment.amount)).toFixed(2)) }).catch(() => {});
-      await recordAffiliateCommission(payment.affiliateRef, payment.userId, payment.courseId, parseFloat(String(payment.amount)));
-      if (payment.courseId) await recordCreatorCommissions(payment, [payment.courseId]);
     }
   }
+  // Commissions run on EVERY successful payment, even repeat purchases of
+  // the same course. The "payment.status === completed" guard earlier in this
+  // handler prevents double-recording on duplicate verify calls.
+  await recordAffiliateCommission(payment.affiliateRef, payment.userId, payment.courseId, parseFloat(String(payment.amount)));
+  if (payment.courseId) await recordCreatorCommissions(payment, [payment.courseId]);
 
   if (payment.couponCode) {
     const [coupon] = await db.select().from(couponsTable)
