@@ -9,6 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Bell, Menu, X, Home, BookOpen, Share2, GraduationCap, LogOut, ShieldCheck, ChevronRight, Mail, Youtube, Twitter, Linkedin, Instagram, CheckCheck, Sun, Moon, User, Sparkles } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { EmailVerificationBanner } from "@/components/email-verification-banner";
+import { UpcalifyLogo } from "@/components/upcalify-logo";
 
 /* ─── Notification Popup ─── */
 function NotificationPopup({ iconSize = "w-4 h-4" }: { iconSize?: string }) {
@@ -265,14 +266,14 @@ export function Navbar() {
                     style={{ height: branding.logoSizeMobile, width: "auto", maxWidth: branding.logoSizeMobile * 4 }}
                   />
                 </>
-              ) : branding.siteName ? (
-                // No admin-uploaded logo — render the site name as a wordmark.
-                // We deliberately don't fall back to the built-in default
-                // logo so a fresh tenant shows nothing until they brand it.
-                <span className="text-lg md:text-xl font-extrabold tracking-tight whitespace-nowrap">
-                  {branding.siteName}
-                </span>
-              ) : null}
+              ) : (
+                // No admin-uploaded logo — render the built-in default
+                // brand mark (VK badge + Vipul Kumar Academy wordmark).
+                <>
+                  <UpcalifyLogo height={branding.logoSize} title={branding.siteName} className="hidden md:block" />
+                  <UpcalifyLogo height={branding.logoSizeMobile} title={branding.siteName} className="block md:hidden" />
+                </>
+              )}
             </div>
           </Link>
 
@@ -595,11 +596,9 @@ export function SiteFooter() {
                   className="object-contain"
                   style={{ height: branding.logoSize, width: "auto", maxWidth: branding.logoSize * 4 }}
                 />
-              ) : branding.siteName ? (
-                <span className="text-xl font-extrabold tracking-tight text-foreground whitespace-nowrap">
-                  {branding.siteName}
-                </span>
-              ) : null}
+              ) : (
+                <UpcalifyLogo height={branding.logoSize} title={branding.siteName} className="text-foreground" />
+              )}
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mb-5">
               Premium online education platform for aspiring entrepreneurs. Master affiliate marketing, e-commerce, and dropshipping — built by operators.
