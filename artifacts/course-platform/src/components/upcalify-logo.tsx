@@ -13,9 +13,9 @@ import { useId } from "react";
  * ── Theming ───────────────────────────────────────────────────────────
  * The badge gradient adapts to the active theme so the mark stays
  * vibrant on every background:
- *   • dark / midnight → bold sky → indigo gradient (default)
- *   • light           → emerald → teal gradient (fresh, academic feel —
- *     much higher contrast than the deep-blue gradient on white paper)
+ *   • dark / light → bold sky → indigo gradient (default)
+ *   • midnight     → emerald → teal gradient (fresh accent that pops
+ *     against the deep midnight backdrop)
  * Theme detection uses the `.light` / `.dark` / `.midnight` classes the
  * ThemeProvider sets on <html>, via the SVG's CSS sibling selectors.
  *
@@ -84,14 +84,14 @@ export function UpcalifyLogo({
         </linearGradient>
 
         {/* Theme-aware badge fill driven by the <html> theme class.
-            Default (dark / midnight) uses the sky→indigo gradient; the
-            `.light` ancestor swaps it to the emerald→teal gradient. */}
+            Default (dark / light) uses the sky→indigo gradient; the
+            `.midnight` ancestor swaps it to the emerald→teal gradient. */}
         <style>{`
           .vka-badge-fill-${uid} { fill: url(#${darkGradId}); }
-          :where(.light) .vka-badge-fill-${uid} { fill: url(#${lightGradId}); }
+          :where(.midnight) .vka-badge-fill-${uid} { fill: url(#${lightGradId}); }
 
-          .vka-badge-ring-${uid} { stroke: transparent; }
-          :where(.light) .vka-badge-ring-${uid} { stroke: url(#${ringGradId}); }
+          .vka-badge-ring-${uid} { stroke: url(#${ringGradId}); }
+          :where(.dark, .midnight) .vka-badge-ring-${uid} { stroke: transparent; }
         `}</style>
       </defs>
 
