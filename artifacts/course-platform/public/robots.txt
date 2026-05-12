@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+# Block private/admin areas from search indexing
+Disallow: /admin/
+Disallow: /api/
+Disallow: /learn/
+Disallow: /my-courses
+Disallow: /checkout
+Disallow: /unsubscribe
+Disallow: /reset-password
+Disallow: /verify-email
+
+Sitemap: https://vipulkumaracademy.com/sitemap.xml
