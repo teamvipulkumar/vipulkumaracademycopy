@@ -49,8 +49,7 @@ src="https://www.facebook.com/tr?id=${data.pixelId}&ev=PageView&noscript=1"/></n
 export default defineConfig({
   base: basePath,
   plugins: [
-    pixelHeadInjectorPlugin(),
-    react(),
+  react(),
     tailwindcss(),
     runtimeErrorOverlay({
       filter: (err: { message?: string; name?: string }) =>
