@@ -65,6 +65,9 @@ function buildAllowedOrigins(): Set<string> {
   if (replitDev) explicit.push(`https://${replitDev}`, `http://${replitDev}`);
   const siteUrl = process.env.SITE_URL;
   if (siteUrl) explicit.push(siteUrl.replace(/\/+$/, ""));
+
+  explicit.push("https://workspacecourse-platform-production.up.railway.app");
+  
   return new Set(explicit);
 }
 const ALLOWED_ORIGINS = buildAllowedOrigins();
