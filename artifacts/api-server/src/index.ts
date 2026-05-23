@@ -1,9 +1,15 @@
-import app from "./app";
+import router from "./app";
+import express from "express";
 import { logger } from "./lib/logger";
 import { processSequences, processScheduledCampaigns } from "./routes/crm";
 import { runCreatorPayoutCycle } from "./routes/creators";
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
+
+const app = express();
+
+app.use(express.json());
+app.use("/api", router);
 
 const rawPort = process.env["PORT"];
 
