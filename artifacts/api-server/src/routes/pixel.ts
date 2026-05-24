@@ -356,5 +356,12 @@ router.post("/send-test-event", requireAdmin, async (req, res): Promise<void> =>
     res.status(500).json({ sent: false, reason: "internal_error" });
   }
 });
-
+router.post("/event", async (req, res) => {
+  try {
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false });
+  }
+});
 export default router;
