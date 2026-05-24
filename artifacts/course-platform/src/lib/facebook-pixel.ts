@@ -210,7 +210,7 @@ function sendCapi(
   if (userData?.lastName) body.last_name = userData.lastName;
   if (userData?.externalId !== undefined) body.external_id = userData.externalId;
   try {
-    fetch(`${API_BASE}/api/pixel/event`, {
+    fetch(`${API_BASE}/pixel/event`, {
       method: "POST",
       credentials: "include",
       keepalive: true,
